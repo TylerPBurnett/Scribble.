@@ -2,41 +2,56 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import NoteList from './components/NoteList'
 import NoteEditor from './components/NoteEditor'
+import SettingsWindow from './components/SettingsWindow'
 import { Note } from './types/Note'
-import { getNotes, createNote, getNoteById } from './services/noteService'
+import { getNotes, createNote, getNoteById, deleteNote } from './services/noteService'
+import { getSettings, saveSettings, initSettings, AppSettings } from './services/settingsService'
 
 function App() {
   const [notes, setNotes] = useState<Note[]>([])
   const [activeNote, setActiveNote] = useState<Note | null>(null)
   const [isNoteWindow, setIsNoteWindow] = useState(false)
+  const [isSettingsWindow, setIsSettingsWindow] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [saveLocation, setSaveLocation] = useState('/Users/justinsmith/Documents/StickyNotes')
+  const [appSettings, setAppSettings] = useState<AppSettings>({
+    saveLocation: '',
+    autoSave: true,
+    autoSaveInterval: 5,
+    darkMode: true,
+  })
 
-  // Load notes on startup
+  // Load notes and settings on startup
   useEffect(() => {
-    const loadedNotes = getNotes()
-    setNotes(loadedNotes)
+    const init = async () => {
+      // Initialize settings
+      const settings = await initSettings()
+      setAppSettings(settings)
 
-    // If this is a note window, get the note ID from the URL
-    const checkIfNoteWindow = async () => {
+      // Load notes
+      const loadedNotes = getNotes()
+      setNotes(loadedNotes)
+
+      // Check if this is a settings window
+      const isSettings = await window.settings.isSettingsWindow()
+      if (isSettings) {
+        setIsSettingsWindow(true)
+        return
+      }
+
+      // If this is a note window, get the note ID from the URL
       const noteId = await window.noteWindow.getNoteId()
       if (noteId) {
         setIsNoteWindow(true)
-        if (noteId === 'new') {
-          // Create a new note
-          const newNote = createNote()
-          setActiveNote(newNote)
-        } else {
-          // Load existing note
-          const note = getNoteById(noteId)
-          if (note) {
-            setActiveNote(note)
-          }
+        // Load existing note
+        const note = getNoteById(noteId)
+        if (note) {
+          setActiveNote(note)
         }
       }
     }
 
-    checkIfNoteWindow()
+    init()
   }, [])
 
   // Filter notes based on search query
@@ -58,7 +73,21 @@ function App() {
 
   // Handle creating a new note
   const handleNewNote = async () => {
-    await window.noteWindow.createNote()
+    // Create a new note first
+    const newNote = createNote()
+    // Then open it in a new window
+    await window.noteWindow.openNote(newNote.id)
+  }
+
+  // Handle opening settings
+  const handleOpenSettings = () => {
+    setShowSettings(true)
+  }
+
+  // Handle saving settings
+  const handleSaveSettings = (newSettings: AppSettings) => {
+    setAppSettings(newSettings)
+    saveSettings(newSettings)
   }
 
   // Handle note save (for the note window)
@@ -69,6 +98,28 @@ function App() {
       prevNotes.map(note =>
         note.id === updatedNote.id ? updatedNote : note
       )
+    )
+  }
+
+  // Handle note deletion
+  const handleNoteDelete = (noteToDelete: Note) => {
+    // Delete the note
+    deleteNote(noteToDelete.id)
+
+    // Update the notes list
+    setNotes(prevNotes => prevNotes.filter(note => note.id !== noteToDelete.id))
+  }
+
+  // Render the settings window
+  if (isSettingsWindow) {
+    return (
+      <div className="settings-window-container">
+        <SettingsWindow
+          onClose={() => window.close()}
+          initialSettings={appSettings}
+          onSave={handleSaveSettings}
+        />
+      </div>
     )
   }
 
@@ -93,7 +144,7 @@ function App() {
           <button className="new-note-btn" onClick={handleNewNote}>
             <span className="plus-icon">+</span> New Note
           </button>
-          <button className="settings-btn">
+          <button className="settings-btn" onClick={handleOpenSettings}>
             <span className="settings-icon">⚙</span> Settings
           </button>
         </div>
@@ -113,13 +164,23 @@ function App() {
         <NoteList
           notes={filteredNotes}
           onNoteClick={handleNoteClick}
+          onNoteDelete={handleNoteDelete}
           activeNoteId={activeNote?.id}
         />
       </main>
 
       <footer className="app-footer">
-        <div className="save-location">Save location: {saveLocation}</div>
+        <div className="save-location">Save location: {appSettings.saveLocation}</div>
       </footer>
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <SettingsWindow
+          onClose={() => setShowSettings(false)}
+          initialSettings={appSettings}
+          onSave={handleSaveSettings}
+        />
+      )}
     </div>
   )
 }

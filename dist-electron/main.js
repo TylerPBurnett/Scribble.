@@ -1,7 +1,8 @@
-import { ipcMain, BrowserWindow, app } from "electron";
+import { ipcMain, BrowserWindow, dialog, app } from "electron";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import fs from "node:fs";
 createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 process.env.APP_ROOT = path.join(__dirname, "..");
@@ -10,6 +11,7 @@ const MAIN_DIST = path.join(process.env.APP_ROOT, "dist-electron");
 const RENDERER_DIST = path.join(process.env.APP_ROOT, "dist");
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
 let mainWindow;
+let settingsWindow = null;
 const noteWindows = /* @__PURE__ */ new Map();
 function createMainWindow() {
   mainWindow = new BrowserWindow({
@@ -70,12 +72,50 @@ function createNoteWindow(noteId) {
   });
   return noteWindow;
 }
+function createSettingsWindow() {
+  if (settingsWindow) {
+    settingsWindow.focus();
+    return settingsWindow;
+  }
+  settingsWindow = new BrowserWindow({
+    width: 550,
+    height: 600,
+    minWidth: 500,
+    minHeight: 500,
+    backgroundColor: "#1a1a1a",
+    parent: mainWindow || void 0,
+    modal: true,
+    webPreferences: {
+      preload: path.join(__dirname, "preload.mjs"),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+  if (VITE_DEV_SERVER_URL) {
+    settingsWindow.loadURL(`${VITE_DEV_SERVER_URL}?settings=true`);
+  } else {
+    settingsWindow.loadFile(path.join(RENDERER_DIST, "index.html"), {
+      query: { settings: "true" }
+    });
+  }
+  settingsWindow.on("closed", () => {
+    settingsWindow = null;
+  });
+  return settingsWindow;
+}
+function getDefaultSaveLocation() {
+  const userDataPath = app.getPath("userData");
+  const savePath = path.join(userDataPath, "Notes");
+  if (!fs.existsSync(savePath)) {
+    fs.mkdirSync(savePath, { recursive: true });
+  }
+  return savePath;
+}
 ipcMain.handle("open-note", (_, noteId) => {
   createNoteWindow(noteId);
   return { success: true };
 });
 ipcMain.handle("create-note", () => {
-  createNoteWindow("new");
   return { success: true };
 });
 ipcMain.handle("get-note-id", (event) => {
@@ -87,6 +127,25 @@ ipcMain.handle("get-note-id", (event) => {
     }
   }
   return null;
+});
+ipcMain.handle("open-settings", () => {
+  createSettingsWindow();
+  return { success: true };
+});
+ipcMain.handle("is-settings-window", (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  return win === settingsWindow;
+});
+ipcMain.handle("select-directory", async () => {
+  if (!mainWindow && !settingsWindow) return { canceled: true };
+  const result = await dialog.showOpenDialog(settingsWindow || mainWindow, {
+    properties: ["openDirectory", "createDirectory"],
+    title: "Select Save Location"
+  });
+  return result;
+});
+ipcMain.handle("get-default-save-location", () => {
+  return getDefaultSaveLocation();
 });
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {

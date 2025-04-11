@@ -23,3 +23,9 @@ electron.contextBridge.exposeInMainWorld("noteWindow", {
   createNote: () => electron.ipcRenderer.invoke("create-note"),
   getNoteId: () => electron.ipcRenderer.invoke("get-note-id")
 });
+electron.contextBridge.exposeInMainWorld("settings", {
+  openSettings: () => electron.ipcRenderer.invoke("open-settings"),
+  isSettingsWindow: () => electron.ipcRenderer.invoke("is-settings-window"),
+  selectDirectory: () => electron.ipcRenderer.invoke("select-directory"),
+  getDefaultSaveLocation: () => electron.ipcRenderer.invoke("get-default-save-location")
+});

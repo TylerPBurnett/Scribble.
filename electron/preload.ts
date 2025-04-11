@@ -26,3 +26,11 @@ contextBridge.exposeInMainWorld('noteWindow', {
   createNote: () => ipcRenderer.invoke('create-note'),
   getNoteId: () => ipcRenderer.invoke('get-note-id'),
 })
+
+// Expose specific APIs for settings management
+contextBridge.exposeInMainWorld('settings', {
+  openSettings: () => ipcRenderer.invoke('open-settings'),
+  isSettingsWindow: () => ipcRenderer.invoke('is-settings-window'),
+  selectDirectory: () => ipcRenderer.invoke('select-directory'),
+  getDefaultSaveLocation: () => ipcRenderer.invoke('get-default-save-location'),
+})
