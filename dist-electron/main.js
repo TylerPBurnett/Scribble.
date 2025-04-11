@@ -17,8 +17,8 @@ function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-    minWidth: 800,
-    minHeight: 600,
+    minWidth: 500,
+    minHeight: 400,
     backgroundColor: "#1a1a1a",
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
     webPreferences: {
@@ -116,6 +116,7 @@ ipcMain.handle("open-note", (_, noteId) => {
   return { success: true };
 });
 ipcMain.handle("create-note", () => {
+  createNoteWindow("new");
   return { success: true };
 });
 ipcMain.handle("get-note-id", (event) => {

@@ -1,68 +1,113 @@
 .note-card {
-  background-color: #ffecb3; /* Default color, will be overridden */
-  border-radius: 4px;
-  padding: 16px;
-  margin-bottom: 16px;
+  background-color: #192734;
+  border-radius: 12px;
+  padding: 12px;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all 0.2s ease;
   overflow: hidden;
   position: relative;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  /* Sticky note appearance */
-  border-bottom-right-radius: 20px;
-  border-top-right-radius: 2px;
-  border-bottom-left-radius: 2px;
-  border-top-left-radius: 2px;
+  height: 100%;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin: 0;
+  width: 100%;
+  min-width: 200px;
+}
+
+/* Different note colors */
+.note-card.color-pink {
+  background-color: #ffd1dc;
+  color: #333;
+}
+
+.note-card.color-yellow {
+  background-color: #fff9c4;
+  color: #333;
+}
+
+.note-card.color-blue {
+  background-color: #bbdefb;
+  color: #333;
+}
+
+.note-card.color-green {
+  background-color: #c8e6c9;
+  color: #333;
 }
 
 .note-card:hover {
-  transform: translateY(-5px) rotate(1deg);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
 }
 
 .note-card.active {
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-  transform: translateY(-8px) rotate(2deg);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
 }
 
 .note-title {
   margin: 0 0 8px 0;
   font-size: 1.2rem;
   font-weight: 600;
-  color: #333;
+  color: #e0e0e0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.color-pink .note-title,
+.color-yellow .note-title,
+.color-blue .note-title,
+.color-green .note-title {
+  color: #333;
+}
+
 .note-preview {
   margin: 0 0 12px 0;
   font-size: 0.9rem;
-  color: #555;
+  color: #aaa;
   line-height: 1.4;
   max-height: 3.8em;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
+  flex: 1;
+}
+
+.color-pink .note-preview,
+.color-yellow .note-preview,
+.color-blue .note-preview,
+.color-green .note-preview {
+  color: #555;
 }
 
 .note-date {
   font-size: 0.8rem;
   color: #777;
   text-align: right;
+  margin-top: auto;
 }
 
+.color-pink .note-date,
+.color-yellow .note-date,
+.color-blue .note-date,
+.color-green .note-date {
+  color: #666;
+}
+
+/* Delete button */
 .note-delete-btn {
   position: absolute;
-  top: 5px;
-  right: 5px;
+  top: 8px;
+  right: 8px;
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.7);
-  color: #f44336;
-  font-size: 18px;
+  background-color: rgba(0, 0, 0, 0.2);
+  color: #fff;
+  font-size: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -70,11 +115,77 @@
   border: none;
   padding: 0;
   line-height: 1;
-  transition: background-color 0.2s, color 0.2s;
+  transition: background-color 0.2s;
+  opacity: 0;
   z-index: 2;
 }
 
+.note-card:hover .note-delete-btn {
+  opacity: 1;
+}
+
 .note-delete-btn:hover {
-  background-color: rgba(255, 255, 255, 0.9);
-  color: #d32f2f;
+  background-color: rgba(255, 0, 0, 0.6);
+}
+
+/* Delete confirmation dialog */
+.delete-confirm {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  z-index: 10;
+}
+
+.delete-confirm-content {
+  background-color: #2a2a2a;
+  padding: 16px;
+  border-radius: 8px;
+  text-align: center;
+  max-width: 90%;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.delete-confirm-content p {
+  margin: 0 0 16px 0;
+  color: #e0e0e0;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.delete-confirm-actions button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.2s;
+}
+
+.delete-confirm-actions button:first-child {
+  background-color: #f44336;
+  color: white;
+}
+
+.delete-confirm-actions button:first-child:hover {
+  background-color: #d32f2f;
+}
+
+.delete-confirm-actions button:last-child {
+  background-color: #757575;
+  color: white;
+}
+
+.delete-confirm-actions button:last-child:hover {
+  background-color: #616161;
 }

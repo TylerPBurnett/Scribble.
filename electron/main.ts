@@ -33,8 +33,8 @@ function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-    minWidth: 800,
-    minHeight: 600,
+    minWidth: 500,
+    minHeight: 400,
     backgroundColor: '#1a1a1a',
     icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
     webPreferences: {
@@ -162,9 +162,10 @@ ipcMain.handle('open-note', (_, noteId) => {
   return { success: true }
 })
 
-// We no longer need this handler as we're creating notes in the renderer process first
-// and then opening them with their actual IDs
 ipcMain.handle('create-note', () => {
+  // The actual note creation happens in the renderer process
+  // This just opens a new window for a new note
+  createNoteWindow('new')
   return { success: true }
 })
 

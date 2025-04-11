@@ -43,10 +43,16 @@ function App() {
       const noteId = await window.noteWindow.getNoteId()
       if (noteId) {
         setIsNoteWindow(true)
-        // Load existing note
-        const note = getNoteById(noteId)
-        if (note) {
-          setActiveNote(note)
+        if (noteId === 'new') {
+          // Create a new note
+          const newNote = createNote()
+          setActiveNote(newNote)
+        } else {
+          // Load existing note
+          const note = getNoteById(noteId)
+          if (note) {
+            setActiveNote(note)
+          }
         }
       }
     }
@@ -73,10 +79,7 @@ function App() {
 
   // Handle creating a new note
   const handleNewNote = async () => {
-    // Create a new note first
-    const newNote = createNote()
-    // Then open it in a new window
-    await window.noteWindow.openNote(newNote.id)
+    await window.noteWindow.createNote()
   }
 
   // Handle opening settings
@@ -102,12 +105,12 @@ function App() {
   }
 
   // Handle note deletion
-  const handleNoteDelete = (noteToDelete: Note) => {
-    // Delete the note
-    deleteNote(noteToDelete.id)
+  const handleNoteDelete = (noteId: string) => {
+    // Delete the note using the service
+    deleteNote(noteId)
 
     // Update the notes list
-    setNotes(prevNotes => prevNotes.filter(note => note.id !== noteToDelete.id))
+    setNotes(prevNotes => prevNotes.filter(note => note.id !== noteId))
   }
 
   // Render the settings window
@@ -164,8 +167,8 @@ function App() {
         <NoteList
           notes={filteredNotes}
           onNoteClick={handleNoteClick}
-          onNoteDelete={handleNoteDelete}
           activeNoteId={activeNote?.id}
+          onNoteDelete={handleNoteDelete}
         />
       </main>
 

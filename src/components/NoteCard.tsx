@@ -1,17 +1,51 @@
 import { useState } from 'react';
 import { Note } from '../types/Note';
+import { deleteNote } from '../services/noteService';
 import './NoteCard.css';
 
 interface NoteCardProps {
   note: Note;
   onClick: (note: Note) => void;
-  onDelete?: (note: Note) => void;
   isActive?: boolean;
+  onDelete?: (noteId: string) => void;
 }
 
-const NoteCard = ({ note, onClick, onDelete, isActive = false }: NoteCardProps) => {
-  const [isHovered, setIsHovered] = useState(false);
+const NoteCard = ({ note, onClick, isActive = false, onDelete }: NoteCardProps) => {
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
+  // Assign a color based on the note ID (for consistent colors)
+  const getNoteColor = () => {
+    const colors = ['color-pink', 'color-yellow', 'color-blue', 'color-green'];
+    // Use the last character of the ID to determine the color
+    const lastChar = note.id.charAt(note.id.length - 1);
+    const colorIndex = parseInt(lastChar, 16) % colors.length;
+    return colors[colorIndex];
+  };
+
+  // Handle delete button click
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the note click
+    setShowConfirmDelete(true);
+  };
+
+  // Handle confirm delete
+  const handleConfirmDelete = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the note click
+    if (onDelete) {
+      onDelete(note.id);
+    } else {
+      // Fallback if onDelete prop is not provided
+      deleteNote(note.id);
+      // Reload notes (this is not ideal, but works as a fallback)
+      window.location.reload();
+    }
+  };
+
+  // Handle cancel delete
+  const handleCancelDelete = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the note click
+    setShowConfirmDelete(false);
+  };
   // Format date to display
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
@@ -29,65 +63,38 @@ const NoteCard = ({ note, onClick, onDelete, isActive = false }: NoteCardProps) 
     return plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText;
   };
 
-  // Generate a random pastel color based on the note ID
-  const getNoteColor = () => {
-    // Use the first 6 characters of the note ID as a seed
-    const seed = note.id.substring(0, 6);
-    // Convert to a number and use it to pick from predefined colors
-    const colorIndex = parseInt(seed, 36) % noteColors.length;
-    return noteColors[colorIndex];
-  };
-
-  // Handle delete button click
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent the note click event
-    if (onDelete) {
-      onDelete(note);
-    }
-  };
-
   return (
     <div
-      className={`note-card ${isActive ? 'active' : ''}`}
-      style={{ backgroundColor: getNoteColor() }}
+      className={`note-card ${isActive ? 'active' : ''} ${getNoteColor()}`}
       onClick={() => onClick(note)}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
-      {isHovered && onDelete && (
-        <button
-          className="note-delete-btn"
-          onClick={handleDeleteClick}
-          aria-label="Delete note"
-        >
-          ×
-        </button>
-      )}
-      <h3 className="note-title">{note.title || 'New Note'}</h3>
+      {/* Delete button */}
+      <button
+        className="note-delete-btn"
+        onClick={handleDeleteClick}
+        title="Delete note"
+      >
+        ×
+      </button>
+
+      <h3 className="note-title">{note.title || 'Untitled Note'}</h3>
       <p className="note-preview">{getContentPreview(note.content)}</p>
       <div className="note-date">{formatDate(note.createdAt)}</div>
+
+      {/* Confirmation dialog */}
+      {showConfirmDelete && (
+        <div className="delete-confirm" onClick={(e) => e.stopPropagation()}>
+          <div className="delete-confirm-content">
+            <p>Are you sure you want to delete this note?</p>
+            <div className="delete-confirm-actions">
+              <button onClick={handleConfirmDelete}>Delete</button>
+              <button onClick={handleCancelDelete}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
-
-// Predefined pastel colors for notes
-const noteColors = [
-  '#ffcdd2', // Light Red
-  '#f8bbd0', // Light Pink
-  '#e1bee7', // Light Purple
-  '#d1c4e9', // Light Deep Purple
-  '#c5cae9', // Light Indigo
-  '#bbdefb', // Light Blue
-  '#b3e5fc', // Light Light Blue
-  '#b2ebf2', // Light Cyan
-  '#b2dfdb', // Light Teal
-  '#c8e6c9', // Light Green
-  '#dcedc8', // Light Light Green
-  '#f0f4c3', // Light Lime
-  '#fff9c4', // Light Yellow
-  '#ffecb3', // Light Amber
-  '#ffe0b2', // Light Orange
-  '#ffccbc', // Light Deep Orange
-];
 
 export default NoteCard;
