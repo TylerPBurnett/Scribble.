@@ -1,0 +1,151 @@
+#root {
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  height: 60px;
+  background-color: #2a2a2a;
+  border-bottom: 1px solid #3a3a3a;
+}
+
+.app-logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background-color: #f5a623;
+  color: #1a1a1a;
+  border-radius: 8px;
+  font-size: 24px;
+  font-weight: bold;
+  margin-right: 12px;
+}
+
+.app-logo h1 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.app-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.new-note-btn, .settings-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.new-note-btn {
+  background-color: #2196f3;
+  color: white;
+  border: none;
+}
+
+.new-note-btn:hover {
+  background-color: #1976d2;
+}
+
+.settings-btn {
+  background-color: transparent;
+  color: #e0e0e0;
+  border: 1px solid #3a3a3a;
+}
+
+.settings-btn:hover {
+  background-color: #3a3a3a;
+}
+
+.plus-icon {
+  font-size: 18px;
+  margin-right: 6px;
+}
+
+.settings-icon {
+  font-size: 16px;
+  margin-right: 6px;
+}
+
+.search-container {
+  padding: 16px;
+  background-color: #1a1a1a;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #3a3a3a;
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  border-color: #4a4a4a;
+}
+
+.search-input::placeholder {
+  color: #777;
+}
+
+.app-content {
+  flex: 1;
+  overflow: hidden;
+}
+
+.app-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background-color: #2a2a2a;
+  border-top: 1px solid #3a3a3a;
+  font-size: 12px;
+  color: #777;
+}
+
+.save-location {
+  font-style: italic;
+}
+
+/* Note window styles */
+.note-window {
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background-color: #1a1a1a;
+}
