@@ -17,8 +17,8 @@ function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-    minWidth: 500,
-    minHeight: 400,
+    minWidth: 250,
+    minHeight: 300,
     backgroundColor: "#1a1a1a",
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
     webPreferences: {
