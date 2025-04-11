@@ -37,6 +37,8 @@ function createMainWindow() {
     minHeight: 300,
     backgroundColor: '#1a1a1a',
     icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
+    frame: false,
+    titleBarStyle: 'hidden',
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,
@@ -73,9 +75,11 @@ function createNoteWindow(noteId: string) {
   const noteWindow = new BrowserWindow({
     width: 900,
     height: 700,
-    minWidth: 500,
-    minHeight: 400,
+    minWidth: 250,
+    minHeight: 300,
     backgroundColor: '#1a1a1a',
+    frame: false,
+    titleBarStyle: 'hidden',
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,
@@ -114,11 +118,13 @@ function createSettingsWindow() {
   settingsWindow = new BrowserWindow({
     width: 550,
     height: 600,
-    minWidth: 500,
-    minHeight: 500,
+    minWidth: 250,
+    minHeight: 300,
     backgroundColor: '#1a1a1a',
     parent: mainWindow || undefined,
     modal: true,
+    frame: false,
+    titleBarStyle: 'hidden',
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,
@@ -160,6 +166,28 @@ function getDefaultSaveLocation() {
 ipcMain.handle('open-note', (_, noteId) => {
   createNoteWindow(noteId)
   return { success: true }
+})
+
+// Window control handlers
+ipcMain.handle('window-minimize', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (win) win.minimize()
+})
+
+ipcMain.handle('window-maximize', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (win) {
+    if (win.isMaximized()) {
+      win.unmaximize()
+    } else {
+      win.maximize()
+    }
+  }
+})
+
+ipcMain.handle('window-close', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (win) win.close()
 })
 
 ipcMain.handle('create-note', () => {

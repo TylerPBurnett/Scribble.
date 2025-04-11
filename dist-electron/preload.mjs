@@ -18,6 +18,11 @@ electron.contextBridge.exposeInMainWorld("ipcRenderer", {
     return electron.ipcRenderer.invoke(channel, ...omit);
   }
 });
+electron.contextBridge.exposeInMainWorld("windowControls", {
+  minimize: () => electron.ipcRenderer.invoke("window-minimize"),
+  maximize: () => electron.ipcRenderer.invoke("window-maximize"),
+  close: () => electron.ipcRenderer.invoke("window-close")
+});
 electron.contextBridge.exposeInMainWorld("noteWindow", {
   openNote: (noteId) => electron.ipcRenderer.invoke("open-note", noteId),
   createNote: () => electron.ipcRenderer.invoke("create-note"),

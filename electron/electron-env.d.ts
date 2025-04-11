@@ -35,4 +35,9 @@ interface Window {
     selectDirectory: () => Promise<{ canceled: boolean, filePaths: string[] }>
     getDefaultSaveLocation: () => Promise<string>
   }
+  windowControls: {
+    minimize: () => Promise<void>
+    maximize: () => Promise<void>
+    close: () => Promise<void>
+  }
 }

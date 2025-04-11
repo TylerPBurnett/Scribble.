@@ -3,6 +3,7 @@ import './App.css'
 import NoteList from './components/NoteList'
 import NoteEditor from './components/NoteEditor'
 import SettingsWindow from './components/SettingsWindow'
+import TitleBar from './components/TitleBar'
 import { Note } from './types/Note'
 import { getNotes, createNote, getNoteById, deleteNote } from './services/noteService'
 import { getSettings, saveSettings, initSettings, AppSettings } from './services/settingsService'
@@ -138,20 +139,20 @@ function App() {
   // Render the main window
   return (
     <div className="app">
-      <header className="app-header">
-        <div className="app-logo">
-          <span className="logo-icon">S</span>
-          <h1>Scribble</h1>
-        </div>
-        <div className="app-actions">
-          <button className="new-note-btn" onClick={handleNewNote}>
-            <span className="plus-icon">+</span> New Note
-          </button>
-          <button className="settings-btn" onClick={handleOpenSettings}>
-            <span className="settings-icon">⚙</span> Settings
-          </button>
-        </div>
-      </header>
+      <TitleBar
+        title="Scribble"
+        onMinimize={() => window.windowControls.minimize()}
+        onMaximize={() => window.windowControls.maximize()}
+        onClose={() => window.windowControls.close()}
+      />
+      <div className="app-actions">
+        <button className="new-note-btn" onClick={handleNewNote}>
+          <span className="plus-icon">+</span> New Note
+        </button>
+        <button className="settings-btn" onClick={handleOpenSettings}>
+          <span className="settings-icon">⚙</span> Settings
+        </button>
+      </div>
 
       <div className="search-container">
         <input
