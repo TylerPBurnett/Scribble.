@@ -187,6 +187,33 @@ ipcMain.handle("select-directory", async () => {
 ipcMain.handle("get-default-save-location", () => {
   return getDefaultSaveLocation();
 });
+ipcMain.handle("save-note-to-file", async (_, noteId, title, content, saveLocation) => {
+  try {
+    if (!fs.existsSync(saveLocation)) {
+      fs.mkdirSync(saveLocation, { recursive: true });
+    }
+    const safeTitle = title.trim() ? title.trim().replace(/[^a-z0-9]/gi, "_").toLowerCase() : noteId;
+    const filePath = path.join(saveLocation, `${safeTitle}.md`);
+    fs.writeFileSync(filePath, content, "utf8");
+    return { success: true, filePath };
+  } catch (error) {
+    console.error("Error saving note to file:", error);
+    return { success: false, error: error.message || "Unknown error" };
+  }
+});
+ipcMain.handle("delete-note-file", async (_, noteId, title, saveLocation) => {
+  try {
+    const safeTitle = title.trim() ? title.trim().replace(/[^a-z0-9]/gi, "_").toLowerCase() : noteId;
+    const filePath = path.join(saveLocation, `${safeTitle}.md`);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting note file:", error);
+    return { success: false, error: error.message || "Unknown error" };
+  }
+});
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();

@@ -256,6 +256,54 @@ ipcMain.handle('get-default-save-location', () => {
   return getDefaultSaveLocation()
 })
 
+// File operation handlers
+ipcMain.handle('save-note-to-file', async (_, noteId, title, content, saveLocation) => {
+  try {
+    // Ensure the directory exists
+    if (!fs.existsSync(saveLocation)) {
+      fs.mkdirSync(saveLocation, { recursive: true })
+    }
+
+    // Create a safe filename from the title or use the ID if title is empty
+    const safeTitle = title.trim() ?
+      title.trim().replace(/[^a-z0-9]/gi, '_').toLowerCase() :
+      noteId
+
+    // Create the full path
+    const filePath = path.join(saveLocation, `${safeTitle}.md`)
+
+    // Write the file
+    fs.writeFileSync(filePath, content, 'utf8')
+
+    return { success: true, filePath }
+  } catch (error: any) {
+    console.error('Error saving note to file:', error)
+    return { success: false, error: error.message || 'Unknown error' }
+  }
+})
+
+ipcMain.handle('delete-note-file', async (_, noteId, title, saveLocation) => {
+  try {
+    // Create a safe filename from the title or use the ID if title is empty
+    const safeTitle = title.trim() ?
+      title.trim().replace(/[^a-z0-9]/gi, '_').toLowerCase() :
+      noteId
+
+    // Create the full path
+    const filePath = path.join(saveLocation, `${safeTitle}.md`)
+
+    // Check if file exists before deleting
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath)
+    }
+
+    return { success: true }
+  } catch (error: any) {
+    console.error('Error deleting note file:', error)
+    return { success: false, error: error.message || 'Unknown error' }
+  }
+})
+
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.

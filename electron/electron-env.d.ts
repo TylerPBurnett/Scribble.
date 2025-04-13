@@ -37,6 +37,10 @@ interface Window {
     selectDirectory: () => Promise<{ canceled: boolean, filePaths: string[] }>
     getDefaultSaveLocation: () => Promise<string>
   }
+  fileOps: {
+    saveNoteToFile: (noteId: string, title: string, content: string, saveLocation: string) => Promise<{ success: boolean, filePath?: string, error?: string }>
+    deleteNoteFile: (noteId: string, title: string, saveLocation: string) => Promise<{ success: boolean, error?: string }>
+  }
   windowControls: {
     minimize: () => Promise<void>
     maximize: () => Promise<void>

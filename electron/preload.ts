@@ -43,3 +43,11 @@ contextBridge.exposeInMainWorld('settings', {
   selectDirectory: () => ipcRenderer.invoke('select-directory'),
   getDefaultSaveLocation: () => ipcRenderer.invoke('get-default-save-location'),
 })
+
+// Expose file operation APIs
+contextBridge.exposeInMainWorld('fileOps', {
+  saveNoteToFile: (noteId: string, title: string, content: string, saveLocation: string) =>
+    ipcRenderer.invoke('save-note-to-file', noteId, title, content, saveLocation),
+  deleteNoteFile: (noteId: string, title: string, saveLocation: string) =>
+    ipcRenderer.invoke('delete-note-file', noteId, title, saveLocation),
+})
