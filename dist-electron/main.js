@@ -1,9 +1,7 @@
 import { ipcMain, BrowserWindow, dialog, app } from "electron";
-import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
-createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 process.env.APP_ROOT = path.join(__dirname, "..");
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
@@ -148,6 +146,13 @@ ipcMain.handle("window-maximize", (event) => {
 ipcMain.handle("window-close", (event) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   if (win) win.close();
+});
+ipcMain.handle("window-move", (event, moveX, moveY) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win) {
+    const [x, y] = win.getPosition();
+    win.setPosition(x + moveX, y + moveY);
+  }
 });
 ipcMain.handle("create-note", () => {
   const noteId = `new-${Date.now().toString(36)}`;

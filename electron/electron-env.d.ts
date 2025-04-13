@@ -45,5 +45,7 @@ interface Window {
     minimize: () => Promise<void>
     maximize: () => Promise<void>
     close: () => Promise<void>
+    moveWindow: (moveX: number, moveY: number) => Promise<void>
   }
+
 }

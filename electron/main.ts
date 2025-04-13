@@ -1,10 +1,8 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron'
-import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs'
 
-const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // The built directory structure
@@ -24,6 +22,8 @@ export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
+
+
 
 let mainWindow: BrowserWindow | null
 let settingsWindow: BrowserWindow | null = null
@@ -98,6 +98,8 @@ function createNoteWindow(noteId: string) {
       query: { noteId }
     })
   }
+
+
 
   // Store the window reference
   noteWindows.set(noteId, noteWindow)
@@ -201,6 +203,14 @@ ipcMain.handle('window-maximize', (event) => {
 ipcMain.handle('window-close', (event) => {
   const win = BrowserWindow.fromWebContents(event.sender)
   if (win) win.close()
+})
+
+ipcMain.handle('window-move', (event, moveX, moveY) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (win) {
+    const [x, y] = win.getPosition()
+    win.setPosition(x + moveX, y + moveY)
+  }
 })
 
 ipcMain.handle('create-note', () => {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Note } from '../types/Note';
 import Tiptap from './Tiptap';
 import { updateNote } from '../services/noteService';
@@ -52,19 +52,67 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
     }).format(lastSaved);
   };
 
+  // Dragging functionality
+  const [isDragging, setIsDragging] = useState(false);
+  const noteRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only allow dragging from the title bar
+    if ((e.target as HTMLElement).closest('.note-drag-handle')) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (isDragging && noteRef.current) {
+      // Use IPC to move the window instead of remote
+      window.windowControls.moveWindow(e.movementX, e.movementY);
+    }
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    } else {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
+
+  const handleClose = () => {
+    window.windowControls.close();
+  };
+
   return (
-    <div className="note-editor">
-      <div className="note-editor-header">
-        <input
-          type="text"
-          className="note-title-input"
-          value={title}
-          onChange={(e) => {
-            console.log('Title changed to:', e.target.value);
-            setTitle(e.target.value);
-          }}
-          placeholder="Untitled Note"
-        />
+    <div className="note-editor" ref={noteRef}>
+      <div className="note-editor-header" onMouseDown={handleMouseDown}>
+        <div className="note-drag-handle">
+          <div className="note-controls">
+            <button className="note-close-btn" onClick={handleClose} title="Close note">
+              ×
+            </button>
+          </div>
+          <input
+            type="text"
+            className="note-title-input"
+            value={title}
+            onChange={(e) => {
+              console.log('Title changed to:', e.target.value);
+              setTitle(e.target.value);
+            }}
+            placeholder="Untitled Note"
+          />
+        </div>
         {lastSaved && (
           <div className="last-saved">
             Last saved: {formatLastSaved()}

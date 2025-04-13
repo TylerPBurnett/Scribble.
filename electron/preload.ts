@@ -1,4 +1,4 @@
-import { ipcRenderer, contextBridge, BrowserWindow } from 'electron'
+import { ipcRenderer, contextBridge } from 'electron'
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {
@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld('windowControls', {
   minimize: () => ipcRenderer.invoke('window-minimize'),
   maximize: () => ipcRenderer.invoke('window-maximize'),
   close: () => ipcRenderer.invoke('window-close'),
+  moveWindow: (moveX: number, moveY: number) => ipcRenderer.invoke('window-move', moveX, moveY),
 })
 
 // Expose specific APIs for note management
@@ -51,3 +52,5 @@ contextBridge.exposeInMainWorld('fileOps', {
   deleteNoteFile: (noteId: string, title: string, saveLocation: string) =>
     ipcRenderer.invoke('delete-note-file', noteId, title, saveLocation),
 })
+
+

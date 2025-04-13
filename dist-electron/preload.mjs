@@ -21,7 +21,8 @@ electron.contextBridge.exposeInMainWorld("ipcRenderer", {
 electron.contextBridge.exposeInMainWorld("windowControls", {
   minimize: () => electron.ipcRenderer.invoke("window-minimize"),
   maximize: () => electron.ipcRenderer.invoke("window-maximize"),
-  close: () => electron.ipcRenderer.invoke("window-close")
+  close: () => electron.ipcRenderer.invoke("window-close"),
+  moveWindow: (moveX, moveY) => electron.ipcRenderer.invoke("window-move", moveX, moveY)
 });
 electron.contextBridge.exposeInMainWorld("noteWindow", {
   openNote: (noteId) => electron.ipcRenderer.invoke("open-note", noteId),
