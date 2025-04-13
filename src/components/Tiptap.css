@@ -153,61 +153,9 @@
   margin-top: 0.3em;
 }
 
-/* Bubble menu styling */
+/* Selected node styling */
 .ProseMirror-selectednode {
-  outline: 2px solid #61dafb;
-}
-
-[data-tippy-root] {
-  max-width: calc(100vw - 20px);
-}
-
-.tippy-box {
-  background-color: #2a2a2a;
-  color: #e0e0e0;
-  border-radius: 4px;
-  font-size: 0.9rem;
-}
-
-.tippy-box[data-placement^=top] > .tippy-arrow::before {
-  border-top-color: #2a2a2a;
-}
-
-.tippy-box[data-placement^=bottom] > .tippy-arrow::before {
-  border-bottom-color: #2a2a2a;
-}
-
-.tippy-box[data-placement^=left] > .tippy-arrow::before {
-  border-left-color: #2a2a2a;
-}
-
-.tippy-box[data-placement^=right] > .tippy-arrow::before {
-  border-right-color: #2a2a2a;
-}
-
-.tippy-content {
-  padding: 5px;
-}
-
-.tippy-content button {
-  background-color: transparent;
-  border: 1px solid #3a3a3a;
-  border-radius: 4px;
-  color: #e0e0e0;
-  cursor: pointer;
-  padding: 5px 10px;
-  margin: 0 2px;
-  transition: background-color 0.2s, border-color 0.2s;
-}
-
-.tippy-content button:hover {
-  background-color: #3a3a3a;
-  border-color: #4a4a4a;
-}
-
-.tippy-content button.is-active {
-  background-color: #4a4a4a;
-  border-color: #5a5a5a;
+  outline: 2px solid rgba(0, 0, 0, 0.2);
 }
 
 /* Placeholder styling */
