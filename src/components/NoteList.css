@@ -1,9 +1,28 @@
 .note-list {
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+  gap: 12px;
+  padding: 12px;
   overflow-y: auto;
-  height: calc(100vh - 80px);
+  height: calc(100vh - 140px);
+  max-width: 100%;
+  grid-auto-rows: minmax(180px, auto);
+  align-items: start;
+  justify-content: center;
+}
+
+/* Responsive behavior */
+
+@media (max-width: 680px) and (min-width: 501px) {
+  .note-list {
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 500px) {
+  .note-list {
+    grid-template-columns: minmax(150px, 1fr);
+  }
 }
 
 .no-notes {

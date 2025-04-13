@@ -18,8 +18,19 @@ electron.contextBridge.exposeInMainWorld("ipcRenderer", {
     return electron.ipcRenderer.invoke(channel, ...omit);
   }
 });
+electron.contextBridge.exposeInMainWorld("windowControls", {
+  minimize: () => electron.ipcRenderer.invoke("window-minimize"),
+  maximize: () => electron.ipcRenderer.invoke("window-maximize"),
+  close: () => electron.ipcRenderer.invoke("window-close")
+});
 electron.contextBridge.exposeInMainWorld("noteWindow", {
   openNote: (noteId) => electron.ipcRenderer.invoke("open-note", noteId),
   createNote: () => electron.ipcRenderer.invoke("create-note"),
   getNoteId: () => electron.ipcRenderer.invoke("get-note-id")
+});
+electron.contextBridge.exposeInMainWorld("settings", {
+  openSettings: () => electron.ipcRenderer.invoke("open-settings"),
+  isSettingsWindow: () => electron.ipcRenderer.invoke("is-settings-window"),
+  selectDirectory: () => electron.ipcRenderer.invoke("select-directory"),
+  getDefaultSaveLocation: () => electron.ipcRenderer.invoke("get-default-save-location")
 });

@@ -29,4 +29,15 @@ interface Window {
     createNote: () => Promise<any>
     getNoteId: () => Promise<string | null>
   }
+  settings: {
+    openSettings: () => Promise<any>
+    isSettingsWindow: () => Promise<boolean>
+    selectDirectory: () => Promise<{ canceled: boolean, filePaths: string[] }>
+    getDefaultSaveLocation: () => Promise<string>
+  }
+  windowControls: {
+    minimize: () => Promise<void>
+    maximize: () => Promise<void>
+    close: () => Promise<void>
+  }
 }

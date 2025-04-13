@@ -1,4 +1,4 @@
-import { ipcRenderer, contextBridge } from 'electron'
+import { ipcRenderer, contextBridge, BrowserWindow } from 'electron'
 
 // --------- Expose some API to the Renderer process ---------
 contextBridge.exposeInMainWorld('ipcRenderer', {
@@ -20,9 +20,24 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   },
 })
 
+// Expose window control functions
+contextBridge.exposeInMainWorld('windowControls', {
+  minimize: () => ipcRenderer.invoke('window-minimize'),
+  maximize: () => ipcRenderer.invoke('window-maximize'),
+  close: () => ipcRenderer.invoke('window-close'),
+})
+
 // Expose specific APIs for note management
 contextBridge.exposeInMainWorld('noteWindow', {
   openNote: (noteId: string) => ipcRenderer.invoke('open-note', noteId),
   createNote: () => ipcRenderer.invoke('create-note'),
   getNoteId: () => ipcRenderer.invoke('get-note-id'),
+})
+
+// Expose specific APIs for settings management
+contextBridge.exposeInMainWorld('settings', {
+  openSettings: () => ipcRenderer.invoke('open-settings'),
+  isSettingsWindow: () => ipcRenderer.invoke('is-settings-window'),
+  selectDirectory: () => ipcRenderer.invoke('select-directory'),
+  getDefaultSaveLocation: () => ipcRenderer.invoke('get-default-save-location'),
 })
