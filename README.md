@@ -1,30 +1,115 @@
-# React + TypeScript + Vite
+# Scribble App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, cross-platform note-taking application built with Electron, React, and TypeScript. Scribble provides a clean, intuitive interface for creating, editing, and organizing your notes with rich text formatting capabilities.
 
-Currently, two official plugins are available:
+<!-- Add a screenshot of your application here -->
+<!-- ![Scribble App Screenshot](screenshot.png) -->
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## Expanding the ESLint configuration
+### Core Functionality
+- **Multi-window Architecture**: Create and edit notes in separate windows for better multitasking
+- **Rich Text Editing**: Full-featured text editor with formatting options including:
+  - Text styling (bold, italic, underline, strikethrough)
+  - Headings and text alignment
+  - Lists (bulleted, numbered, and task lists)
+  - Code blocks with syntax highlighting
+  - Links and images
+  - Text highlighting and typography enhancements
+- **Auto-save**: Automatically saves your notes as you type
+- **Local Storage**: All notes are stored locally on your device
+- **Search**: Quickly find notes by searching through titles and content
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+### User Interface
+- **Dark Mode**: Easy on the eyes with a modern dark interface
+- **Responsive Design**: Adapts to different window sizes with responsive breakpoints
+- **Customizable Notes**: Notes with different color options for better organization
+- **Confirmation Dialogs**: Prevents accidental deletion of notes
+- **Modern UI Elements**: Clean design with subtle animations and visual feedback
 
-- Configure the top-level `parserOptions` property like this:
+### Settings & Customization
+- **Custom Save Location**: Choose where to store your notes
+- **Auto-save Configuration**: Enable/disable auto-save and adjust the interval
+- **Appearance Settings**: Toggle between light and dark modes
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+## Tech Stack
+
+### Core Technologies
+- **Electron**: Cross-platform desktop application framework
+- **React**: UI library for building the user interface
+- **TypeScript**: Type-safe JavaScript for better code quality and developer experience
+- **Vite**: Modern, fast build tool and development server
+
+### Key Libraries
+- **TipTap**: Rich text editor built on ProseMirror
+  - Multiple extensions for advanced editing capabilities
+  - Floating menus and bubble menus for contextual editing
+- **Electron Builder**: Packaging and distribution tool for Electron applications
+
+### Architecture
+- **Multi-process Design**: Separate main and renderer processes following Electron's architecture
+- **Component-based UI**: Modular React components for maintainability
+- **Service-based Logic**: Separation of concerns with dedicated services for notes and settings
+- **IPC Communication**: Inter-process communication between main and renderer processes
+
+## Development
+
+### Prerequisites
+- Node.js (v18 or higher)
+- npm or yarn
+
+### Getting Started
+
+1. Clone the repository:
+```bash
+git clone https://github.com/TylerPBurnett/Scribble.git
+cd Scribble
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Start the development server:
+```bash
+npm run dev
+```
+
+### Project Structure
+```
+scribble-app/
+├── electron/           # Electron main process code
+├── src/
+│   ├── components/     # React components
+│   ├── services/       # Business logic services
+│   ├── types/          # TypeScript type definitions
+│   ├── App.tsx         # Main application component
+│   └── main.tsx        # Application entry point
+├── public/             # Static assets
+└── dist-electron/      # Compiled Electron code
+```
+
+## Building
+
+To build the application for distribution:
+
+```bash
+npm run build
+```
+
+This will create platform-specific installers in the `release` directory.
+
+## Supported Platforms
+
+- Windows
+- macOS
+- Linux
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+[MIT](LICENSE)
