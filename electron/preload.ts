@@ -31,7 +31,9 @@ contextBridge.exposeInMainWorld('windowControls', {
 contextBridge.exposeInMainWorld('noteWindow', {
   openNote: (noteId: string) => ipcRenderer.invoke('open-note', noteId),
   createNote: () => ipcRenderer.invoke('create-note'),
+  createNoteWithId: (noteId: string) => ipcRenderer.invoke('create-note-with-id', noteId),
   getNoteId: () => ipcRenderer.invoke('get-note-id'),
+  noteUpdated: (noteId: string) => ipcRenderer.send('note-updated', noteId),
 })
 
 // Expose specific APIs for settings management

@@ -27,7 +27,9 @@ interface Window {
   noteWindow: {
     openNote: (noteId: string) => Promise<any>
     createNote: () => Promise<any>
+    createNoteWithId: (noteId: string) => Promise<any>
     getNoteId: () => Promise<string | null>
+    noteUpdated: (noteId: string) => void
   }
   settings: {
     openSettings: () => Promise<any>

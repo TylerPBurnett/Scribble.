@@ -36,7 +36,8 @@ function createMainWindow() {
     minWidth: 250,
     minHeight: 300,
     backgroundColor: '#1a1a1a',
-    icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
+    icon: path.join(process.env.APP_ROOT, 'src/assets/icon.png'),
+    title: 'Scribble',
     frame: false,
     titleBarStyle: 'hidden',
     webPreferences: {
@@ -78,6 +79,8 @@ function createNoteWindow(noteId: string) {
     minWidth: 250,
     minHeight: 300,
     backgroundColor: '#1a1a1a',
+    icon: path.join(process.env.APP_ROOT, 'src/assets/icon.png'),
+    title: 'Scribble - Note',
     frame: false,
     titleBarStyle: 'hidden',
     webPreferences: {
@@ -121,6 +124,8 @@ function createSettingsWindow() {
     minWidth: 250,
     minHeight: 300,
     backgroundColor: '#1a1a1a',
+    icon: path.join(process.env.APP_ROOT, 'src/assets/icon.png'),
+    title: 'Scribble - Settings',
     parent: mainWindow || undefined,
     modal: true,
     frame: false,
@@ -168,6 +173,14 @@ ipcMain.handle('open-note', (_, noteId) => {
   return { success: true }
 })
 
+// Listen for note updates and relay to main window
+ipcMain.on('note-updated', (_, noteId) => {
+  // Relay the update to the main window if it exists
+  if (mainWindow) {
+    mainWindow.webContents.send('note-updated', noteId)
+  }
+})
+
 // Window control handlers
 ipcMain.handle('window-minimize', (event) => {
   const win = BrowserWindow.fromWebContents(event.sender)
@@ -191,9 +204,14 @@ ipcMain.handle('window-close', (event) => {
 })
 
 ipcMain.handle('create-note', () => {
-  // The actual note creation happens in the renderer process
-  // This just opens a new window for a new note
-  createNoteWindow('new')
+  // Generate a unique ID for the new note
+  const noteId = `new-${Date.now().toString(36)}`
+  createNoteWindow(noteId)
+  return { success: true, noteId }
+})
+
+ipcMain.handle('create-note-with-id', (_, noteId) => {
+  createNoteWindow(noteId)
   return { success: true }
 })
 
@@ -255,5 +273,10 @@ app.on('activate', () => {
     createMainWindow()
   }
 })
+
+// Set the app user model id for Windows
+if (process.platform === 'win32') {
+  app.setAppUserModelId('com.tylerburnett.scribble')
+}
 
 app.whenReady().then(createMainWindow)

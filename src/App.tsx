@@ -44,7 +44,7 @@ function App() {
       const noteId = await window.noteWindow.getNoteId()
       if (noteId) {
         setIsNoteWindow(true)
-        if (noteId === 'new') {
+        if (noteId.startsWith('new-')) {
           // Create a new note
           const newNote = createNote()
           setActiveNote(newNote)
@@ -60,6 +60,28 @@ function App() {
 
     init()
   }, [])
+
+  // Listen for note updates from other windows
+  useEffect(() => {
+    // Skip this in note windows
+    if (isNoteWindow) return
+
+    // Set up listener for note updates
+    const handleNoteUpdated = (_event: any, noteId: string) => {
+      console.log('Note updated:', noteId)
+      // Reload all notes from localStorage
+      const updatedNotes = getNotes()
+      setNotes(updatedNotes)
+    }
+
+    // Add event listener
+    window.ipcRenderer.on('note-updated', handleNoteUpdated)
+
+    // Clean up
+    return () => {
+      window.ipcRenderer.off('note-updated', handleNoteUpdated)
+    }
+  }, [isNoteWindow])
 
   // Filter notes based on search query
   const filteredNotes = notes.filter(note => {
@@ -80,7 +102,14 @@ function App() {
 
   // Handle creating a new note
   const handleNewNote = async () => {
-    await window.noteWindow.createNote()
+    // Create a new note in the main window
+    const newNote = createNote()
+
+    // Open a new window with the note's ID
+    await window.noteWindow.openNote(newNote.id)
+
+    // Notify other windows that a new note has been created
+    window.noteWindow.noteUpdated(newNote.id)
   }
 
   // Handle opening settings
@@ -112,6 +141,9 @@ function App() {
 
     // Update the notes list
     setNotes(prevNotes => prevNotes.filter(note => note.id !== noteId))
+
+    // Notify other windows that this note has been deleted
+    window.noteWindow.noteUpdated(noteId)
   }
 
   // Render the settings window

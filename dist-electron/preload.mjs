@@ -26,7 +26,9 @@ electron.contextBridge.exposeInMainWorld("windowControls", {
 electron.contextBridge.exposeInMainWorld("noteWindow", {
   openNote: (noteId) => electron.ipcRenderer.invoke("open-note", noteId),
   createNote: () => electron.ipcRenderer.invoke("create-note"),
-  getNoteId: () => electron.ipcRenderer.invoke("get-note-id")
+  createNoteWithId: (noteId) => electron.ipcRenderer.invoke("create-note-with-id", noteId),
+  getNoteId: () => electron.ipcRenderer.invoke("get-note-id"),
+  noteUpdated: (noteId) => electron.ipcRenderer.send("note-updated", noteId)
 });
 electron.contextBridge.exposeInMainWorld("settings", {
   openSettings: () => electron.ipcRenderer.invoke("open-settings"),

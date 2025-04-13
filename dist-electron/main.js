@@ -20,7 +20,8 @@ function createMainWindow() {
     minWidth: 250,
     minHeight: 300,
     backgroundColor: "#1a1a1a",
-    icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
+    icon: path.join(process.env.APP_ROOT, "src/assets/icon.png"),
+    title: "Scribble",
     frame: false,
     titleBarStyle: "hidden",
     webPreferences: {
@@ -55,6 +56,8 @@ function createNoteWindow(noteId) {
     minWidth: 250,
     minHeight: 300,
     backgroundColor: "#1a1a1a",
+    icon: path.join(process.env.APP_ROOT, "src/assets/icon.png"),
+    title: "Scribble - Note",
     frame: false,
     titleBarStyle: "hidden",
     webPreferences: {
@@ -87,6 +90,8 @@ function createSettingsWindow() {
     minWidth: 250,
     minHeight: 300,
     backgroundColor: "#1a1a1a",
+    icon: path.join(process.env.APP_ROOT, "src/assets/icon.png"),
+    title: "Scribble - Settings",
     parent: mainWindow || void 0,
     modal: true,
     frame: false,
@@ -121,6 +126,11 @@ ipcMain.handle("open-note", (_, noteId) => {
   createNoteWindow(noteId);
   return { success: true };
 });
+ipcMain.on("note-updated", (_, noteId) => {
+  if (mainWindow) {
+    mainWindow.webContents.send("note-updated", noteId);
+  }
+});
 ipcMain.handle("window-minimize", (event) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   if (win) win.minimize();
@@ -140,7 +150,12 @@ ipcMain.handle("window-close", (event) => {
   if (win) win.close();
 });
 ipcMain.handle("create-note", () => {
-  createNoteWindow("new");
+  const noteId = `new-${Date.now().toString(36)}`;
+  createNoteWindow(noteId);
+  return { success: true, noteId };
+});
+ipcMain.handle("create-note-with-id", (_, noteId) => {
+  createNoteWindow(noteId);
   return { success: true };
 });
 ipcMain.handle("get-note-id", (event) => {
@@ -183,6 +198,9 @@ app.on("activate", () => {
     createMainWindow();
   }
 });
+if (process.platform === "win32") {
+  app.setAppUserModelId("com.tylerburnett.scribble");
+}
 app.whenReady().then(createMainWindow);
 export {
   MAIN_DIST,

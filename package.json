@@ -1,7 +1,9 @@
 {
-  "name": "scribble-app",
+  "name": "scribble",
+  "productName": "Scribble",
+  "description": "A modern note-taking application",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",

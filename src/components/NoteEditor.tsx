@@ -26,6 +26,9 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
         const savedNote = updateNote(updatedNote);
         setLastSaved(savedNote.updatedAt);
         onSave?.(savedNote);
+
+        // Notify other windows that this note has been updated
+        window.noteWindow.noteUpdated(note.id);
       }
     }, 1000); // Save after 1 second of inactivity
 
@@ -35,7 +38,7 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
   // Format the last saved time
   const formatLastSaved = () => {
     if (!lastSaved) return '';
-    
+
     return new Intl.DateTimeFormat('en-US', {
       hour: 'numeric',
       minute: 'numeric',

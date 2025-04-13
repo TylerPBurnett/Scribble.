@@ -36,6 +36,8 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete }: NoteCardProps) 
     } else {
       // Fallback if onDelete prop is not provided
       deleteNote(note.id);
+      // Notify other windows that this note has been deleted
+      window.noteWindow.noteUpdated(note.id);
       // Reload notes (this is not ideal, but works as a fallback)
       window.location.reload();
     }
