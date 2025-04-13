@@ -257,23 +257,54 @@ ipcMain.handle('get-default-save-location', () => {
 })
 
 // File operation handlers
-ipcMain.handle('save-note-to-file', async (_, noteId, title, content, saveLocation) => {
+ipcMain.handle('save-note-to-file', async (_, noteId, title, content, saveLocation, oldTitle = '') => {
+    console.log('Saving note to file:', { noteId, title, saveLocation, oldTitle });
   try {
     // Ensure the directory exists
     if (!fs.existsSync(saveLocation)) {
       fs.mkdirSync(saveLocation, { recursive: true })
     }
 
-    // Create a safe filename from the title or use the ID if title is empty
-    const safeTitle = title.trim() ?
+    // Create a safe filename from the title or use 'untitled_note' if title is empty
+    const safeTitle = title && title.trim() ?
       title.trim().replace(/[^a-z0-9]/gi, '_').toLowerCase() :
-      noteId
+      'untitled_note_' + noteId.substring(0, 8)
+
+    console.log('Creating filename from title:', { title, safeTitle })
 
     // Create the full path
     const filePath = path.join(saveLocation, `${safeTitle}.md`)
 
-    // Write the file
+    // Check if the title has changed and we need to rename the file
+    if (oldTitle && oldTitle !== title && oldTitle.trim()) {
+      const oldSafeTitle = oldTitle.trim().replace(/[^a-z0-9]/gi, '_').toLowerCase()
+      const oldFilePath = path.join(saveLocation, `${oldSafeTitle}.md`)
+
+      console.log('Title changed, handling file rename:', {
+        oldTitle,
+        newTitle: title,
+        oldFilePath,
+        newFilePath: filePath
+      })
+
+      // Check if old file exists and rename it
+      if (fs.existsSync(oldFilePath) && oldFilePath !== filePath) {
+        try {
+          console.log(`Renaming file from ${oldFilePath} to ${filePath}`)
+          // Rename the file instead of deleting and creating a new one
+          fs.renameSync(oldFilePath, filePath)
+          console.log('File renamed successfully')
+        } catch (renameErr) {
+          console.error('Error renaming file:', renameErr)
+          // If rename fails, we'll create a new file below
+        }
+      }
+    }
+
+    // Write the file (either new file or update existing)
+    console.log('Writing to file path:', filePath)
     fs.writeFileSync(filePath, content, 'utf8')
+    console.log('File written successfully')
 
     return { success: true, filePath }
   } catch (error: any) {
@@ -284,10 +315,12 @@ ipcMain.handle('save-note-to-file', async (_, noteId, title, content, saveLocati
 
 ipcMain.handle('delete-note-file', async (_, noteId, title, saveLocation) => {
   try {
-    // Create a safe filename from the title or use the ID if title is empty
-    const safeTitle = title.trim() ?
+    // Create a safe filename from the title or use 'untitled_note' if title is empty
+    const safeTitle = title && title.trim() ?
       title.trim().replace(/[^a-z0-9]/gi, '_').toLowerCase() :
-      noteId
+      'untitled_note_' + noteId.substring(0, 8)
+
+    console.log('Creating filename from title:', { title, safeTitle })
 
     // Create the full path
     const filePath = path.join(saveLocation, `${safeTitle}.md`)

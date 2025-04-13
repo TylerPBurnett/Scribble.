@@ -16,19 +16,25 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
 
   // Auto-save when content or title changes
   useEffect(() => {
-    const saveTimeout = setTimeout(() => {
+    const saveTimeout = setTimeout(async () => {
       if (note) {
         const updatedNote = {
           ...note,
           title,
           content,
         };
-        const savedNote = updateNote(updatedNote);
-        setLastSaved(savedNote.updatedAt);
-        onSave?.(savedNote);
+        try {
+          console.log('NoteEditor - Saving note:', updatedNote.id);
+          const savedNote = await updateNote(updatedNote);
+          console.log('NoteEditor - Note saved:', savedNote);
+          setLastSaved(savedNote.updatedAt);
+          onSave?.(savedNote);
 
-        // Notify other windows that this note has been updated
-        window.noteWindow.noteUpdated(note.id);
+          // Notify other windows that this note has been updated
+          window.noteWindow.noteUpdated(note.id);
+        } catch (error) {
+          console.error('Error saving note:', error);
+        }
       }
     }, 1000); // Save after 1 second of inactivity
 
@@ -53,7 +59,10 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
           type="text"
           className="note-title-input"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => {
+            console.log('Title changed to:', e.target.value);
+            setTitle(e.target.value);
+          }}
           placeholder="Untitled Note"
         />
         {lastSaved && (

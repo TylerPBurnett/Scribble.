@@ -26,7 +26,9 @@ function App() {
   useEffect(() => {
     const init = async () => {
       // Initialize settings
+      console.log('App.tsx - Initializing settings...')
       const settings = await initSettings()
+      console.log('App.tsx - Settings initialized:', settings)
       setAppSettings(settings)
 
       // Load notes
@@ -46,7 +48,7 @@ function App() {
         setIsNoteWindow(true)
         if (noteId.startsWith('new-')) {
           // Create a new note
-          const newNote = createNote()
+          const newNote = await createNote()
           setActiveNote(newNote)
         } else {
           // Load existing note
@@ -103,7 +105,9 @@ function App() {
   // Handle creating a new note
   const handleNewNote = async () => {
     // Create a new note in the main window
-    const newNote = createNote()
+    console.log('Creating new note...')
+    const newNote = await createNote()
+    console.log('New note created:', newNote)
 
     // Open a new window with the note's ID
     await window.noteWindow.openNote(newNote.id)
@@ -119,8 +123,10 @@ function App() {
 
   // Handle saving settings
   const handleSaveSettings = (newSettings: AppSettings) => {
+    console.log('App.tsx - Saving new settings:', newSettings)
     setAppSettings(newSettings)
     saveSettings(newSettings)
+    console.log('App.tsx - Settings saved, current state:', newSettings)
   }
 
   // Handle note save (for the note window)
@@ -135,15 +141,18 @@ function App() {
   }
 
   // Handle note deletion
-  const handleNoteDelete = (noteId: string) => {
+  const handleNoteDelete = async (noteId: string) => {
+    console.log('Deleting note:', noteId)
     // Delete the note using the service
-    deleteNote(noteId)
+    await deleteNote(noteId)
+    console.log('Note deleted from storage')
 
     // Update the notes list
     setNotes(prevNotes => prevNotes.filter(note => note.id !== noteId))
 
     // Notify other windows that this note has been deleted
     window.noteWindow.noteUpdated(noteId)
+    console.log('Note deletion complete')
   }
 
   // Render the settings window

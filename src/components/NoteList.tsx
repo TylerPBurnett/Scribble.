@@ -15,16 +15,22 @@ const NoteList = ({ notes, onNoteClick, activeNoteId, onNoteDelete }: NoteListPr
   const [deletedNotes, setDeletedNotes] = useState<string[]>([]);
 
   // Handle note deletion
-  const handleNoteDelete = (noteId: string) => {
+  const handleNoteDelete = async (noteId: string) => {
+    console.log('NoteList - Deleting note:', noteId);
     // Delete the note using the service
-    deleteNote(noteId);
+    try {
+      await deleteNote(noteId);
+      console.log('NoteList - Note deleted from service');
 
-    // Add to deleted notes list to remove from UI
-    setDeletedNotes([...deletedNotes, noteId]);
+      // Add to deleted notes list to remove from UI
+      setDeletedNotes([...deletedNotes, noteId]);
 
-    // Call the parent's onNoteDelete if provided
-    if (onNoteDelete) {
-      onNoteDelete(noteId);
+      // Call the parent's onNoteDelete if provided
+      if (onNoteDelete) {
+        onNoteDelete(noteId);
+      }
+    } catch (error) {
+      console.error('Error deleting note:', error);
     }
   };
 

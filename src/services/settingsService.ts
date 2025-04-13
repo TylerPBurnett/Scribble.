@@ -17,10 +17,16 @@ export interface AppSettings {
 // Get settings from localStorage
 export const getSettings = (): AppSettings => {
   const settingsJson = localStorage.getItem('app_settings');
-  if (!settingsJson) return DEFAULT_SETTINGS;
-  
+  console.log('Raw settings from localStorage:', settingsJson);
+  if (!settingsJson) {
+    console.log('No settings found, returning defaults');
+    return DEFAULT_SETTINGS;
+  }
+
   try {
-    return JSON.parse(settingsJson);
+    const settings = JSON.parse(settingsJson);
+    console.log('Parsed settings:', settings);
+    return settings;
   } catch (error) {
     console.error('Error parsing settings from localStorage:', error);
     return DEFAULT_SETTINGS;
@@ -29,29 +35,37 @@ export const getSettings = (): AppSettings => {
 
 // Save settings to localStorage
 export const saveSettings = (settings: AppSettings): void => {
+  console.log('Saving settings to localStorage:', settings);
   localStorage.setItem('app_settings', JSON.stringify(settings));
 };
 
 // Initialize settings
 export const initSettings = async (): Promise<AppSettings> => {
+  console.log('Initializing settings...');
   // Get settings from localStorage
   const storedSettings = getSettings();
-  
+  console.log('Stored settings:', storedSettings);
+
   // If no save location is set, get the default from the main process
   if (!storedSettings.saveLocation) {
+    console.log('No save location found, getting default...');
     try {
       const defaultLocation = await window.settings.getDefaultSaveLocation();
+      console.log('Default save location:', defaultLocation);
       const updatedSettings = {
         ...storedSettings,
         saveLocation: defaultLocation,
       };
+      console.log('Updated settings with default location:', updatedSettings);
       saveSettings(updatedSettings);
       return updatedSettings;
     } catch (error) {
       console.error('Error getting default save location:', error);
       return storedSettings;
     }
+  } else {
+    console.log('Using existing save location:', storedSettings.saveLocation);
   }
-  
+
   return storedSettings;
 };

@@ -22,19 +22,24 @@ const SettingsWindow = ({ onClose, initialSettings, onSave }: SettingsWindowProp
 
   const handleSaveLocationSelect = async () => {
     try {
+      console.log('Selecting directory...');
       const result = await window.settings.selectDirectory();
+      console.log('Directory selection result:', result);
       if (result.canceled) return;
-      
-      setSettings({
+
+      const newSettings = {
         ...settings,
         saveLocation: result.filePaths[0]
-      });
+      };
+      console.log('Updating settings with new save location:', newSettings);
+      setSettings(newSettings);
     } catch (error) {
       console.error('Error selecting directory:', error);
     }
   };
 
   const handleSave = () => {
+    console.log('Saving settings:', settings);
     onSave(settings);
     onClose();
   };
@@ -46,17 +51,17 @@ const SettingsWindow = ({ onClose, initialSettings, onSave }: SettingsWindowProp
           <h2>Settings</h2>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
-        
+
         <div className="settings-content">
           <div className="settings-section">
             <h3>Storage</h3>
             <div className="settings-item">
               <label>Save Location:</label>
               <div className="file-path-selector">
-                <input 
-                  type="text" 
-                  value={settings.saveLocation} 
-                  readOnly 
+                <input
+                  type="text"
+                  value={settings.saveLocation}
+                  readOnly
                 />
                 <button onClick={handleSaveLocationSelect}>Browse...</button>
               </div>
@@ -75,7 +80,7 @@ const SettingsWindow = ({ onClose, initialSettings, onSave }: SettingsWindowProp
                 Auto-save notes
               </label>
             </div>
-            
+
             {settings.autoSave && (
               <div className="settings-item">
                 <label>Auto-save interval (seconds):</label>
@@ -85,7 +90,7 @@ const SettingsWindow = ({ onClose, initialSettings, onSave }: SettingsWindowProp
                   max="60"
                   value={settings.autoSaveInterval}
                   onChange={(e) => setSettings({
-                    ...settings, 
+                    ...settings,
                     autoSaveInterval: parseInt(e.target.value) || 1
                   })}
                 />
@@ -107,7 +112,7 @@ const SettingsWindow = ({ onClose, initialSettings, onSave }: SettingsWindowProp
             </div>
           </div>
         </div>
-        
+
         <div className="settings-footer">
           <button className="cancel-btn" onClick={onClose}>Cancel</button>
           <button className="save-btn" onClick={handleSave}>Save</button>

@@ -187,14 +187,37 @@ ipcMain.handle("select-directory", async () => {
 ipcMain.handle("get-default-save-location", () => {
   return getDefaultSaveLocation();
 });
-ipcMain.handle("save-note-to-file", async (_, noteId, title, content, saveLocation) => {
+ipcMain.handle("save-note-to-file", async (_, noteId, title, content, saveLocation, oldTitle = "") => {
+  console.log("Saving note to file:", { noteId, title, saveLocation, oldTitle });
   try {
     if (!fs.existsSync(saveLocation)) {
       fs.mkdirSync(saveLocation, { recursive: true });
     }
-    const safeTitle = title.trim() ? title.trim().replace(/[^a-z0-9]/gi, "_").toLowerCase() : noteId;
+    const safeTitle = title && title.trim() ? title.trim().replace(/[^a-z0-9]/gi, "_").toLowerCase() : "untitled_note_" + noteId.substring(0, 8);
+    console.log("Creating filename from title:", { title, safeTitle });
     const filePath = path.join(saveLocation, `${safeTitle}.md`);
+    if (oldTitle && oldTitle !== title && oldTitle.trim()) {
+      const oldSafeTitle = oldTitle.trim().replace(/[^a-z0-9]/gi, "_").toLowerCase();
+      const oldFilePath = path.join(saveLocation, `${oldSafeTitle}.md`);
+      console.log("Title changed, handling file rename:", {
+        oldTitle,
+        newTitle: title,
+        oldFilePath,
+        newFilePath: filePath
+      });
+      if (fs.existsSync(oldFilePath) && oldFilePath !== filePath) {
+        try {
+          console.log(`Renaming file from ${oldFilePath} to ${filePath}`);
+          fs.renameSync(oldFilePath, filePath);
+          console.log("File renamed successfully");
+        } catch (renameErr) {
+          console.error("Error renaming file:", renameErr);
+        }
+      }
+    }
+    console.log("Writing to file path:", filePath);
     fs.writeFileSync(filePath, content, "utf8");
+    console.log("File written successfully");
     return { success: true, filePath };
   } catch (error) {
     console.error("Error saving note to file:", error);
@@ -203,7 +226,8 @@ ipcMain.handle("save-note-to-file", async (_, noteId, title, content, saveLocati
 });
 ipcMain.handle("delete-note-file", async (_, noteId, title, saveLocation) => {
   try {
-    const safeTitle = title.trim() ? title.trim().replace(/[^a-z0-9]/gi, "_").toLowerCase() : noteId;
+    const safeTitle = title && title.trim() ? title.trim().replace(/[^a-z0-9]/gi, "_").toLowerCase() : "untitled_note_" + noteId.substring(0, 8);
+    console.log("Creating filename from title:", { title, safeTitle });
     const filePath = path.join(saveLocation, `${safeTitle}.md`);
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);

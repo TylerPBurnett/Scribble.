@@ -32,10 +32,10 @@ export const saveNotes = (notes: Note[]): void => {
 };
 
 // Create a new note
-export const createNote = (): Note => {
+export const createNote = async (): Promise<Note> => {
   const newNote: Note = {
     id: generateId(),
-    title: '',
+    title: 'Untitled Note', // Set a default title
     content: '<p></p>',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -46,26 +46,54 @@ export const createNote = (): Note => {
 
   // Save to file if a save location is set
   const settings = getSettings();
+  console.log('Create Note - Settings:', settings);
   if (settings.saveLocation) {
+    console.log('Create Note - Save location found:', settings.saveLocation);
     try {
       // For a new empty note, just create a minimal markdown file
-      window.fileOps.saveNoteToFile(
-        newNote.id,
-        newNote.title,
-        '# Untitled Note\n\n',
-        settings.saveLocation
-      );
+      console.log('Creating new note file with:', {
+        id: newNote.id,
+        title: newNote.title,
+        saveLocation: settings.saveLocation
+      });
+
+      try {
+        const result = await window.fileOps.saveNoteToFile(
+          newNote.id,
+          newNote.title,
+          '# Untitled Note\n\n',
+          settings.saveLocation
+        );
+        console.log('Create note file result:', result);
+      } catch (saveError) {
+        console.error('Error creating note file:', saveError);
+      }
     } catch (error) {
       console.error('Error saving new note to file:', error);
     }
+  } else {
+    console.log('Create Note - No save location found in settings');
   }
 
   return newNote;
 };
 
 // Update a note
-export const updateNote = (updatedNote: Note): Note => {
+export const updateNote = async (updatedNote: Note): Promise<Note> => {
   const notes = getNotes();
+
+  // Find the original note to check if title has changed
+  const originalNote = notes.find(note => note.id === updatedNote.id);
+  const oldTitle = originalNote?.title || '';
+
+  // Check if title has changed
+  const titleChanged = originalNote && originalNote.title !== updatedNote.title;
+  console.log('Title changed?', {
+    oldTitle: originalNote?.title,
+    newTitle: updatedNote.title,
+    changed: titleChanged
+  });
+
   const updatedNotes = notes.map(note =>
     note.id === updatedNote.id
       ? { ...updatedNote, updatedAt: new Date() }
@@ -79,7 +107,9 @@ export const updateNote = (updatedNote: Note): Note => {
 
   // Save to file if a save location is set
   const settings = getSettings();
+  console.log('Settings from getSettings():', settings);
   if (settings.saveLocation) {
+    console.log('Save location found:', settings.saveLocation);
     try {
       // Convert HTML content to Markdown
       const markdownContent = htmlToMarkdown(finalNote.content);
@@ -89,22 +119,46 @@ export const updateNote = (updatedNote: Note): Note => {
       const fullContent = titlePrefix + markdownContent;
 
       // Save to file
-      window.fileOps.saveNoteToFile(
-        finalNote.id,
-        finalNote.title,
-        fullContent,
-        settings.saveLocation
-      );
+      console.log('Calling saveNoteToFile with:', {
+        id: finalNote.id,
+        title: finalNote.title,
+        saveLocation: settings.saveLocation,
+        oldTitle
+      });
+
+      try {
+        // Only pass oldTitle if the title has actually changed
+        const titleToPass = titleChanged ? oldTitle : undefined;
+        console.log('Passing to saveNoteToFile:', {
+          id: finalNote.id,
+          title: finalNote.title,
+          oldTitle: titleToPass,
+          titleChanged
+        });
+
+        const result = await window.fileOps.saveNoteToFile(
+          finalNote.id,
+          finalNote.title,
+          fullContent,
+          settings.saveLocation,
+          titleToPass // Pass the old title only if title changed
+        );
+        console.log('Save result:', result);
+      } catch (saveError) {
+        console.error('Error in saveNoteToFile:', saveError);
+      }
     } catch (error) {
       console.error('Error saving note to file:', error);
     }
+  } else {
+    console.log('No save location found in settings');
   }
 
   return finalNote;
 };
 
 // Delete a note
-export const deleteNote = (noteId: string): void => {
+export const deleteNote = async (noteId: string): Promise<void> => {
   const notes = getNotes();
 
   // Find the note before deleting it
@@ -119,11 +173,22 @@ export const deleteNote = (noteId: string): void => {
     const settings = getSettings();
     if (settings.saveLocation) {
       try {
-        window.fileOps.deleteNoteFile(
-          noteToDelete.id,
-          noteToDelete.title,
-          settings.saveLocation
-        );
+        console.log('Deleting note file:', {
+          id: noteToDelete.id,
+          title: noteToDelete.title,
+          saveLocation: settings.saveLocation
+        });
+
+        try {
+          const result = await window.fileOps.deleteNoteFile(
+            noteToDelete.id,
+            noteToDelete.title,
+            settings.saveLocation
+          );
+          console.log('Delete note file result:', result);
+        } catch (deleteError) {
+          console.error('Error in deleteNoteFile:', deleteError);
+        }
       } catch (error) {
         console.error('Error deleting note file:', error);
       }
