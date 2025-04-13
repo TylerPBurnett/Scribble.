@@ -1,6 +1,6 @@
 .tiptap-editor {
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse; /* Reversed to put toolbar at bottom */
   border: none;
   border-radius: 0;
   overflow: hidden;
@@ -13,11 +13,17 @@
 
 .tiptap-toolbar {
   display: flex;
-  flex-wrap: wrap;
-  padding: 8px;
+  flex-wrap: nowrap; /* Prevent wrapping to multiple lines */
+  padding: 6px; /* Reduced padding */
   background-color: #fff5b1;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  gap: 4px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1); /* Changed from border-bottom to border-top */
+  gap: 3px; /* Reduced gap */
+  transform: scale(0.8); /* Make toolbar 20% smaller instead of 30% */
+  transform-origin: center left; /* Scale from left side */
+  overflow-x: auto; /* Allow horizontal scrolling for single line */
+  white-space: nowrap; /* Keep all items in a single line */
+  scrollbar-width: thin; /* Thin scrollbar for Firefox */
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent; /* Scrollbar color for Firefox */
 }
 
 .tiptap-toolbar button {
@@ -26,13 +32,15 @@
   border-radius: 4px;
   color: #333;
   cursor: pointer;
-  height: 32px;
-  width: 32px;
+  height: 30px; /* Slightly larger than before */
+  min-width: 30px; /* Slightly larger than before */
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   transition: background-color 0.2s, border-color 0.2s;
+  font-size: 0.95em; /* Slightly larger font */
+  flex-shrink: 0; /* Prevent buttons from shrinking */
 }
 
 .tiptap-toolbar button:hover {
@@ -49,14 +57,15 @@
 .tiptap-toolbar .divider {
   width: 1px;
   background-color: rgba(0, 0, 0, 0.1);
-  margin: 0 4px;
-  height: 24px;
+  margin: 0 3px;
+  height: 22px; /* Adjusted height to match new button size */
   align-self: center;
+  flex-shrink: 0; /* Prevent divider from shrinking */
 }
 
 .tiptap-content {
   flex: 1;
-  padding: 16px;
+  padding: 16px 16px 8px 16px; /* Reduced bottom padding */
   overflow-y: auto;
   line-height: 1.5;
   background-color: #fff9c4;
@@ -151,6 +160,20 @@
 .tiptap-content .task-list-item-checkbox {
   margin-right: 0.5em;
   margin-top: 0.3em;
+}
+
+/* WebKit scrollbar styling */
+.tiptap-toolbar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.tiptap-toolbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tiptap-toolbar::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
 }
 
 /* Selected node styling */
