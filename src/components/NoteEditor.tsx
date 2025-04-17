@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Note } from '../types/Note';
 import Tiptap from './Tiptap';
 import { updateNote } from '../services/noteService';
-import { getSettings } from '../services/settingsService';
+import { getSettings, subscribeToSettingsChanges } from '../services/settingsService';
 import './NoteEditor.css';
 
 interface NoteEditorProps {
@@ -15,13 +15,30 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
   const [content, setContent] = useState(note.content);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
+  // Get settings for auto-save
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+  const [autoSaveInterval, setAutoSaveInterval] = useState(5000);
+
+  // Load settings on component mount and subscribe to changes
+  useEffect(() => {
+    // Initial settings load
+    const settings = getSettings();
+    setAutoSaveEnabled(settings.autoSave);
+    setAutoSaveInterval(settings.autoSaveInterval * 1000); // Convert to milliseconds
+
+    // Subscribe to settings changes
+    const unsubscribe = subscribeToSettingsChanges((newSettings) => {
+      console.log('Settings changed in NoteEditor:', newSettings);
+      setAutoSaveEnabled(newSettings.autoSave);
+      setAutoSaveInterval(newSettings.autoSaveInterval * 1000);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []);
+
   // Auto-save when content or title changes
   useEffect(() => {
-    // Get settings for auto-save interval
-    const settings = getSettings();
-    const autoSaveEnabled = settings.autoSave;
-    const autoSaveInterval = settings.autoSaveInterval * 1000; // Convert to milliseconds
-
     // Only set up auto-save if it's enabled
     if (!autoSaveEnabled) {
       return;
@@ -52,7 +69,7 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
     }, autoSaveInterval); // Use the interval from settings
 
     return () => clearTimeout(saveTimeout);
-  }, [title, content, note, onSave]);
+  }, [title, content, note, onSave, autoSaveEnabled, autoSaveInterval]);
 
   // Format the last saved time
   const formatLastSaved = () => {
@@ -133,35 +150,60 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
     <div className="note-editor" ref={noteRef}>
       <div className="note-editor-header" onMouseDown={handleMouseDown}>
         <div className="note-drag-handle">
-          <div className="note-controls">
-            <button className="note-close-btn" onClick={handleClose} title="Close note">
-              ×
-            </button>
+          <div className="note-title-container">
+            <input
+              type="text"
+              className="note-title-input"
+              value={title}
+              onChange={(e) => {
+                console.log('Title changed to:', e.target.value);
+                setTitle(e.target.value);
+              }}
+              placeholder="Untitled Note"
+            />
           </div>
-          <input
-            type="text"
-            className="note-title-input"
-            value={title}
-            onChange={(e) => {
-              console.log('Title changed to:', e.target.value);
-              setTitle(e.target.value);
-            }}
-            placeholder="Untitled Note"
-          />
-        </div>
-        <div className="note-header-actions">
-          <button
-            className="save-btn"
-            onClick={handleManualSave}
-            title="Save now"
-          >
-            💾
-          </button>
-          {lastSaved && (
-            <div className="last-saved">
-              Last saved: {formatLastSaved()}
+
+          <div className="note-header-right">
+            <div className="note-header-actions">
+              {!autoSaveEnabled && (
+                <svg
+                  className="save-icon"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  onClick={handleManualSave}
+                  title="Save now"
+                >
+                  <path d="M19 21H5C3.89543 21 3 20.1046 3 19V5C3 3.89543 3.89543 3 5 3H16L21 8V19C21 20.1046 20.1046 21 19 21Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M17 21V13H7V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M7 3V8H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+              {lastSaved && (
+                <div className="last-saved">
+                  Last saved: {formatLastSaved()}
+                </div>
+              )}
             </div>
-          )}
+
+            <div className="note-controls">
+              <svg
+                className="note-close-icon"
+                onClick={handleClose}
+                title="Close note"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
       <div className="note-editor-content">

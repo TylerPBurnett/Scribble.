@@ -33,10 +33,35 @@ export const getSettings = (): AppSettings => {
   }
 };
 
+// Event system for settings changes
+type SettingsChangeListener = (settings: AppSettings) => void;
+const settingsChangeListeners: SettingsChangeListener[] = [];
+
+// Subscribe to settings changes
+export const subscribeToSettingsChanges = (listener: SettingsChangeListener): () => void => {
+  settingsChangeListeners.push(listener);
+
+  // Return unsubscribe function
+  return () => {
+    const index = settingsChangeListeners.indexOf(listener);
+    if (index !== -1) {
+      settingsChangeListeners.splice(index, 1);
+    }
+  };
+};
+
+// Notify all listeners of settings changes
+const notifySettingsChange = (settings: AppSettings): void => {
+  settingsChangeListeners.forEach(listener => listener(settings));
+};
+
 // Save settings to localStorage
 export const saveSettings = (settings: AppSettings): void => {
   console.log('Saving settings to localStorage:', settings);
   localStorage.setItem('app_settings', JSON.stringify(settings));
+
+  // Notify listeners of the change
+  notifySettingsChange(settings);
 };
 
 // Initialize settings

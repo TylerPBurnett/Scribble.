@@ -31,8 +31,22 @@
   border: none;
   outline: none;
   width: 100%;
-  padding: 8px;
+  padding: 8px 0; /* Remove horizontal padding */
   font-family: 'Comic Sans MS', cursive, sans-serif; /* More sticky note-like font */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  caret-color: #0078d4; /* Make cursor blue and more visible */
+}
+
+/* Add a subtle background when the title is being edited */
+.note-title-input:focus {
+  background-color: rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  padding-left: 4px;
+  padding-right: 4px;
+  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+  transition: all 0.2s ease;
 }
 
 .note-title-input::placeholder {
@@ -45,20 +59,15 @@
   gap: 8px;
 }
 
-.save-btn {
-  background-color: transparent;
-  border: none;
-  color: #666;
+.save-icon {
+  color: rgba(0, 0, 0, 0.5);
   cursor: pointer;
-  font-size: 1rem;
-  padding: 4px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
 }
 
-.save-btn:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-  color: #333;
+.save-icon:hover {
+  color: rgba(0, 120, 212, 0.9);
+  transform: scale(1.1);
 }
 
 .last-saved {
@@ -80,36 +89,37 @@
 .note-drag-handle {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   width: 100%;
   cursor: move;
+}
+
+.note-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.note-title-container {
+  flex: 1;
+  min-width: 0; /* Allow container to shrink below min-content width */
 }
 
 .note-controls {
   display: flex;
   align-items: center;
-  margin-right: 10px;
 }
 
-.note-close-btn {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background-color: #ff5f57;
-  color: #750000;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.note-close-icon {
+  color: rgba(0, 0, 0, 0.5);
   cursor: pointer;
-  border: none;
-  padding: 0;
-  line-height: 1;
-  transition: background-color 0.2s;
-  font-weight: bold;
+  transition: all 0.2s ease;
+  margin-left: 4px;
 }
 
-.note-close-btn:hover {
-  background-color: #ff3b30;
+.note-close-icon:hover {
+  color: rgba(255, 0, 0, 0.9);
+  transform: scale(1.1);
 }
 
 /* Style the Tiptap editor to match the sticky note */
