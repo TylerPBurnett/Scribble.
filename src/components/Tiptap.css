@@ -18,8 +18,7 @@
   background-color: #fff5b1;
   border-top: 1px solid rgba(0, 0, 0, 0.1); /* Changed from border-bottom to border-top */
   gap: 3px; /* Reduced gap */
-  transform: scale(0.8); /* Make toolbar 20% smaller instead of 30% */
-  transform-origin: center left; /* Scale from left side */
+  width: 100%; /* Full width of the container */
   overflow-x: auto; /* Allow horizontal scrolling for single line */
   white-space: nowrap; /* Keep all items in a single line */
   scrollbar-width: thin; /* Thin scrollbar for Firefox */
@@ -32,14 +31,14 @@
   border-radius: 4px;
   color: #333;
   cursor: pointer;
-  height: 30px; /* Slightly larger than before */
-  min-width: 30px; /* Slightly larger than before */
+  height: 28px; /* Slightly smaller height */
+  min-width: 28px; /* Slightly smaller width */
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   transition: background-color 0.2s, border-color 0.2s;
-  font-size: 0.95em; /* Slightly larger font */
+  font-size: 0.9em; /* Slightly smaller font */
   flex-shrink: 0; /* Prevent buttons from shrinking */
 }
 
@@ -58,7 +57,7 @@
   width: 1px;
   background-color: rgba(0, 0, 0, 0.1);
   margin: 0 3px;
-  height: 22px; /* Adjusted height to match new button size */
+  height: 20px; /* Adjusted height to match new button size */
   align-self: center;
   flex-shrink: 0; /* Prevent divider from shrinking */
 }
@@ -201,4 +200,41 @@
 
 .ProseMirror .text-right {
   text-align: right;
+}
+
+/* Responsive toolbar adjustments */
+@media (max-width: 500px) {
+  .tiptap-toolbar button {
+    height: 26px;
+    min-width: 26px;
+    font-size: 0.85em;
+  }
+
+  .tiptap-toolbar .divider {
+    height: 18px;
+    margin: 0 2px;
+  }
+
+  .tiptap-toolbar {
+    gap: 2px;
+    padding: 4px;
+  }
+}
+
+@media (max-width: 350px) {
+  .tiptap-toolbar button {
+    height: 24px;
+    min-width: 24px;
+    font-size: 0.8em;
+  }
+
+  .tiptap-toolbar .divider {
+    height: 16px;
+    margin: 0 1px;
+  }
+
+  .tiptap-toolbar {
+    gap: 1px;
+    padding: 3px;
+  }
 }
