@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Note } from '../types/Note';
 import Tiptap from './Tiptap';
 import { updateNote } from '../services/noteService';
+import { getSettings } from '../services/settingsService';
 import './NoteEditor.css';
 
 interface NoteEditorProps {
@@ -16,6 +17,18 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
 
   // Auto-save when content or title changes
   useEffect(() => {
+    // Get settings for auto-save interval
+    const settings = getSettings();
+    const autoSaveEnabled = settings.autoSave;
+    const autoSaveInterval = settings.autoSaveInterval * 1000; // Convert to milliseconds
+
+    // Only set up auto-save if it's enabled
+    if (!autoSaveEnabled) {
+      return;
+    }
+
+    console.log(`Setting up auto-save with interval: ${autoSaveInterval}ms`);
+
     const saveTimeout = setTimeout(async () => {
       if (note) {
         const updatedNote = {
@@ -36,7 +49,7 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
           console.error('Error saving note:', error);
         }
       }
-    }, 1000); // Save after 1 second of inactivity
+    }, autoSaveInterval); // Use the interval from settings
 
     return () => clearTimeout(saveTimeout);
   }, [title, content, note, onSave]);
@@ -93,6 +106,29 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
     window.windowControls.close();
   };
 
+  // Manual save function
+  const handleManualSave = async () => {
+    if (note) {
+      const updatedNote = {
+        ...note,
+        title,
+        content,
+      };
+      try {
+        console.log('NoteEditor - Manual saving note:', updatedNote.id);
+        const savedNote = await updateNote(updatedNote);
+        console.log('NoteEditor - Note manually saved:', savedNote);
+        setLastSaved(savedNote.updatedAt);
+        onSave?.(savedNote);
+
+        // Notify other windows that this note has been updated
+        window.noteWindow.noteUpdated(note.id);
+      } catch (error) {
+        console.error('Error manually saving note:', error);
+      }
+    }
+  };
+
   return (
     <div className="note-editor" ref={noteRef}>
       <div className="note-editor-header" onMouseDown={handleMouseDown}>
@@ -113,11 +149,20 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
             placeholder="Untitled Note"
           />
         </div>
-        {lastSaved && (
-          <div className="last-saved">
-            Last saved: {formatLastSaved()}
-          </div>
-        )}
+        <div className="note-header-actions">
+          <button
+            className="save-btn"
+            onClick={handleManualSave}
+            title="Save now"
+          >
+            💾
+          </button>
+          {lastSaved && (
+            <div className="last-saved">
+              Last saved: {formatLastSaved()}
+            </div>
+          )}
+        </div>
       </div>
       <div className="note-editor-content">
         <Tiptap

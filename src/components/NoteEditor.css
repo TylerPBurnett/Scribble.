@@ -39,10 +39,31 @@
   color: #888;
 }
 
+.note-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.save-btn {
+  background-color: transparent;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.save-btn:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+  color: #333;
+}
+
 .last-saved {
   font-size: 0.8rem;
   color: #666;
-  margin-left: 16px;
   white-space: nowrap;
 }
 
