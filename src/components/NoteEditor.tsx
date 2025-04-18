@@ -13,7 +13,6 @@ interface NoteEditorProps {
 const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
   const [title, setTitle] = useState(note.title);
   const [content, setContent] = useState(note.content);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   // Get settings for auto-save
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
@@ -57,7 +56,6 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
           console.log('NoteEditor - Saving note:', updatedNote.id);
           const savedNote = await updateNote(updatedNote);
           console.log('NoteEditor - Note saved:', savedNote);
-          setLastSaved(savedNote.updatedAt);
           onSave?.(savedNote);
 
           // Notify other windows that this note has been updated
@@ -71,16 +69,7 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
     return () => clearTimeout(saveTimeout);
   }, [title, content, note, onSave, autoSaveEnabled, autoSaveInterval]);
 
-  // Format the last saved time
-  const formatLastSaved = () => {
-    if (!lastSaved) return '';
-
-    return new Intl.DateTimeFormat('en-US', {
-      hour: 'numeric',
-      minute: 'numeric',
-      second: 'numeric',
-    }).format(lastSaved);
-  };
+  // Last saved time formatting removed
 
   // Dragging functionality
   const [isDragging, setIsDragging] = useState(false);
@@ -135,7 +124,6 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
         console.log('NoteEditor - Manual saving note:', updatedNote.id);
         const savedNote = await updateNote(updatedNote);
         console.log('NoteEditor - Note manually saved:', savedNote);
-        setLastSaved(savedNote.updatedAt);
         onSave?.(savedNote);
 
         // Notify other windows that this note has been updated
@@ -151,6 +139,7 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
       <div className="note-editor-header" onMouseDown={handleMouseDown}>
         <div className="note-drag-handle">
           <div className="note-title-container">
+            {/* Back to basics with a simple input */}
             <input
               type="text"
               className="note-title-input"
@@ -181,11 +170,7 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
                   <path d="M7 3V8H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               )}
-              {lastSaved && (
-                <div className="last-saved">
-                  Last saved: {formatLastSaved()}
-                </div>
-              )}
+              {/* Last saved timestamp removed */}
             </div>
 
             <div className="note-controls">

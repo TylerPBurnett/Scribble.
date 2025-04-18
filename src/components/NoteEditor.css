@@ -23,30 +23,26 @@
   cursor: move; /* Indicate it's draggable */
 }
 
+/* Styling for the title input with visible cursor */
 .note-title-input {
   font-size: 1.5rem;
   font-weight: 600;
   color: #333;
   background-color: transparent;
-  border: none;
-  outline: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
   width: 100%;
-  padding: 8px 0; /* Remove horizontal padding */
-  font-family: 'Comic Sans MS', cursive, sans-serif; /* More sticky note-like font */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  caret-color: #0078d4; /* Make cursor blue and more visible */
+  padding: 8px;
+  font-family: 'Comic Sans MS', cursive, sans-serif;
+  cursor: text;
 }
 
-/* Add a subtle background when the title is being edited */
+/* Only show background and border when focused */
 .note-title-input:focus {
+  border-color: #aaa;
   background-color: rgba(255, 255, 255, 0.4);
-  border-radius: 4px;
-  padding-left: 4px;
-  padding-right: 4px;
-  box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
-  transition: all 0.2s ease;
+  outline: none;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.1);
 }
 
 .note-title-input::placeholder {
@@ -70,11 +66,7 @@
   transform: scale(1.1);
 }
 
-.last-saved {
-  font-size: 0.8rem;
-  color: #666;
-  white-space: nowrap;
-}
+/* Last saved timestamp CSS removed */
 
 .note-editor-content {
   flex: 1;
@@ -103,6 +95,7 @@
 .note-title-container {
   flex: 1;
   min-width: 0; /* Allow container to shrink below min-content width */
+  padding: 4px;
 }
 
 .note-controls {
