@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './TitleBar.css';
+import logoIcon from '../assets/icon-64.png';
 
 interface TitleBarProps {
   title: string;
@@ -25,7 +26,7 @@ const TitleBar: React.FC<TitleBarProps> = ({ title, onMinimize, onMaximize, onCl
             <span></span>
           </button>
           <div className="app-logo">
-            <span className="logo-icon">S</span>
+            <img src={logoIcon} alt="Scribble Logo" className="logo-icon" />
             <h1>{title}</h1>
           </div>
         </div>
@@ -48,16 +49,19 @@ const TitleBar: React.FC<TitleBarProps> = ({ title, onMinimize, onMaximize, onCl
           </button>
         </div>
       </div>
-      
+
       {menuOpen && (
         <div className="app-menu">
           <div className="menu-item">
+            <span style={{ marginRight: '8px', fontSize: '14px' }}>+</span>
             <span>New Note</span>
           </div>
           <div className="menu-item">
+            <span style={{ marginRight: '8px', fontSize: '14px' }}>⚙</span>
             <span>Settings</span>
           </div>
           <div className="menu-item">
+            <span style={{ marginRight: '8px', fontSize: '14px' }}>ℹ</span>
             <span>About</span>
           </div>
         </div>

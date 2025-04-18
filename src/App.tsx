@@ -26,7 +26,9 @@ function App() {
   useEffect(() => {
     const init = async () => {
       // Initialize settings
+      console.log('App.tsx - Initializing settings...')
       const settings = await initSettings()
+      console.log('App.tsx - Settings initialized:', settings)
       setAppSettings(settings)
 
       // Load notes
@@ -44,9 +46,9 @@ function App() {
       const noteId = await window.noteWindow.getNoteId()
       if (noteId) {
         setIsNoteWindow(true)
-        if (noteId === 'new') {
+        if (noteId.startsWith('new-')) {
           // Create a new note
-          const newNote = createNote()
+          const newNote = await createNote()
           setActiveNote(newNote)
         } else {
           // Load existing note
@@ -60,6 +62,28 @@ function App() {
 
     init()
   }, [])
+
+  // Listen for note updates from other windows
+  useEffect(() => {
+    // Skip this in note windows
+    if (isNoteWindow) return
+
+    // Set up listener for note updates
+    const handleNoteUpdated = (_event: any, noteId: string) => {
+      console.log('Note updated:', noteId)
+      // Reload all notes from localStorage
+      const updatedNotes = getNotes()
+      setNotes(updatedNotes)
+    }
+
+    // Add event listener
+    window.ipcRenderer.on('note-updated', handleNoteUpdated)
+
+    // Clean up
+    return () => {
+      window.ipcRenderer.off('note-updated', handleNoteUpdated)
+    }
+  }, [isNoteWindow])
 
   // Filter notes based on search query
   const filteredNotes = notes.filter(note => {
@@ -80,7 +104,16 @@ function App() {
 
   // Handle creating a new note
   const handleNewNote = async () => {
-    await window.noteWindow.createNote()
+    // Create a new note in the main window
+    console.log('Creating new note...')
+    const newNote = await createNote()
+    console.log('New note created:', newNote)
+
+    // Open a new window with the note's ID
+    await window.noteWindow.openNote(newNote.id)
+
+    // Notify other windows that a new note has been created
+    window.noteWindow.noteUpdated(newNote.id)
   }
 
   // Handle opening settings
@@ -90,8 +123,10 @@ function App() {
 
   // Handle saving settings
   const handleSaveSettings = (newSettings: AppSettings) => {
+    console.log('App.tsx - Saving new settings:', newSettings)
     setAppSettings(newSettings)
     saveSettings(newSettings)
+    console.log('App.tsx - Settings saved, current state:', newSettings)
   }
 
   // Handle note save (for the note window)
@@ -106,12 +141,18 @@ function App() {
   }
 
   // Handle note deletion
-  const handleNoteDelete = (noteId: string) => {
+  const handleNoteDelete = async (noteId: string) => {
+    console.log('Deleting note:', noteId)
     // Delete the note using the service
-    deleteNote(noteId)
+    await deleteNote(noteId)
+    console.log('Note deleted from storage')
 
     // Update the notes list
     setNotes(prevNotes => prevNotes.filter(note => note.id !== noteId))
+
+    // Notify other windows that this note has been deleted
+    window.noteWindow.noteUpdated(noteId)
+    console.log('Note deletion complete')
   }
 
   // Render the settings window

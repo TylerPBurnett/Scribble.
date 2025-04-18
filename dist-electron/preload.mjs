@@ -21,16 +21,23 @@ electron.contextBridge.exposeInMainWorld("ipcRenderer", {
 electron.contextBridge.exposeInMainWorld("windowControls", {
   minimize: () => electron.ipcRenderer.invoke("window-minimize"),
   maximize: () => electron.ipcRenderer.invoke("window-maximize"),
-  close: () => electron.ipcRenderer.invoke("window-close")
+  close: () => electron.ipcRenderer.invoke("window-close"),
+  moveWindow: (moveX, moveY) => electron.ipcRenderer.invoke("window-move", moveX, moveY)
 });
 electron.contextBridge.exposeInMainWorld("noteWindow", {
   openNote: (noteId) => electron.ipcRenderer.invoke("open-note", noteId),
   createNote: () => electron.ipcRenderer.invoke("create-note"),
-  getNoteId: () => electron.ipcRenderer.invoke("get-note-id")
+  createNoteWithId: (noteId) => electron.ipcRenderer.invoke("create-note-with-id", noteId),
+  getNoteId: () => electron.ipcRenderer.invoke("get-note-id"),
+  noteUpdated: (noteId) => electron.ipcRenderer.send("note-updated", noteId)
 });
 electron.contextBridge.exposeInMainWorld("settings", {
   openSettings: () => electron.ipcRenderer.invoke("open-settings"),
   isSettingsWindow: () => electron.ipcRenderer.invoke("is-settings-window"),
   selectDirectory: () => electron.ipcRenderer.invoke("select-directory"),
   getDefaultSaveLocation: () => electron.ipcRenderer.invoke("get-default-save-location")
+});
+electron.contextBridge.exposeInMainWorld("fileOps", {
+  saveNoteToFile: (noteId, title, content, saveLocation) => electron.ipcRenderer.invoke("save-note-to-file", noteId, title, content, saveLocation),
+  deleteNoteFile: (noteId, title, saveLocation) => electron.ipcRenderer.invoke("delete-note-file", noteId, title, saveLocation)
 });

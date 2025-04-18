@@ -27,7 +27,9 @@ interface Window {
   noteWindow: {
     openNote: (noteId: string) => Promise<any>
     createNote: () => Promise<any>
+    createNoteWithId: (noteId: string) => Promise<any>
     getNoteId: () => Promise<string | null>
+    noteUpdated: (noteId: string) => void
   }
   settings: {
     openSettings: () => Promise<any>
@@ -35,9 +37,15 @@ interface Window {
     selectDirectory: () => Promise<{ canceled: boolean, filePaths: string[] }>
     getDefaultSaveLocation: () => Promise<string>
   }
+  fileOps: {
+    saveNoteToFile: (noteId: string, title: string, content: string, saveLocation: string) => Promise<{ success: boolean, filePath?: string, error?: string }>
+    deleteNoteFile: (noteId: string, title: string, saveLocation: string) => Promise<{ success: boolean, error?: string }>
+  }
   windowControls: {
     minimize: () => Promise<void>
     maximize: () => Promise<void>
     close: () => Promise<void>
+    moveWindow: (moveX: number, moveY: number) => Promise<void>
   }
+
 }

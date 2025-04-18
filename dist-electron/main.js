@@ -1,9 +1,7 @@
 import { ipcMain, BrowserWindow, dialog, app } from "electron";
-import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
-createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 process.env.APP_ROOT = path.join(__dirname, "..");
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
@@ -20,7 +18,8 @@ function createMainWindow() {
     minWidth: 250,
     minHeight: 300,
     backgroundColor: "#1a1a1a",
-    icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
+    icon: path.join(process.env.APP_ROOT, "src/assets/icon.png"),
+    title: "Scribble",
     frame: false,
     titleBarStyle: "hidden",
     webPreferences: {
@@ -55,6 +54,8 @@ function createNoteWindow(noteId) {
     minWidth: 250,
     minHeight: 300,
     backgroundColor: "#1a1a1a",
+    icon: path.join(process.env.APP_ROOT, "src/assets/icon.png"),
+    title: "Scribble - Note",
     frame: false,
     titleBarStyle: "hidden",
     webPreferences: {
@@ -87,6 +88,8 @@ function createSettingsWindow() {
     minWidth: 250,
     minHeight: 300,
     backgroundColor: "#1a1a1a",
+    icon: path.join(process.env.APP_ROOT, "src/assets/icon.png"),
+    title: "Scribble - Settings",
     parent: mainWindow || void 0,
     modal: true,
     frame: false,
@@ -121,6 +124,11 @@ ipcMain.handle("open-note", (_, noteId) => {
   createNoteWindow(noteId);
   return { success: true };
 });
+ipcMain.on("note-updated", (_, noteId) => {
+  if (mainWindow) {
+    mainWindow.webContents.send("note-updated", noteId);
+  }
+});
 ipcMain.handle("window-minimize", (event) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   if (win) win.minimize();
@@ -139,8 +147,20 @@ ipcMain.handle("window-close", (event) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   if (win) win.close();
 });
+ipcMain.handle("window-move", (event, moveX, moveY) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win) {
+    const [x, y] = win.getPosition();
+    win.setPosition(x + moveX, y + moveY);
+  }
+});
 ipcMain.handle("create-note", () => {
-  createNoteWindow("new");
+  const noteId = `new-${Date.now().toString(36)}`;
+  createNoteWindow(noteId);
+  return { success: true, noteId };
+});
+ipcMain.handle("create-note-with-id", (_, noteId) => {
+  createNoteWindow(noteId);
   return { success: true };
 });
 ipcMain.handle("get-note-id", (event) => {
@@ -172,6 +192,57 @@ ipcMain.handle("select-directory", async () => {
 ipcMain.handle("get-default-save-location", () => {
   return getDefaultSaveLocation();
 });
+ipcMain.handle("save-note-to-file", async (_, noteId, title, content, saveLocation, oldTitle = "") => {
+  console.log("Saving note to file:", { noteId, title, saveLocation, oldTitle });
+  try {
+    if (!fs.existsSync(saveLocation)) {
+      fs.mkdirSync(saveLocation, { recursive: true });
+    }
+    const safeTitle = title && title.trim() ? title.trim().replace(/[^a-z0-9]/gi, "_").toLowerCase() : "untitled_note_" + noteId.substring(0, 8);
+    console.log("Creating filename from title:", { title, safeTitle });
+    const filePath = path.join(saveLocation, `${safeTitle}.md`);
+    if (oldTitle && oldTitle !== title && oldTitle.trim()) {
+      const oldSafeTitle = oldTitle.trim().replace(/[^a-z0-9]/gi, "_").toLowerCase();
+      const oldFilePath = path.join(saveLocation, `${oldSafeTitle}.md`);
+      console.log("Title changed, handling file rename:", {
+        oldTitle,
+        newTitle: title,
+        oldFilePath,
+        newFilePath: filePath
+      });
+      if (fs.existsSync(oldFilePath) && oldFilePath !== filePath) {
+        try {
+          console.log(`Renaming file from ${oldFilePath} to ${filePath}`);
+          fs.renameSync(oldFilePath, filePath);
+          console.log("File renamed successfully");
+        } catch (renameErr) {
+          console.error("Error renaming file:", renameErr);
+        }
+      }
+    }
+    console.log("Writing to file path:", filePath);
+    fs.writeFileSync(filePath, content, "utf8");
+    console.log("File written successfully");
+    return { success: true, filePath };
+  } catch (error) {
+    console.error("Error saving note to file:", error);
+    return { success: false, error: error.message || "Unknown error" };
+  }
+});
+ipcMain.handle("delete-note-file", async (_, noteId, title, saveLocation) => {
+  try {
+    const safeTitle = title && title.trim() ? title.trim().replace(/[^a-z0-9]/gi, "_").toLowerCase() : "untitled_note_" + noteId.substring(0, 8);
+    console.log("Creating filename from title:", { title, safeTitle });
+    const filePath = path.join(saveLocation, `${safeTitle}.md`);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting note file:", error);
+    return { success: false, error: error.message || "Unknown error" };
+  }
+});
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
@@ -183,6 +254,9 @@ app.on("activate", () => {
     createMainWindow();
   }
 });
+if (process.platform === "win32") {
+  app.setAppUserModelId("com.tylerburnett.scribble");
+}
 app.whenReady().then(createMainWindow);
 export {
   MAIN_DIST,

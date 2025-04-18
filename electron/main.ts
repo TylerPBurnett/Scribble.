@@ -1,10 +1,8 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron'
-import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs'
 
-const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // The built directory structure
@@ -25,6 +23,8 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
+
+
 let mainWindow: BrowserWindow | null
 let settingsWindow: BrowserWindow | null = null
 const noteWindows = new Map<string, BrowserWindow>()
@@ -36,7 +36,8 @@ function createMainWindow() {
     minWidth: 250,
     minHeight: 300,
     backgroundColor: '#1a1a1a',
-    icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
+    icon: path.join(process.env.APP_ROOT, 'src/assets/icon.png'),
+    title: 'Scribble',
     frame: false,
     titleBarStyle: 'hidden',
     webPreferences: {
@@ -78,6 +79,8 @@ function createNoteWindow(noteId: string) {
     minWidth: 250,
     minHeight: 300,
     backgroundColor: '#1a1a1a',
+    icon: path.join(process.env.APP_ROOT, 'src/assets/icon.png'),
+    title: 'Scribble - Note',
     frame: false,
     titleBarStyle: 'hidden',
     webPreferences: {
@@ -95,6 +98,8 @@ function createNoteWindow(noteId: string) {
       query: { noteId }
     })
   }
+
+
 
   // Store the window reference
   noteWindows.set(noteId, noteWindow)
@@ -121,6 +126,8 @@ function createSettingsWindow() {
     minWidth: 250,
     minHeight: 300,
     backgroundColor: '#1a1a1a',
+    icon: path.join(process.env.APP_ROOT, 'src/assets/icon.png'),
+    title: 'Scribble - Settings',
     parent: mainWindow || undefined,
     modal: true,
     frame: false,
@@ -168,6 +175,14 @@ ipcMain.handle('open-note', (_, noteId) => {
   return { success: true }
 })
 
+// Listen for note updates and relay to main window
+ipcMain.on('note-updated', (_, noteId) => {
+  // Relay the update to the main window if it exists
+  if (mainWindow) {
+    mainWindow.webContents.send('note-updated', noteId)
+  }
+})
+
 // Window control handlers
 ipcMain.handle('window-minimize', (event) => {
   const win = BrowserWindow.fromWebContents(event.sender)
@@ -190,10 +205,23 @@ ipcMain.handle('window-close', (event) => {
   if (win) win.close()
 })
 
+ipcMain.handle('window-move', (event, moveX, moveY) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (win) {
+    const [x, y] = win.getPosition()
+    win.setPosition(x + moveX, y + moveY)
+  }
+})
+
 ipcMain.handle('create-note', () => {
-  // The actual note creation happens in the renderer process
-  // This just opens a new window for a new note
-  createNoteWindow('new')
+  // Generate a unique ID for the new note
+  const noteId = `new-${Date.now().toString(36)}`
+  createNoteWindow(noteId)
+  return { success: true, noteId }
+})
+
+ipcMain.handle('create-note-with-id', (_, noteId) => {
+  createNoteWindow(noteId)
   return { success: true }
 })
 
@@ -238,6 +266,87 @@ ipcMain.handle('get-default-save-location', () => {
   return getDefaultSaveLocation()
 })
 
+// File operation handlers
+ipcMain.handle('save-note-to-file', async (_, noteId, title, content, saveLocation, oldTitle = '') => {
+    console.log('Saving note to file:', { noteId, title, saveLocation, oldTitle });
+  try {
+    // Ensure the directory exists
+    if (!fs.existsSync(saveLocation)) {
+      fs.mkdirSync(saveLocation, { recursive: true })
+    }
+
+    // Create a safe filename from the title or use 'untitled_note' if title is empty
+    const safeTitle = title && title.trim() ?
+      title.trim().replace(/[^a-z0-9]/gi, '_').toLowerCase() :
+      'untitled_note_' + noteId.substring(0, 8)
+
+    console.log('Creating filename from title:', { title, safeTitle })
+
+    // Create the full path
+    const filePath = path.join(saveLocation, `${safeTitle}.md`)
+
+    // Check if the title has changed and we need to rename the file
+    if (oldTitle && oldTitle !== title && oldTitle.trim()) {
+      const oldSafeTitle = oldTitle.trim().replace(/[^a-z0-9]/gi, '_').toLowerCase()
+      const oldFilePath = path.join(saveLocation, `${oldSafeTitle}.md`)
+
+      console.log('Title changed, handling file rename:', {
+        oldTitle,
+        newTitle: title,
+        oldFilePath,
+        newFilePath: filePath
+      })
+
+      // Check if old file exists and rename it
+      if (fs.existsSync(oldFilePath) && oldFilePath !== filePath) {
+        try {
+          console.log(`Renaming file from ${oldFilePath} to ${filePath}`)
+          // Rename the file instead of deleting and creating a new one
+          fs.renameSync(oldFilePath, filePath)
+          console.log('File renamed successfully')
+        } catch (renameErr) {
+          console.error('Error renaming file:', renameErr)
+          // If rename fails, we'll create a new file below
+        }
+      }
+    }
+
+    // Write the file (either new file or update existing)
+    console.log('Writing to file path:', filePath)
+    fs.writeFileSync(filePath, content, 'utf8')
+    console.log('File written successfully')
+
+    return { success: true, filePath }
+  } catch (error: any) {
+    console.error('Error saving note to file:', error)
+    return { success: false, error: error.message || 'Unknown error' }
+  }
+})
+
+ipcMain.handle('delete-note-file', async (_, noteId, title, saveLocation) => {
+  try {
+    // Create a safe filename from the title or use 'untitled_note' if title is empty
+    const safeTitle = title && title.trim() ?
+      title.trim().replace(/[^a-z0-9]/gi, '_').toLowerCase() :
+      'untitled_note_' + noteId.substring(0, 8)
+
+    console.log('Creating filename from title:', { title, safeTitle })
+
+    // Create the full path
+    const filePath = path.join(saveLocation, `${safeTitle}.md`)
+
+    // Check if file exists before deleting
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath)
+    }
+
+    return { success: true }
+  } catch (error: any) {
+    console.error('Error deleting note file:', error)
+    return { success: false, error: error.message || 'Unknown error' }
+  }
+})
+
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
@@ -255,5 +364,10 @@ app.on('activate', () => {
     createMainWindow()
   }
 })
+
+// Set the app user model id for Windows
+if (process.platform === 'win32') {
+  app.setAppUserModelId('com.tylerburnett.scribble')
+}
 
 app.whenReady().then(createMainWindow)

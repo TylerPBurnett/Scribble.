@@ -1,27 +1,26 @@
 .note-list {
   display: grid;
-  grid-template-columns: repeat(3, minmax(150px, 1fr));
-  gap: 12px;
-  padding: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  padding: 16px;
   overflow-y: auto;
-  height: calc(100vh - 140px);
-  max-width: 100%;
-  grid-auto-rows: minmax(180px, auto);
-  align-items: start;
-  justify-content: center;
+  height: calc(100vh - 180px);
+  width: 100%;
+  grid-auto-rows: 180px;
+  align-items: stretch;
+  background-color: #192734; /* You can change this color to customize the notelist background */
 }
 
 /* Responsive behavior */
-
-@media (max-width: 680px) and (min-width: 501px) {
+@media (max-width: 680px) and (min-width: 351px) {
   .note-list {
-    grid-template-columns: repeat(2, minmax(150px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 500px) {
+@media (max-width: 350px) {
   .note-list {
-    grid-template-columns: minmax(150px, 1fr);
+    grid-template-columns: 1fr;
   }
 }
 
@@ -30,11 +29,12 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 200px;
+  height: 180px;
   color: #777;
   text-align: center;
   border: 1px dashed #3a3a3a;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 20px;
-  margin-top: 20px;
+  grid-column: 1 / -1; /* Span all columns */
+  margin: 0;
 }

@@ -1,62 +1,75 @@
 .tiptap-editor {
   display: flex;
-  flex-direction: column;
-  border: 1px solid #2a2a2a;
-  border-radius: 8px;
+  flex-direction: column-reverse; /* Reversed to put toolbar at bottom */
+  border: none;
+  border-radius: 0;
   overflow: hidden;
-  background-color: #1a1a1a;
-  color: #e0e0e0;
+  background-color: #fff9c4;
+  color: #333;
   width: 100%;
   height: 100%;
+  font-family: 'Comic Sans MS', cursive, sans-serif;
 }
 
 .tiptap-toolbar {
   display: flex;
-  flex-wrap: wrap;
-  padding: 8px;
-  background-color: #2a2a2a;
-  border-bottom: 1px solid #3a3a3a;
-  gap: 4px;
+  flex-wrap: nowrap; /* Prevent wrapping to multiple lines */
+  padding: 6px; /* Reduced padding */
+  background-color: #fff5b1;
+  border-top: 1px solid rgba(0, 0, 0, 0.1); /* Changed from border-bottom to border-top */
+  gap: 3px; /* Reduced gap */
+  width: 100%; /* Full width of the container */
+  overflow-x: auto; /* Allow horizontal scrolling for single line */
+  white-space: nowrap; /* Keep all items in a single line */
+  scrollbar-width: thin; /* Thin scrollbar for Firefox */
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent; /* Scrollbar color for Firefox */
 }
 
 .tiptap-toolbar button {
-  background-color: transparent;
-  border: 1px solid #3a3a3a;
+  background-color: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 4px;
-  color: #e0e0e0;
+  color: #333;
   cursor: pointer;
-  height: 32px;
-  width: 32px;
+  height: 28px; /* Slightly smaller height */
+  min-width: 28px; /* Slightly smaller width */
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   transition: background-color 0.2s, border-color 0.2s;
+  font-size: 0.9em; /* Slightly smaller font */
+  flex-shrink: 0; /* Prevent buttons from shrinking */
 }
 
 .tiptap-toolbar button:hover {
-  background-color: #3a3a3a;
-  border-color: #4a4a4a;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.2);
 }
 
 .tiptap-toolbar button.is-active {
-  background-color: #4a4a4a;
-  border-color: #5a5a5a;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .tiptap-toolbar .divider {
   width: 1px;
-  background-color: #3a3a3a;
-  margin: 0 4px;
-  height: 24px;
+  background-color: rgba(0, 0, 0, 0.1);
+  margin: 0 3px;
+  height: 20px; /* Adjusted height to match new button size */
   align-self: center;
+  flex-shrink: 0; /* Prevent divider from shrinking */
 }
 
 .tiptap-content {
   flex: 1;
-  padding: 16px;
+  padding: 16px 16px 8px 16px; /* Reduced bottom padding */
   overflow-y: auto;
   line-height: 1.5;
+  background-color: #fff9c4;
+  color: #333;
+  font-family: 'Comic Sans MS', cursive, sans-serif;
 }
 
 .tiptap-content p {
@@ -84,24 +97,27 @@
 }
 
 .tiptap-content blockquote {
-  border-left: 3px solid #4a4a4a;
+  border-left: 3px solid rgba(0, 0, 0, 0.2);
   padding-left: 1em;
   margin-left: 0;
-  color: #aaa;
+  color: #555;
+  background-color: rgba(255, 255, 255, 0.3);
 }
 
 .tiptap-content code {
-  background-color: #2a2a2a;
+  background-color: rgba(255, 255, 255, 0.5);
   padding: 0.2em 0.4em;
   border-radius: 3px;
   font-family: monospace;
+  color: #333;
 }
 
 .tiptap-content pre {
-  background-color: #2a2a2a;
+  background-color: rgba(255, 255, 255, 0.5);
   padding: 0.75em 1em;
   border-radius: 5px;
   overflow-x: auto;
+  color: #333;
 }
 
 .tiptap-content pre code {
@@ -115,7 +131,7 @@
 }
 
 .tiptap-content a {
-  color: #61dafb;
+  color: #0066cc;
   text-decoration: none;
 }
 
@@ -125,7 +141,7 @@
 
 .tiptap-content hr {
   border: none;
-  border-top: 1px solid #3a3a3a;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
   margin: 1em 0;
 }
 
@@ -145,68 +161,30 @@
   margin-top: 0.3em;
 }
 
-/* Bubble menu styling */
+/* WebKit scrollbar styling */
+.tiptap-toolbar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.tiptap-toolbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tiptap-toolbar::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+/* Selected node styling */
 .ProseMirror-selectednode {
-  outline: 2px solid #61dafb;
-}
-
-[data-tippy-root] {
-  max-width: calc(100vw - 20px);
-}
-
-.tippy-box {
-  background-color: #2a2a2a;
-  color: #e0e0e0;
-  border-radius: 4px;
-  font-size: 0.9rem;
-}
-
-.tippy-box[data-placement^=top] > .tippy-arrow::before {
-  border-top-color: #2a2a2a;
-}
-
-.tippy-box[data-placement^=bottom] > .tippy-arrow::before {
-  border-bottom-color: #2a2a2a;
-}
-
-.tippy-box[data-placement^=left] > .tippy-arrow::before {
-  border-left-color: #2a2a2a;
-}
-
-.tippy-box[data-placement^=right] > .tippy-arrow::before {
-  border-right-color: #2a2a2a;
-}
-
-.tippy-content {
-  padding: 5px;
-}
-
-.tippy-content button {
-  background-color: transparent;
-  border: 1px solid #3a3a3a;
-  border-radius: 4px;
-  color: #e0e0e0;
-  cursor: pointer;
-  padding: 5px 10px;
-  margin: 0 2px;
-  transition: background-color 0.2s, border-color 0.2s;
-}
-
-.tippy-content button:hover {
-  background-color: #3a3a3a;
-  border-color: #4a4a4a;
-}
-
-.tippy-content button.is-active {
-  background-color: #4a4a4a;
-  border-color: #5a5a5a;
+  outline: 2px solid rgba(0, 0, 0, 0.2);
 }
 
 /* Placeholder styling */
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
-  color: #aaa;
+  color: #888;
   pointer-events: none;
   height: 0;
 }
@@ -222,4 +200,41 @@
 
 .ProseMirror .text-right {
   text-align: right;
+}
+
+/* Responsive toolbar adjustments */
+@media (max-width: 500px) {
+  .tiptap-toolbar button {
+    height: 26px;
+    min-width: 26px;
+    font-size: 0.85em;
+  }
+
+  .tiptap-toolbar .divider {
+    height: 18px;
+    margin: 0 2px;
+  }
+
+  .tiptap-toolbar {
+    gap: 2px;
+    padding: 4px;
+  }
+}
+
+@media (max-width: 350px) {
+  .tiptap-toolbar button {
+    height: 24px;
+    min-width: 24px;
+    font-size: 0.8em;
+  }
+
+  .tiptap-toolbar .divider {
+    height: 16px;
+    margin: 0 1px;
+  }
+
+  .tiptap-toolbar {
+    gap: 1px;
+    padding: 3px;
+  }
 }

@@ -1,49 +1,68 @@
 .note-card {
   background-color: #192734;
   border-radius: 12px;
-  padding: 12px;
+  padding: 16px;
   cursor: pointer;
   transition: all 0.2s ease;
   overflow: hidden;
   position: relative;
   height: 100%;
-  min-height: 180px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin: 0;
   width: 100%;
-  min-width: 150px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Different note colors */
 .note-card.color-pink {
   background-color: #ffd1dc;
   color: #333;
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .note-card.color-yellow {
   background-color: #fff9c4;
   color: #333;
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .note-card.color-blue {
   background-color: #bbdefb;
   color: #333;
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .note-card.color-green {
   background-color: #c8e6c9;
   color: #333;
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .note-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.note-card.color-pink:hover,
+.note-card.color-yellow:hover,
+.note-card.color-blue:hover,
+.note-card.color-green:hover {
+  border-color: rgba(0, 0, 0, 0.2);
 }
 
 .note-card.active {
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.note-card.color-pink.active,
+.note-card.color-yellow.active,
+.note-card.color-blue.active,
+.note-card.color-green.active {
+  border-color: rgba(0, 0, 0, 0.3);
 }
 
 .note-title {

@@ -14,15 +14,6 @@
   color: #e0e0e0;
 }
 
-.app-actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 10px 20px;
-  background-color: #192734;
-  border-bottom: 1px solid #2a3a4a;
-}
-
 .app-logo {
   display: flex;
   align-items: center;
@@ -34,7 +25,7 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  background-color: #f5a623;
+  background-color: #00000000;
   color: #1a1a1a;
   border-radius: 8px;
   font-size: 24px;
@@ -50,6 +41,11 @@
 
 .app-actions {
   display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #192734;
+  border-bottom: 1px solid #2a3a4a;
   gap: 12px;
 }
 
@@ -58,43 +54,46 @@
   align-items: center;
   justify-content: center;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: 20px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .new-note-btn {
   background-color: #2196f3;
   color: white;
   border: none;
-  border-radius: 20px;
 }
 
 .new-note-btn:hover {
   background-color: #1976d2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .settings-btn {
   background-color: rgba(255, 255, 255, 0.1);
   color: #e0e0e0;
   border: none;
-  border-radius: 20px;
 }
 
 .settings-btn:hover {
   background-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
 }
 
 .plus-icon {
   font-size: 18px;
-  margin-right: 6px;
+  margin-right: 8px;
+  line-height: 1;
 }
 
 .settings-icon {
   font-size: 16px;
-  margin-right: 6px;
+  margin-right: 8px;
+  line-height: 1;
 }
 
 .search-container {
@@ -126,9 +125,11 @@
 
 .app-content {
   flex: 1;
-  overflow: hidden;
+  overflow: auto;
   padding: 0;
   margin: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .app-footer {

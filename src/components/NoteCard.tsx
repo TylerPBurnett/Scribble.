@@ -29,15 +29,23 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete }: NoteCardProps) 
   };
 
   // Handle confirm delete
-  const handleConfirmDelete = (e: React.MouseEvent) => {
+  const handleConfirmDelete = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering the note click
     if (onDelete) {
       onDelete(note.id);
     } else {
       // Fallback if onDelete prop is not provided
-      deleteNote(note.id);
-      // Reload notes (this is not ideal, but works as a fallback)
-      window.location.reload();
+      console.log('NoteCard - Deleting note (fallback):', note.id);
+      try {
+        await deleteNote(note.id);
+        console.log('NoteCard - Note deleted');
+        // Notify other windows that this note has been deleted
+        window.noteWindow.noteUpdated(note.id);
+        // Reload notes (this is not ideal, but works as a fallback)
+        window.location.reload();
+      } catch (error) {
+        console.error('Error deleting note:', error);
+      }
     }
   };
 
