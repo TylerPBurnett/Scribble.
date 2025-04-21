@@ -25,38 +25,59 @@ function App() {
   // Load notes and settings on startup
   useEffect(() => {
     const init = async () => {
-      // Initialize settings
-      console.log('App.tsx - Initializing settings...')
-      const settings = await initSettings()
-      console.log('App.tsx - Settings initialized:', settings)
-      setAppSettings(settings)
+      try {
+        // Initialize settings
+        console.log('App.tsx - Initializing settings...')
+        const settings = await initSettings()
+        console.log('App.tsx - Settings initialized:', settings)
+        setAppSettings(settings)
 
-      // Load notes
-      const loadedNotes = getNotes()
-      setNotes(loadedNotes)
+        // Check if this is a settings window
+        const isSettings = await window.settings.isSettingsWindow()
+        if (isSettings) {
+          console.log('This is a settings window')
+          setIsSettingsWindow(true)
+          return
+        }
 
-      // Check if this is a settings window
-      const isSettings = await window.settings.isSettingsWindow()
-      if (isSettings) {
-        setIsSettingsWindow(true)
-        return
-      }
+        // If this is a note window, get the note ID from the URL
+        const noteId = await window.noteWindow.getNoteId()
+        console.log('getNoteId returned:', noteId)
 
-      // If this is a note window, get the note ID from the URL
-      const noteId = await window.noteWindow.getNoteId()
-      if (noteId) {
-        setIsNoteWindow(true)
-        if (noteId.startsWith('new-')) {
-          // Create a new note
-          const newNote = await createNote()
-          setActiveNote(newNote)
+        if (noteId) {
+          console.log('This is a note window for note ID:', noteId)
+          setIsNoteWindow(true)
+
+          if (noteId.startsWith('new-')) {
+            // Create a new note
+            console.log('Creating new note for new window')
+            const newNote = await createNote()
+            console.log('New note created in note window:', newNote)
+            setActiveNote(newNote)
+          } else {
+            // Load existing note
+            console.log('Loading existing note with ID:', noteId)
+            const note = await getNoteById(noteId)
+            console.log('Loaded note:', note)
+            if (note) {
+              setActiveNote(note)
+            } else {
+              console.error('Note not found with ID:', noteId)
+            }
+          }
         } else {
-          // Load existing note
-          const note = getNoteById(noteId)
-          if (note) {
-            setActiveNote(note)
+          // Load notes for the main window
+          console.log('This is the main window, loading all notes')
+          try {
+            const loadedNotes = await getNotes()
+            console.log('Loaded notes:', loadedNotes.length)
+            setNotes(loadedNotes)
+          } catch (error) {
+            console.error('Error loading notes:', error)
           }
         }
+      } catch (error) {
+        console.error('Error during initialization:', error)
       }
     }
 
@@ -69,11 +90,15 @@ function App() {
     if (isNoteWindow) return
 
     // Set up listener for note updates
-    const handleNoteUpdated = (_event: any, noteId: string) => {
+    const handleNoteUpdated = async (_event: any, noteId: string) => {
       console.log('Note updated:', noteId)
-      // Reload all notes from localStorage
-      const updatedNotes = getNotes()
-      setNotes(updatedNotes)
+      // Reload all notes from file system
+      try {
+        const updatedNotes = await getNotes()
+        setNotes(updatedNotes)
+      } catch (error) {
+        console.error('Error reloading notes after update:', error)
+      }
     }
 
     // Add event listener
@@ -104,16 +129,23 @@ function App() {
 
   // Handle creating a new note
   const handleNewNote = async () => {
-    // Create a new note in the main window
-    console.log('Creating new note...')
-    const newNote = await createNote()
-    console.log('New note created:', newNote)
+    try {
+      // Create a new note in the main window
+      console.log('Creating new note...')
+      const newNote = await createNote()
+      console.log('New note created:', newNote)
 
-    // Open a new window with the note's ID
-    await window.noteWindow.openNote(newNote.id)
+      // Use the createNote IPC method directly instead of openNote
+      // This will create a new window with a temporary ID and then create the note
+      console.log('Creating note window directly via IPC')
+      const result = await window.noteWindow.createNote()
+      console.log('Result from creating note window:', result)
 
-    // Notify other windows that a new note has been created
-    window.noteWindow.noteUpdated(newNote.id)
+      // Notify other windows that a new note has been created
+      window.noteWindow.noteUpdated(newNote.id)
+    } catch (error) {
+      console.error('Error creating new note:', error)
+    }
   }
 
   // Handle opening settings
@@ -147,8 +179,15 @@ function App() {
     await deleteNote(noteId)
     console.log('Note deleted from storage')
 
-    // Update the notes list
-    setNotes(prevNotes => prevNotes.filter(note => note.id !== noteId))
+    // Update the notes list by reloading from file system
+    try {
+      const updatedNotes = await getNotes()
+      setNotes(updatedNotes)
+    } catch (error) {
+      console.error('Error reloading notes after deletion:', error)
+      // Fallback to filtering the current notes list
+      setNotes(prevNotes => prevNotes.filter(note => note.id !== noteId))
+    }
 
     // Notify other windows that this note has been deleted
     window.noteWindow.noteUpdated(noteId)

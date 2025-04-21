@@ -1,5 +1,5 @@
 import { Note } from '../types/Note';
-import { htmlToMarkdown } from '../utils/markdownUtils';
+import { htmlToMarkdown, markdownToHtml } from '../utils/markdownUtils';
 import { getSettings } from './settingsService';
 
 // Generate a unique ID
@@ -7,28 +7,55 @@ const generateId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
 };
 
-// Get notes from localStorage
-export const getNotes = (): Note[] => {
-  const notesJson = localStorage.getItem('notes');
-  if (!notesJson) return [];
+// Get notes from file system
+export const getNotes = async (): Promise<Note[]> => {
+  const settings = getSettings();
+  if (!settings.saveLocation) return [];
 
   try {
-    const notes = JSON.parse(notesJson);
-    // Convert string dates back to Date objects
-    return notes.map((note: any) => ({
-      ...note,
-      createdAt: new Date(note.createdAt),
-      updatedAt: new Date(note.updatedAt),
-    }));
+    const files = await window.fileOps.listNoteFiles(settings.saveLocation);
+    const notes: Note[] = [];
+
+    for (const file of files) {
+      try {
+        // Read the file content
+        const content = await window.fileOps.readNoteFile(file.path);
+
+        // Extract title from the first line if it's a heading
+        let title = file.name.replace(/\.md$/, '');
+        let markdownContent = content;
+
+        // If content starts with a markdown heading, use it as the title
+        const headingMatch = content.match(/^# (.+)$/m);
+        if (headingMatch) {
+          title = headingMatch[1];
+          // Remove the heading from the content for display
+          markdownContent = content.replace(/^# .+\n\n?/, '');
+        }
+
+        // Convert markdown to HTML for the editor
+        const htmlContent = markdownToHtml(markdownContent);
+
+        // Create a Note object
+        const note: Note = {
+          id: file.id,
+          title,
+          content: htmlContent,
+          createdAt: new Date(file.createdAt),
+          updatedAt: new Date(file.modifiedAt)
+        };
+
+        notes.push(note);
+      } catch (error) {
+        console.error(`Error processing file ${file.path}:`, error);
+      }
+    }
+
+    return notes;
   } catch (error) {
-    console.error('Error parsing notes from localStorage:', error);
+    console.error('Error reading notes from file system:', error);
     return [];
   }
-};
-
-// Save notes to localStorage
-export const saveNotes = (notes: Note[]): void => {
-  localStorage.setItem('notes', JSON.stringify(notes));
 };
 
 // Create a new note
@@ -40,9 +67,6 @@ export const createNote = async (): Promise<Note> => {
     createdAt: new Date(),
     updatedAt: new Date(),
   };
-
-  const notes = getNotes();
-  saveNotes([newNote, ...notes]);
 
   // Save to file if a save location is set
   const settings = getSettings();
@@ -80,28 +104,6 @@ export const createNote = async (): Promise<Note> => {
 
 // Update a note
 export const updateNote = async (updatedNote: Note): Promise<Note> => {
-  const notes = getNotes();
-
-  // Find the original note to check if title has changed
-  const originalNote = notes.find(note => note.id === updatedNote.id);
-  const oldTitle = originalNote?.title || '';
-
-  // Check if title has changed
-  const titleChanged = originalNote && originalNote.title !== updatedNote.title;
-  console.log('Title changed?', {
-    oldTitle: originalNote?.title,
-    newTitle: updatedNote.title,
-    changed: titleChanged
-  });
-
-  const updatedNotes = notes.map(note =>
-    note.id === updatedNote.id
-      ? { ...updatedNote, updatedAt: new Date() }
-      : note
-  );
-
-  saveNotes(updatedNotes);
-
   // Get the updated note with the new timestamp
   const finalNote = { ...updatedNote, updatedAt: new Date() };
 
@@ -122,26 +124,15 @@ export const updateNote = async (updatedNote: Note): Promise<Note> => {
       console.log('Calling saveNoteToFile with:', {
         id: finalNote.id,
         title: finalNote.title,
-        saveLocation: settings.saveLocation,
-        oldTitle
+        saveLocation: settings.saveLocation
       });
 
       try {
-        // Only pass oldTitle if the title has actually changed
-        const titleToPass = titleChanged ? oldTitle : undefined;
-        console.log('Passing to saveNoteToFile:', {
-          id: finalNote.id,
-          title: finalNote.title,
-          oldTitle: titleToPass,
-          titleChanged
-        });
-
         const result = await window.fileOps.saveNoteToFile(
           finalNote.id,
           finalNote.title,
           fullContent,
-          settings.saveLocation,
-          titleToPass // Pass the old title only if title changed
+          settings.saveLocation
         );
         console.log('Save result:', result);
       } catch (saveError) {
@@ -159,14 +150,9 @@ export const updateNote = async (updatedNote: Note): Promise<Note> => {
 
 // Delete a note
 export const deleteNote = async (noteId: string): Promise<void> => {
-  const notes = getNotes();
-
-  // Find the note before deleting it
+  // Get all notes to find the one to delete
+  const notes = await getNotes();
   const noteToDelete = notes.find(note => note.id === noteId);
-
-  // Remove from localStorage
-  const filteredNotes = notes.filter(note => note.id !== noteId);
-  saveNotes(filteredNotes);
 
   // Delete the file if a save location is set
   if (noteToDelete) {
@@ -197,7 +183,7 @@ export const deleteNote = async (noteId: string): Promise<void> => {
 };
 
 // Get a note by ID
-export const getNoteById = (noteId: string): Note | undefined => {
-  const notes = getNotes();
+export const getNoteById = async (noteId: string): Promise<Note | undefined> => {
+  const notes = await getNotes();
   return notes.find(note => note.id === noteId);
 };

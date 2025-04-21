@@ -41,13 +41,16 @@ function createMainWindow() {
   });
 }
 function createNoteWindow(noteId) {
+  console.log("Creating note window with ID:", noteId);
   if (noteWindows.has(noteId)) {
     const existingWindow = noteWindows.get(noteId);
     if (existingWindow) {
+      console.log("Window already exists, focusing it");
       existingWindow.focus();
       return existingWindow;
     }
   }
+  console.log("Creating new BrowserWindow for note");
   const noteWindow = new BrowserWindow({
     width: 900,
     height: 700,
@@ -64,10 +67,12 @@ function createNoteWindow(noteId) {
       nodeIntegration: false
     }
   });
+  const url = VITE_DEV_SERVER_URL ? `${VITE_DEV_SERVER_URL}?noteId=${noteId}` : path.join(RENDERER_DIST, "index.html");
+  console.log("Loading URL for note window:", VITE_DEV_SERVER_URL ? url : `${url} with query noteId=${noteId}`);
   if (VITE_DEV_SERVER_URL) {
-    noteWindow.loadURL(`${VITE_DEV_SERVER_URL}?noteId=${noteId}`);
+    noteWindow.loadURL(url);
   } else {
-    noteWindow.loadFile(path.join(RENDERER_DIST, "index.html"), {
+    noteWindow.loadFile(url, {
       query: { noteId }
     });
   }
@@ -121,8 +126,10 @@ function getDefaultSaveLocation() {
   return savePath;
 }
 ipcMain.handle("open-note", (_, noteId) => {
-  createNoteWindow(noteId);
-  return { success: true };
+  console.log("IPC: open-note called with noteId:", noteId);
+  const window = createNoteWindow(noteId);
+  console.log("Note window created:", window ? "success" : "failed");
+  return { success: !!window };
 });
 ipcMain.on("note-updated", (_, noteId) => {
   if (mainWindow) {
@@ -156,21 +163,29 @@ ipcMain.handle("window-move", (event, moveX, moveY) => {
 });
 ipcMain.handle("create-note", () => {
   const noteId = `new-${Date.now().toString(36)}`;
-  createNoteWindow(noteId);
-  return { success: true, noteId };
+  console.log("IPC: create-note called, generated ID:", noteId);
+  const window = createNoteWindow(noteId);
+  console.log("New note window created:", window ? "success" : "failed");
+  return { success: !!window, noteId };
 });
 ipcMain.handle("create-note-with-id", (_, noteId) => {
   createNoteWindow(noteId);
   return { success: true };
 });
 ipcMain.handle("get-note-id", (event) => {
+  console.log("IPC: get-note-id called");
   const win = BrowserWindow.fromWebContents(event.sender);
-  if (!win) return null;
+  if (!win) {
+    console.log("No window found for this request");
+    return null;
+  }
   for (const [noteId, noteWin] of noteWindows.entries()) {
     if (noteWin === win) {
+      console.log("Found note ID for window:", noteId);
       return noteId;
     }
   }
+  console.log("This is not a note window");
   return null;
 });
 ipcMain.handle("open-settings", () => {
@@ -241,6 +256,42 @@ ipcMain.handle("delete-note-file", async (_, noteId, title, saveLocation) => {
   } catch (error) {
     console.error("Error deleting note file:", error);
     return { success: false, error: error.message || "Unknown error" };
+  }
+});
+ipcMain.handle("list-note-files", async (_, directoryPath) => {
+  try {
+    if (!fs.existsSync(directoryPath)) {
+      return [];
+    }
+    const files = fs.readdirSync(directoryPath);
+    const markdownFiles = files.filter((file) => file.endsWith(".md"));
+    return Promise.all(markdownFiles.map(async (fileName) => {
+      const filePath = path.join(directoryPath, fileName);
+      const stats = fs.statSync(filePath);
+      const id = fileName.replace(/\.md$/, "");
+      return {
+        name: fileName,
+        path: filePath,
+        id,
+        createdAt: stats.birthtime,
+        modifiedAt: stats.mtime
+      };
+    }));
+  } catch (error) {
+    console.error("Error listing note files:", error);
+    return [];
+  }
+});
+ipcMain.handle("read-note-file", async (_, filePath) => {
+  try {
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`File not found: ${filePath}`);
+    }
+    const content = fs.readFileSync(filePath, "utf8");
+    return content;
+  } catch (error) {
+    console.error("Error reading note file:", error);
+    throw error;
   }
 });
 app.on("window-all-closed", () => {

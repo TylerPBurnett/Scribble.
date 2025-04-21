@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Note } from '../types/Note';
 import Tiptap from './Tiptap';
 import { updateNote } from '../services/noteService';
@@ -13,10 +13,37 @@ interface NoteEditorProps {
 const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
   const [title, setTitle] = useState(note.title);
   const [content, setContent] = useState(note.content);
+  const [isDirty, setIsDirty] = useState(false);
 
   // Get settings for auto-save
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
   const [autoSaveInterval, setAutoSaveInterval] = useState(5000);
+
+  // Use refs to store the latest values for use in debounced functions
+  const titleRef = useRef(title);
+  const contentRef = useRef(content);
+  const noteDataRef = useRef(note);
+  const isDirtyRef = useRef(isDirty);
+
+  // Ref for the DOM element
+  const editorDomRef = useRef<HTMLDivElement>(null);
+
+  // Update refs when state changes
+  useEffect(() => {
+    titleRef.current = title;
+  }, [title]);
+
+  useEffect(() => {
+    contentRef.current = content;
+  }, [content]);
+
+  useEffect(() => {
+    noteDataRef.current = note;
+  }, [note]);
+
+  useEffect(() => {
+    isDirtyRef.current = isDirty;
+  }, [isDirty]);
 
   // Load settings on component mount and subscribe to changes
   useEffect(() => {
@@ -36,44 +63,74 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
     return () => unsubscribe();
   }, []);
 
-  // Auto-save when content or title changes
-  useEffect(() => {
-    // Only set up auto-save if it's enabled
-    if (!autoSaveEnabled) {
-      return;
+  // Define a stable save function that uses refs to access the latest state
+  const saveNote = useCallback(async () => {
+    const currentNote = noteDataRef.current;
+    const currentTitle = titleRef.current;
+    const currentContent = contentRef.current;
+
+    if (!currentNote) return;
+
+    const updatedNote = {
+      ...currentNote,
+      title: currentTitle,
+      content: currentContent,
+    };
+
+    try {
+      console.log('NoteEditor - Saving note:', updatedNote.id);
+      const savedNote = await updateNote(updatedNote);
+      console.log('NoteEditor - Note saved:', savedNote);
+      onSave?.(savedNote);
+
+      // Notify other windows that this note has been updated
+      window.noteWindow.noteUpdated(currentNote.id);
+
+      // Reset dirty state after successful save
+      setIsDirty(false);
+    } catch (error) {
+      console.error('Error saving note:', error);
     }
+  }, [onSave]);
 
-    console.log(`Setting up auto-save with interval: ${autoSaveInterval}ms`);
+  // Create a debounced version of saveNote
+  const debouncedSave = useCallback(
+    (() => {
+      let timeoutId: NodeJS.Timeout | null = null;
 
-    const saveTimeout = setTimeout(async () => {
-      if (note) {
-        const updatedNote = {
-          ...note,
-          title,
-          content,
-        };
-        try {
-          console.log('NoteEditor - Saving note:', updatedNote.id);
-          const savedNote = await updateNote(updatedNote);
-          console.log('NoteEditor - Note saved:', savedNote);
-          onSave?.(savedNote);
-
-          // Notify other windows that this note has been updated
-          window.noteWindow.noteUpdated(note.id);
-        } catch (error) {
-          console.error('Error saving note:', error);
+      return () => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
         }
-      }
-    }, autoSaveInterval); // Use the interval from settings
 
-    return () => clearTimeout(saveTimeout);
-  }, [title, content, note, onSave, autoSaveEnabled, autoSaveInterval]);
+        timeoutId = setTimeout(() => {
+          if (isDirtyRef.current) {
+            saveNote();
+          }
+        }, autoSaveInterval);
+      };
+    })(),
+    [saveNote, autoSaveInterval]
+  );
+
+  // Trigger auto-save when content or title changes
+  useEffect(() => {
+    // Mark as dirty when content or title changes
+    setIsDirty(true);
+  }, [title, content]);
+
+  // Trigger debounced save when isDirty changes
+  useEffect(() => {
+    if (isDirty && autoSaveEnabled) {
+      console.log(`Triggering debounced save with interval: ${autoSaveInterval}ms`);
+      debouncedSave();
+    }
+  }, [isDirty, autoSaveEnabled, debouncedSave]);
 
   // Last saved time formatting removed
 
   // Dragging functionality
   const [isDragging, setIsDragging] = useState(false);
-  const noteRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     // Only allow dragging from the title bar
@@ -87,7 +144,7 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
   };
 
   const handleMouseMove = (e: MouseEvent) => {
-    if (isDragging && noteRef.current) {
+    if (isDragging) {
       // Use IPC to move the window instead of remote
       window.windowControls.moveWindow(e.movementX, e.movementY);
     }
@@ -113,29 +170,18 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
   };
 
   // Manual save function
-  const handleManualSave = async () => {
-    if (note) {
-      const updatedNote = {
-        ...note,
-        title,
-        content,
-      };
-      try {
-        console.log('NoteEditor - Manual saving note:', updatedNote.id);
-        const savedNote = await updateNote(updatedNote);
-        console.log('NoteEditor - Note manually saved:', savedNote);
-        onSave?.(savedNote);
-
-        // Notify other windows that this note has been updated
-        window.noteWindow.noteUpdated(note.id);
-      } catch (error) {
-        console.error('Error manually saving note:', error);
-      }
-    }
+  const handleManualSave = () => {
+    console.log('Manual save triggered');
+    saveNote();
   };
 
+  // Content update handler
+  const handleContentUpdate = useCallback((newContent: string) => {
+    setContent(newContent);
+  }, []);
+
   return (
-    <div className="note-editor" ref={noteRef}>
+    <div className="note-editor" ref={editorDomRef}>
       <div className="note-editor-header" onMouseDown={handleMouseDown}>
         <div className="note-drag-handle">
           <div className="note-title-container">
@@ -145,8 +191,9 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
               className="note-title-input"
               value={title}
               onChange={(e) => {
-                console.log('Title changed to:', e.target.value);
-                setTitle(e.target.value);
+                const newTitle = e.target.value;
+                console.log('Title changed to:', newTitle);
+                setTitle(newTitle);
               }}
               placeholder="Untitled Note"
             />
@@ -163,8 +210,8 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                   onClick={handleManualSave}
-                  title="Save now"
                 >
+                  <title>Save now</title>
                   <path d="M19 21H5C3.89543 21 3 20.1046 3 19V5C3 3.89543 3.89543 3 5 3H16L21 8V19C21 20.1046 20.1046 21 19 21Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M17 21V13H7V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M7 3V8H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -177,13 +224,13 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
               <svg
                 className="note-close-icon"
                 onClick={handleClose}
-                title="Close note"
                 width="18"
                 height="18"
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
+                <title>Close note</title>
                 <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
@@ -194,7 +241,7 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
       <div className="note-editor-content">
         <Tiptap
           content={content}
-          onUpdate={setContent}
+          onUpdate={handleContentUpdate}
           placeholder="Start typing here..."
           autofocus={true}
         />

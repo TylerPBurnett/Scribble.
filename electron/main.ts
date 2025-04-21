@@ -63,16 +63,20 @@ function createMainWindow() {
 }
 
 function createNoteWindow(noteId: string) {
+  console.log('Creating note window with ID:', noteId)
+
   // Check if window already exists
   if (noteWindows.has(noteId)) {
     const existingWindow = noteWindows.get(noteId)
     if (existingWindow) {
+      console.log('Window already exists, focusing it')
       existingWindow.focus()
       return existingWindow
     }
   }
 
   // Create new window
+  console.log('Creating new BrowserWindow for note')
   const noteWindow = new BrowserWindow({
     width: 900,
     height: 700,
@@ -91,10 +95,16 @@ function createNoteWindow(noteId: string) {
   })
 
   // Load the same URL as the main window but with a query parameter
+  const url = VITE_DEV_SERVER_URL ?
+    `${VITE_DEV_SERVER_URL}?noteId=${noteId}` :
+    path.join(RENDERER_DIST, 'index.html')
+
+  console.log('Loading URL for note window:', VITE_DEV_SERVER_URL ? url : `${url} with query noteId=${noteId}`)
+
   if (VITE_DEV_SERVER_URL) {
-    noteWindow.loadURL(`${VITE_DEV_SERVER_URL}?noteId=${noteId}`)
+    noteWindow.loadURL(url)
   } else {
-    noteWindow.loadFile(path.join(RENDERER_DIST, 'index.html'), {
+    noteWindow.loadFile(url, {
       query: { noteId }
     })
   }
@@ -171,8 +181,10 @@ function getDefaultSaveLocation() {
 
 // IPC handlers
 ipcMain.handle('open-note', (_, noteId) => {
-  createNoteWindow(noteId)
-  return { success: true }
+  console.log('IPC: open-note called with noteId:', noteId)
+  const window = createNoteWindow(noteId)
+  console.log('Note window created:', window ? 'success' : 'failed')
+  return { success: !!window }
 })
 
 // Listen for note updates and relay to main window
@@ -216,8 +228,10 @@ ipcMain.handle('window-move', (event, moveX, moveY) => {
 ipcMain.handle('create-note', () => {
   // Generate a unique ID for the new note
   const noteId = `new-${Date.now().toString(36)}`
-  createNoteWindow(noteId)
-  return { success: true, noteId }
+  console.log('IPC: create-note called, generated ID:', noteId)
+  const window = createNoteWindow(noteId)
+  console.log('New note window created:', window ? 'success' : 'failed')
+  return { success: !!window, noteId }
 })
 
 ipcMain.handle('create-note-with-id', (_, noteId) => {
@@ -226,17 +240,23 @@ ipcMain.handle('create-note-with-id', (_, noteId) => {
 })
 
 ipcMain.handle('get-note-id', (event) => {
+  console.log('IPC: get-note-id called')
   // Find the window that sent this request
   const win = BrowserWindow.fromWebContents(event.sender)
-  if (!win) return null
+  if (!win) {
+    console.log('No window found for this request')
+    return null
+  }
 
   // Check if this is a note window
   for (const [noteId, noteWin] of noteWindows.entries()) {
     if (noteWin === win) {
+      console.log('Found note ID for window:', noteId)
       return noteId
     }
   }
 
+  console.log('This is not a note window')
   return null // This is the main window or an unknown window
 })
 
@@ -344,6 +364,52 @@ ipcMain.handle('delete-note-file', async (_, noteId, title, saveLocation) => {
   } catch (error: any) {
     console.error('Error deleting note file:', error)
     return { success: false, error: error.message || 'Unknown error' }
+  }
+})
+
+// List all markdown files in a directory
+ipcMain.handle('list-note-files', async (_, directoryPath) => {
+  try {
+    if (!fs.existsSync(directoryPath)) {
+      return []
+    }
+
+    const files = fs.readdirSync(directoryPath)
+    const markdownFiles = files.filter(file => file.endsWith('.md'))
+
+    return Promise.all(markdownFiles.map(async (fileName) => {
+      const filePath = path.join(directoryPath, fileName)
+      const stats = fs.statSync(filePath)
+
+      // Generate an ID from the filename
+      const id = fileName.replace(/\.md$/, '')
+
+      return {
+        name: fileName,
+        path: filePath,
+        id,
+        createdAt: stats.birthtime,
+        modifiedAt: stats.mtime
+      }
+    }))
+  } catch (error: any) {
+    console.error('Error listing note files:', error)
+    return []
+  }
+})
+
+// Read a markdown file
+ipcMain.handle('read-note-file', async (_, filePath) => {
+  try {
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`File not found: ${filePath}`)
+    }
+
+    const content = fs.readFileSync(filePath, 'utf8')
+    return content
+  } catch (error: any) {
+    console.error('Error reading note file:', error)
+    throw error
   }
 })
 

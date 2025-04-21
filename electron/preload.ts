@@ -51,6 +51,10 @@ contextBridge.exposeInMainWorld('fileOps', {
     ipcRenderer.invoke('save-note-to-file', noteId, title, content, saveLocation),
   deleteNoteFile: (noteId: string, title: string, saveLocation: string) =>
     ipcRenderer.invoke('delete-note-file', noteId, title, saveLocation),
+  listNoteFiles: (directoryPath: string) =>
+    ipcRenderer.invoke('list-note-files', directoryPath),
+  readNoteFile: (filePath: string) =>
+    ipcRenderer.invoke('read-note-file', filePath),
 })
 
 

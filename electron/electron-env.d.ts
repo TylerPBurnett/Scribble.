@@ -40,6 +40,8 @@ interface Window {
   fileOps: {
     saveNoteToFile: (noteId: string, title: string, content: string, saveLocation: string) => Promise<{ success: boolean, filePath?: string, error?: string }>
     deleteNoteFile: (noteId: string, title: string, saveLocation: string) => Promise<{ success: boolean, error?: string }>
+    listNoteFiles: (directoryPath: string) => Promise<Array<{ name: string, path: string, id: string, createdAt: Date, modifiedAt: Date }>>
+    readNoteFile: (filePath: string) => Promise<string>
   }
   windowControls: {
     minimize: () => Promise<void>
