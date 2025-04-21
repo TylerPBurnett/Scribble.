@@ -81,10 +81,17 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
       console.log('NoteEditor - Saving note:', updatedNote.id);
       const savedNote = await updateNote(updatedNote);
       console.log('NoteEditor - Note saved:', savedNote);
+
+      // Update the note reference with the saved note
+      // This is crucial for subsequent renames to work correctly
+      noteDataRef.current = savedNote;
+      console.log('NoteEditor - Updated note reference:', noteDataRef.current);
+
       onSave?.(savedNote);
 
       // Notify other windows that this note has been updated
-      window.noteWindow.noteUpdated(currentNote.id);
+      // Use the saved note ID which might have changed if the title was changed
+      window.noteWindow.noteUpdated(savedNote.id);
 
       // Reset dirty state after successful save
       setIsDirty(false);

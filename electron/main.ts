@@ -395,8 +395,10 @@ ipcMain.handle('list-note-files', async (_, directoryPath) => {
       const filePath = path.join(directoryPath, fileName)
       const stats = fs.statSync(filePath)
 
-      // Generate an ID from the filename
+      // For simplicity, we'll use the filename without extension as the ID
+      // This ensures that when we search for a file by ID, we can find it
       const id = fileName.replace(/\.md$/, '')
+      console.log('Generated ID from filename:', { fileName, id })
 
       return {
         name: fileName,

@@ -283,6 +283,7 @@ ipcMain.handle("list-note-files", async (_, directoryPath) => {
       const filePath = path.join(directoryPath, fileName);
       const stats = fs.statSync(filePath);
       const id = fileName.replace(/\.md$/, "");
+      console.log("Generated ID from filename:", { fileName, id });
       return {
         name: fileName,
         path: filePath,
