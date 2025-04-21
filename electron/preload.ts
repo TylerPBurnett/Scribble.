@@ -47,8 +47,8 @@ contextBridge.exposeInMainWorld('settings', {
 
 // Expose file operation APIs
 contextBridge.exposeInMainWorld('fileOps', {
-  saveNoteToFile: (noteId: string, title: string, content: string, saveLocation: string) =>
-    ipcRenderer.invoke('save-note-to-file', noteId, title, content, saveLocation),
+  saveNoteToFile: (noteId: string, title: string, content: string, saveLocation: string, oldTitle?: string) =>
+    ipcRenderer.invoke('save-note-to-file', noteId, title, content, saveLocation, oldTitle),
   deleteNoteFile: (noteId: string, title: string, saveLocation: string) =>
     ipcRenderer.invoke('delete-note-file', noteId, title, saveLocation),
   listNoteFiles: (directoryPath: string) =>

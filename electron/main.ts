@@ -306,6 +306,7 @@ ipcMain.handle('save-note-to-file', async (_, noteId, title, content, saveLocati
     const filePath = path.join(saveLocation, `${safeTitle}.md`)
 
     // Check if the title has changed and we need to rename the file
+    console.log('Checking for title change:', { oldTitle, newTitle: title });
     if (oldTitle && oldTitle !== title && oldTitle.trim()) {
       const oldSafeTitle = oldTitle.trim().replace(/[^a-z0-9]/gi, '_').toLowerCase()
       const oldFilePath = path.join(saveLocation, `${oldSafeTitle}.md`)
@@ -328,7 +329,20 @@ ipcMain.handle('save-note-to-file', async (_, noteId, title, content, saveLocati
           console.error('Error renaming file:', renameErr)
           // If rename fails, we'll create a new file below
         }
+      } else {
+        console.log('Cannot rename file:', {
+          oldFileExists: fs.existsSync(oldFilePath),
+          pathsEqual: oldFilePath === filePath,
+          oldFilePath,
+          newFilePath: filePath
+        })
       }
+    } else {
+      console.log('No title change detected or invalid old title:', {
+        hasOldTitle: !!oldTitle,
+        titlesEqual: oldTitle === title,
+        oldTitleTrimmed: oldTitle ? oldTitle.trim() : null
+      });
     }
 
     // Write the file (either new file or update existing)

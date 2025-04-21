@@ -216,6 +216,7 @@ ipcMain.handle("save-note-to-file", async (_, noteId, title, content, saveLocati
     const safeTitle = title && title.trim() ? title.trim().replace(/[^a-z0-9]/gi, "_").toLowerCase() : "untitled_note_" + noteId.substring(0, 8);
     console.log("Creating filename from title:", { title, safeTitle });
     const filePath = path.join(saveLocation, `${safeTitle}.md`);
+    console.log("Checking for title change:", { oldTitle, newTitle: title });
     if (oldTitle && oldTitle !== title && oldTitle.trim()) {
       const oldSafeTitle = oldTitle.trim().replace(/[^a-z0-9]/gi, "_").toLowerCase();
       const oldFilePath = path.join(saveLocation, `${oldSafeTitle}.md`);
@@ -233,7 +234,20 @@ ipcMain.handle("save-note-to-file", async (_, noteId, title, content, saveLocati
         } catch (renameErr) {
           console.error("Error renaming file:", renameErr);
         }
+      } else {
+        console.log("Cannot rename file:", {
+          oldFileExists: fs.existsSync(oldFilePath),
+          pathsEqual: oldFilePath === filePath,
+          oldFilePath,
+          newFilePath: filePath
+        });
       }
+    } else {
+      console.log("No title change detected or invalid old title:", {
+        hasOldTitle: !!oldTitle,
+        titlesEqual: oldTitle === title,
+        oldTitleTrimmed: oldTitle ? oldTitle.trim() : null
+      });
     }
     console.log("Writing to file path:", filePath);
     fs.writeFileSync(filePath, content, "utf8");

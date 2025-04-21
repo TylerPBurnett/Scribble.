@@ -38,7 +38,7 @@ electron.contextBridge.exposeInMainWorld("settings", {
   getDefaultSaveLocation: () => electron.ipcRenderer.invoke("get-default-save-location")
 });
 electron.contextBridge.exposeInMainWorld("fileOps", {
-  saveNoteToFile: (noteId, title, content, saveLocation) => electron.ipcRenderer.invoke("save-note-to-file", noteId, title, content, saveLocation),
+  saveNoteToFile: (noteId, title, content, saveLocation, oldTitle) => electron.ipcRenderer.invoke("save-note-to-file", noteId, title, content, saveLocation, oldTitle),
   deleteNoteFile: (noteId, title, saveLocation) => electron.ipcRenderer.invoke("delete-note-file", noteId, title, saveLocation),
   listNoteFiles: (directoryPath) => electron.ipcRenderer.invoke("list-note-files", directoryPath),
   readNoteFile: (filePath) => electron.ipcRenderer.invoke("read-note-file", filePath)

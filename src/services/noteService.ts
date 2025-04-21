@@ -113,6 +113,19 @@ export const updateNote = async (updatedNote: Note): Promise<Note> => {
   if (settings.saveLocation) {
     console.log('Save location found:', settings.saveLocation);
     try {
+      // First, check if we need to handle a title change
+      // Get all notes to find the original one
+      const notes = await getNotes();
+      const originalNote = notes.find(note => note.id === updatedNote.id);
+      const oldTitle = originalNote?.title || '';
+      const titleChanged = originalNote && originalNote.title !== updatedNote.title;
+
+      console.log('Title change check:', {
+        oldTitle,
+        newTitle: updatedNote.title,
+        changed: titleChanged
+      });
+
       // Convert HTML content to Markdown
       const markdownContent = htmlToMarkdown(finalNote.content);
 
@@ -124,7 +137,8 @@ export const updateNote = async (updatedNote: Note): Promise<Note> => {
       console.log('Calling saveNoteToFile with:', {
         id: finalNote.id,
         title: finalNote.title,
-        saveLocation: settings.saveLocation
+        saveLocation: settings.saveLocation,
+        oldTitle: titleChanged ? oldTitle : undefined
       });
 
       try {
@@ -132,7 +146,8 @@ export const updateNote = async (updatedNote: Note): Promise<Note> => {
           finalNote.id,
           finalNote.title,
           fullContent,
-          settings.saveLocation
+          settings.saveLocation,
+          titleChanged ? oldTitle : undefined
         );
         console.log('Save result:', result);
       } catch (saveError) {
