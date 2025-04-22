@@ -5,6 +5,19 @@ import react from '@vitejs/plugin-react'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        note: path.resolve(__dirname, 'note.html'),
+        settings: path.resolve(__dirname, 'settings.html'),
+      },
+    },
+  },
+  server: {
+    open: false,
+    strictPort: true,
+  },
   plugins: [
     react(),
     electron({

@@ -94,11 +94,24 @@ function createNoteWindow(noteId: string) {
     },
   })
 
-  // Load the same URL as the main window but with a query parameter
-  const url = VITE_DEV_SERVER_URL ?
-    `${VITE_DEV_SERVER_URL}?noteId=${noteId}` :
-    path.join(RENDERER_DIST, 'index.html')
+  // Load the note.html file instead of index.html
+  let url;
+  if (VITE_DEV_SERVER_URL) {
+    // In development mode, we need to handle the URL carefully
+    // The VITE_DEV_SERVER_URL might be something like http://localhost:5173/
+    // We need to make sure we're loading note.html with the noteId parameter
+    const baseUrl = VITE_DEV_SERVER_URL.endsWith('/') ?
+      VITE_DEV_SERVER_URL :
+      `${VITE_DEV_SERVER_URL}/`;
+    url = `${baseUrl}note.html?noteId=${noteId}`;
+  } else {
+    // In production mode, we load the file directly
+    url = path.join(RENDERER_DIST, 'note.html');
+  }
 
+  console.log('=== Creating Note Window ===');
+  console.log('VITE_DEV_SERVER_URL:', VITE_DEV_SERVER_URL);
+  console.log('Note ID:', noteId);
   console.log('Loading URL for note window:', VITE_DEV_SERVER_URL ? url : `${url} with query noteId=${noteId}`)
 
   if (VITE_DEV_SERVER_URL) {
@@ -114,8 +127,36 @@ function createNoteWindow(noteId: string) {
   // Store the window reference
   noteWindows.set(noteId, noteWindow)
 
+  // Add a handler for navigation events (including refreshes)
+  noteWindow.webContents.on('will-navigate', (event, url) => {
+    console.log(`=== Note window ${noteWindow.id} will navigate to: ${url} ===`);
+    console.log('Current noteId associated with this window:', noteId);
+    console.log('Is this window still in the noteWindows Map?', noteWindows.has(noteId) && noteWindows.get(noteId) === noteWindow);
+
+    // Prevent the default navigation
+    event.preventDefault();
+
+    // Instead, reload the window with the noteId parameter
+    if (VITE_DEV_SERVER_URL) {
+      // Use the same URL construction logic as in the initial load
+      const baseUrl = VITE_DEV_SERVER_URL.endsWith('/') ?
+        VITE_DEV_SERVER_URL :
+        `${VITE_DEV_SERVER_URL}/`;
+      const newUrl = `${baseUrl}note.html?noteId=${noteId}`;
+      console.log('Reloading with URL:', newUrl);
+      noteWindow.loadURL(newUrl);
+    } else {
+      noteWindow.loadFile(path.join(RENDERER_DIST, 'note.html'), {
+        query: { noteId }
+      });
+    }
+
+    console.log('Reloaded window with noteId parameter:', noteId);
+  });
+
   // Clean up when window is closed
   noteWindow.on('closed', () => {
+    console.log(`Note window closed: ${noteId}`);
     noteWindows.delete(noteId)
   })
 
@@ -149,13 +190,25 @@ function createSettingsWindow() {
     },
   })
 
-  // Load the same URL as the main window but with a settings parameter
+  // Load the settings.html file instead of index.html
+  let url;
   if (VITE_DEV_SERVER_URL) {
-    settingsWindow.loadURL(`${VITE_DEV_SERVER_URL}?settings=true`)
+    // In development mode, we need to handle the URL carefully
+    const baseUrl = VITE_DEV_SERVER_URL.endsWith('/') ?
+      VITE_DEV_SERVER_URL :
+      `${VITE_DEV_SERVER_URL}/`;
+    url = `${baseUrl}settings.html`;
   } else {
-    settingsWindow.loadFile(path.join(RENDERER_DIST, 'index.html'), {
-      query: { settings: 'true' }
-    })
+    // In production mode, we load the file directly
+    url = path.join(RENDERER_DIST, 'settings.html');
+  }
+
+  console.log('Loading URL for settings window:', url)
+
+  if (VITE_DEV_SERVER_URL) {
+    settingsWindow.loadURL(url)
+  } else {
+    settingsWindow.loadFile(url)
   }
 
   // Clean up when window is closed
@@ -240,13 +293,17 @@ ipcMain.handle('create-note-with-id', (_, noteId) => {
 })
 
 ipcMain.handle('get-note-id', (event) => {
-  console.log('IPC: get-note-id called')
+  console.log('=== IPC: get-note-id called ===')
   // Find the window that sent this request
   const win = BrowserWindow.fromWebContents(event.sender)
   if (!win) {
     console.log('No window found for this request')
     return null
   }
+
+  console.log('Window ID:', win.id)
+  console.log('Current noteWindows Map size:', noteWindows.size)
+  console.log('noteWindows entries:', Array.from(noteWindows.entries()).map(([id, w]) => ({ id, winId: w.id })))
 
   // Check if this is a note window
   for (const [noteId, noteWin] of noteWindows.entries()) {

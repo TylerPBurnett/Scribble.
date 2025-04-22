@@ -67,7 +67,16 @@ function createNoteWindow(noteId) {
       nodeIntegration: false
     }
   });
-  const url = VITE_DEV_SERVER_URL ? `${VITE_DEV_SERVER_URL}?noteId=${noteId}` : path.join(RENDERER_DIST, "index.html");
+  let url;
+  if (VITE_DEV_SERVER_URL) {
+    const baseUrl = VITE_DEV_SERVER_URL.endsWith("/") ? VITE_DEV_SERVER_URL : `${VITE_DEV_SERVER_URL}/`;
+    url = `${baseUrl}note.html?noteId=${noteId}`;
+  } else {
+    url = path.join(RENDERER_DIST, "note.html");
+  }
+  console.log("=== Creating Note Window ===");
+  console.log("VITE_DEV_SERVER_URL:", VITE_DEV_SERVER_URL);
+  console.log("Note ID:", noteId);
   console.log("Loading URL for note window:", VITE_DEV_SERVER_URL ? url : `${url} with query noteId=${noteId}`);
   if (VITE_DEV_SERVER_URL) {
     noteWindow.loadURL(url);
@@ -77,7 +86,25 @@ function createNoteWindow(noteId) {
     });
   }
   noteWindows.set(noteId, noteWindow);
+  noteWindow.webContents.on("will-navigate", (event, url2) => {
+    console.log(`=== Note window ${noteWindow.id} will navigate to: ${url2} ===`);
+    console.log("Current noteId associated with this window:", noteId);
+    console.log("Is this window still in the noteWindows Map?", noteWindows.has(noteId) && noteWindows.get(noteId) === noteWindow);
+    event.preventDefault();
+    if (VITE_DEV_SERVER_URL) {
+      const baseUrl = VITE_DEV_SERVER_URL.endsWith("/") ? VITE_DEV_SERVER_URL : `${VITE_DEV_SERVER_URL}/`;
+      const newUrl = `${baseUrl}note.html?noteId=${noteId}`;
+      console.log("Reloading with URL:", newUrl);
+      noteWindow.loadURL(newUrl);
+    } else {
+      noteWindow.loadFile(path.join(RENDERER_DIST, "note.html"), {
+        query: { noteId }
+      });
+    }
+    console.log("Reloaded window with noteId parameter:", noteId);
+  });
   noteWindow.on("closed", () => {
+    console.log(`Note window closed: ${noteId}`);
     noteWindows.delete(noteId);
   });
   return noteWindow;
@@ -105,12 +132,18 @@ function createSettingsWindow() {
       nodeIntegration: false
     }
   });
+  let url;
   if (VITE_DEV_SERVER_URL) {
-    settingsWindow.loadURL(`${VITE_DEV_SERVER_URL}?settings=true`);
+    const baseUrl = VITE_DEV_SERVER_URL.endsWith("/") ? VITE_DEV_SERVER_URL : `${VITE_DEV_SERVER_URL}/`;
+    url = `${baseUrl}settings.html`;
   } else {
-    settingsWindow.loadFile(path.join(RENDERER_DIST, "index.html"), {
-      query: { settings: "true" }
-    });
+    url = path.join(RENDERER_DIST, "settings.html");
+  }
+  console.log("Loading URL for settings window:", url);
+  if (VITE_DEV_SERVER_URL) {
+    settingsWindow.loadURL(url);
+  } else {
+    settingsWindow.loadFile(url);
   }
   settingsWindow.on("closed", () => {
     settingsWindow = null;
@@ -173,12 +206,15 @@ ipcMain.handle("create-note-with-id", (_, noteId) => {
   return { success: true };
 });
 ipcMain.handle("get-note-id", (event) => {
-  console.log("IPC: get-note-id called");
+  console.log("=== IPC: get-note-id called ===");
   const win = BrowserWindow.fromWebContents(event.sender);
   if (!win) {
     console.log("No window found for this request");
     return null;
   }
+  console.log("Window ID:", win.id);
+  console.log("Current noteWindows Map size:", noteWindows.size);
+  console.log("noteWindows entries:", Array.from(noteWindows.entries()).map(([id, w]) => ({ id, winId: w.id })));
   for (const [noteId, noteWin] of noteWindows.entries()) {
     if (noteWin === win) {
       console.log("Found note ID for window:", noteId);

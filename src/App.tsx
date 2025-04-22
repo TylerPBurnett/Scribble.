@@ -9,10 +9,19 @@ import { getNotes, createNote, getNoteById, deleteNote } from './services/noteSe
 import { getSettings, saveSettings, initSettings, AppSettings } from './services/settingsService'
 
 function App() {
+  // Check if this is a note window using the window flag
+  // This flag is set in note.html before React loads
+  const isNoteWindowFlag = !!(window as any).IS_NOTE_WINDOW;
+  console.log('Initial check - Is note window (via window flag):', isNoteWindowFlag);
+
+  // Check if this is a settings window using the window flag
+  const isSettingsWindowFlag = !!(window as any).IS_SETTINGS_WINDOW;
+  console.log('Initial check - Is settings window (via window flag):', isSettingsWindowFlag);
+
   const [notes, setNotes] = useState<Note[]>([])
   const [activeNote, setActiveNote] = useState<Note | null>(null)
-  const [isNoteWindow, setIsNoteWindow] = useState(false)
-  const [isSettingsWindow, setIsSettingsWindow] = useState(false)
+  const [isNoteWindow, setIsNoteWindow] = useState(isNoteWindowFlag)
+  const [isSettingsWindow, setIsSettingsWindow] = useState(isSettingsWindowFlag)
   const [showSettings, setShowSettings] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [appSettings, setAppSettings] = useState<AppSettings>({
@@ -26,27 +35,49 @@ function App() {
   useEffect(() => {
     const init = async () => {
       try {
+        console.log('=== App Initialization Start ===');
+        console.log('Window location:', window.location.href);
+        console.log('Session storage contents:', { ...sessionStorage });
+
         // Initialize settings
         console.log('App.tsx - Initializing settings...')
         const settings = await initSettings()
         console.log('App.tsx - Settings initialized:', settings)
         setAppSettings(settings)
 
-        // Check if this is a settings window
-        const isSettings = await window.settings.isSettingsWindow()
-        if (isSettings) {
-          console.log('This is a settings window')
-          setIsSettingsWindow(true)
+        // We've already set the window type flags at the component level
+        // Now we just need to handle the specific initialization for each window type
+
+        // If this is a settings window, we don't need to do anything else
+        if (isSettingsWindow) {
+          console.log('This is a settings window, initialization complete')
           return
         }
 
         // If this is a note window, get the note ID from the URL
-        const noteId = await window.noteWindow.getNoteId()
-        console.log('getNoteId returned:', noteId)
+        let noteId = null
+        if (isNoteWindow) {
+          // Get the note ID from the URL query parameters
+          const urlParams = new URLSearchParams(window.location.search)
+          noteId = urlParams.get('noteId')
+          console.log('Note ID from URL parameters:', noteId)
+
+          // Log detailed window information for debugging
+          console.log('Window object:', {
+            location: window.location.href,
+            isNoteWindow: (window as any).IS_NOTE_WINDOW,
+            search: window.location.search,
+            pathname: window.location.pathname
+          })
+        }
 
         if (noteId) {
           console.log('This is a note window for note ID:', noteId)
           setIsNoteWindow(true)
+
+          // Store the noteId in session storage for persistence across refreshes
+          sessionStorage.setItem('currentNoteId', noteId)
+          console.log('Stored noteId in session storage:', noteId)
 
           if (noteId.startsWith('new-')) {
             // Create a new note
@@ -68,6 +99,12 @@ function App() {
         } else {
           // Load notes for the main window
           console.log('This is the main window, loading all notes')
+
+          // Clear any stored noteId from session storage
+          // This ensures we don't accidentally treat the main window as a note window after a refresh
+          sessionStorage.removeItem('currentNoteId')
+          console.log('Cleared noteId from session storage')
+
           try {
             const loadedNotes = await getNotes()
             console.log('Loaded notes:', loadedNotes.length)

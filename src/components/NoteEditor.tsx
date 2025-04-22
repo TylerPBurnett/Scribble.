@@ -87,6 +87,13 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
       noteDataRef.current = savedNote;
       console.log('NoteEditor - Updated note reference:', noteDataRef.current);
 
+      // Update the noteId in session storage if it has changed
+      // This ensures that after a refresh, we still know which note we're editing
+      if (savedNote.id !== currentNote.id) {
+        console.log('NoteEditor - Updating noteId in session storage:', savedNote.id);
+        sessionStorage.setItem('currentNoteId', savedNote.id);
+      }
+
       onSave?.(savedNote);
 
       // Notify other windows that this note has been updated
