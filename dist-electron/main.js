@@ -90,18 +90,29 @@ function createNoteWindow(noteId) {
     console.log(`=== Note window ${noteWindow.id} will navigate to: ${url2} ===`);
     console.log("Current noteId associated with this window:", noteId);
     console.log("Is this window still in the noteWindows Map?", noteWindows.has(noteId) && noteWindows.get(noteId) === noteWindow);
-    event.preventDefault();
-    if (VITE_DEV_SERVER_URL) {
-      const baseUrl = VITE_DEV_SERVER_URL.endsWith("/") ? VITE_DEV_SERVER_URL : `${VITE_DEV_SERVER_URL}/`;
-      const newUrl = `${baseUrl}note.html?noteId=${noteId}`;
-      console.log("Reloading with URL:", newUrl);
-      noteWindow.loadURL(newUrl);
+    const urlObj = new URL(url2);
+    const isNoteHtml = urlObj.pathname.endsWith("note.html");
+    if (!isNoteHtml) {
+      event.preventDefault();
+      if (VITE_DEV_SERVER_URL) {
+        const baseUrl = VITE_DEV_SERVER_URL.endsWith("/") ? VITE_DEV_SERVER_URL : `${VITE_DEV_SERVER_URL}/`;
+        const newUrl = `${baseUrl}note.html?noteId=${noteId}`;
+        console.log("Reloading with URL:", newUrl);
+        noteWindow.loadURL(newUrl);
+      } else {
+        noteWindow.loadFile(path.join(RENDERER_DIST, "note.html"), {
+          query: { noteId }
+        });
+      }
+      console.log("Reloaded window with noteId parameter:", noteId);
     } else {
-      noteWindow.loadFile(path.join(RENDERER_DIST, "note.html"), {
-        query: { noteId }
-      });
+      if (!urlObj.searchParams.has("noteId")) {
+        event.preventDefault();
+        urlObj.searchParams.set("noteId", noteId);
+        noteWindow.loadURL(urlObj.toString());
+        console.log("Added noteId parameter to existing note.html URL:", urlObj.toString());
+      }
     }
-    console.log("Reloaded window with noteId parameter:", noteId);
   });
   noteWindow.on("closed", () => {
     console.log(`Note window closed: ${noteId}`);

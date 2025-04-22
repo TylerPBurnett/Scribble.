@@ -133,25 +133,38 @@ function createNoteWindow(noteId: string) {
     console.log('Current noteId associated with this window:', noteId);
     console.log('Is this window still in the noteWindows Map?', noteWindows.has(noteId) && noteWindows.get(noteId) === noteWindow);
 
-    // Prevent the default navigation
-    event.preventDefault();
+    // Only prevent navigation if it's not already to a note.html URL
+    const urlObj = new URL(url);
+    const isNoteHtml = urlObj.pathname.endsWith('note.html');
 
-    // Instead, reload the window with the noteId parameter
-    if (VITE_DEV_SERVER_URL) {
-      // Use the same URL construction logic as in the initial load
-      const baseUrl = VITE_DEV_SERVER_URL.endsWith('/') ?
-        VITE_DEV_SERVER_URL :
-        `${VITE_DEV_SERVER_URL}/`;
-      const newUrl = `${baseUrl}note.html?noteId=${noteId}`;
-      console.log('Reloading with URL:', newUrl);
-      noteWindow.loadURL(newUrl);
+    if (!isNoteHtml) {
+      // Prevent the default navigation
+      event.preventDefault();
+
+      // Instead, reload the window with the noteId parameter
+      if (VITE_DEV_SERVER_URL) {
+        const baseUrl = VITE_DEV_SERVER_URL.endsWith('/') ?
+          VITE_DEV_SERVER_URL :
+          `${VITE_DEV_SERVER_URL}/`;
+        const newUrl = `${baseUrl}note.html?noteId=${noteId}`;
+        console.log('Reloading with URL:', newUrl);
+        noteWindow.loadURL(newUrl);
+      } else {
+        noteWindow.loadFile(path.join(RENDERER_DIST, 'note.html'), {
+          query: { noteId }
+        });
+      }
+
+      console.log('Reloaded window with noteId parameter:', noteId);
     } else {
-      noteWindow.loadFile(path.join(RENDERER_DIST, 'note.html'), {
-        query: { noteId }
-      });
+      // If it's already a note.html URL, make sure it has the noteId parameter
+      if (!urlObj.searchParams.has('noteId')) {
+        event.preventDefault();
+        urlObj.searchParams.set('noteId', noteId);
+        noteWindow.loadURL(urlObj.toString());
+        console.log('Added noteId parameter to existing note.html URL:', urlObj.toString());
+      }
     }
-
-    console.log('Reloaded window with noteId parameter:', noteId);
   });
 
   // Clean up when window is closed
