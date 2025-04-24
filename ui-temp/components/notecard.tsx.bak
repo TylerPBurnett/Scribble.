@@ -1,0 +1,70 @@
+"use client"
+
+import type React from "react"
+
+import { useState } from "react"
+import { formatDistanceToNow } from "date-fns"
+import { Pin, MoreVertical, Trash2, Edit, Copy } from "lucide-react"
+import type { Note } from "../types"
+
+interface NoteCardProps {
+  note: Note
+  isSelected: boolean
+  onClick: () => void
+}
+
+export default function NoteCard({ note, isSelected, onClick }: NoteCardProps) {
+  const [showMenu, setShowMenu] = useState(false)
+
+  const formattedDate = formatDistanceToNow(new Date(note.modified), { addSuffix: true })
+
+  const toggleMenu = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setShowMenu(!showMenu)
+  }
+
+  const handleAction = (e: React.MouseEvent, action: string) => {
+    e.stopPropagation()
+    setShowMenu(false)
+
+    // Implement your action handlers here
+    console.log(`Action ${action} on note ${note.id}`)
+  }
+
+  return (
+    <div className={`note-card ${note.color} ${isSelected ? "selected" : ""}`} onClick={onClick}>
+      <div className="note-header">
+        <h3 className="note-title">{note.title || "Untitled"}</h3>
+        <div className="note-actions">
+          {note.pinned && <Pin size={16} className="pin-icon" />}
+          <button className="more-button" onClick={toggleMenu} aria-label="More options">
+            <MoreVertical size={16} />
+          </button>
+
+          {showMenu && (
+            <div className="dropdown-menu">
+              <button onClick={(e) => handleAction(e, "edit")}>
+                <Edit size={14} />
+                <span>Edit</span>
+              </button>
+              <button onClick={(e) => handleAction(e, "duplicate")}>
+                <Copy size={14} />
+                <span>Duplicate</span>
+              </button>
+              <button onClick={(e) => handleAction(e, "delete")} className="delete-action">
+                <Trash2 size={14} />
+                <span>Delete</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="note-content">{note.content || <span className="empty-content">No content</span>}</div>
+
+      <div className="note-footer">
+        <span className="note-date">{formattedDate}</span>
+      </div>
+    </div>
+  )
+}
