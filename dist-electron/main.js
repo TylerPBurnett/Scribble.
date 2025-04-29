@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, dialog, app } from "electron";
+import { ipcMain, BrowserWindow, app, dialog } from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
@@ -12,6 +12,7 @@ let mainWindow;
 let settingsWindow = null;
 const noteWindows = /* @__PURE__ */ new Map();
 function createMainWindow() {
+  const isMac = process.platform === "darwin";
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -21,7 +22,11 @@ function createMainWindow() {
     icon: path.join(process.env.APP_ROOT, "src/assets/icon.png"),
     title: "Scribble",
     frame: false,
-    titleBarStyle: "hidden",
+    // On macOS, use 'hiddenInset' to show the native traffic lights
+    // On Windows, use 'hidden' to completely hide the title bar
+    titleBarStyle: isMac ? "hiddenInset" : "hidden",
+    // Additional macOS-specific settings
+    trafficLightPosition: { x: 20, y: 20 },
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs"),
       contextIsolation: true,
@@ -50,6 +55,7 @@ function createNoteWindow(noteId) {
       return existingWindow;
     }
   }
+  const isMac = process.platform === "darwin";
   console.log("Creating new BrowserWindow for note");
   const noteWindow = new BrowserWindow({
     width: 900,
@@ -60,7 +66,11 @@ function createNoteWindow(noteId) {
     icon: path.join(process.env.APP_ROOT, "src/assets/icon.png"),
     title: "Scribble - Note",
     frame: false,
-    titleBarStyle: "hidden",
+    // On macOS, use 'hiddenInset' to show the native traffic lights
+    // On Windows, use 'hidden' to completely hide the title bar
+    titleBarStyle: isMac ? "hiddenInset" : "hidden",
+    // Additional macOS-specific settings
+    trafficLightPosition: { x: 20, y: 20 },
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs"),
       contextIsolation: true,
@@ -125,6 +135,7 @@ function createSettingsWindow() {
     settingsWindow.focus();
     return settingsWindow;
   }
+  const isMac = process.platform === "darwin";
   settingsWindow = new BrowserWindow({
     width: 550,
     height: 600,
@@ -136,7 +147,11 @@ function createSettingsWindow() {
     parent: mainWindow || void 0,
     modal: true,
     frame: false,
-    titleBarStyle: "hidden",
+    // On macOS, use 'hiddenInset' to show the native traffic lights
+    // On Windows, use 'hidden' to completely hide the title bar
+    titleBarStyle: isMac ? "hiddenInset" : "hidden",
+    // Additional macOS-specific settings
+    trafficLightPosition: { x: 20, y: 20 },
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs"),
       contextIsolation: true,

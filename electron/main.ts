@@ -30,6 +30,9 @@ let settingsWindow: BrowserWindow | null = null
 const noteWindows = new Map<string, BrowserWindow>()
 
 function createMainWindow() {
+  // Configure window differently based on platform
+  const isMac = process.platform === 'darwin'
+
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -39,7 +42,11 @@ function createMainWindow() {
     icon: path.join(process.env.APP_ROOT, 'src/assets/icon.png'),
     title: 'Scribble',
     frame: false,
-    titleBarStyle: 'hidden',
+    // On macOS, use 'hiddenInset' to show the native traffic lights
+    // On Windows, use 'hidden' to completely hide the title bar
+    titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
+    // Additional macOS-specific settings
+    trafficLightPosition: { x: 20, y: 20 },
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,
@@ -75,6 +82,9 @@ function createNoteWindow(noteId: string) {
     }
   }
 
+  // Configure window differently based on platform
+  const isMac = process.platform === 'darwin'
+
   // Create new window
   console.log('Creating new BrowserWindow for note')
   const noteWindow = new BrowserWindow({
@@ -86,7 +96,11 @@ function createNoteWindow(noteId: string) {
     icon: path.join(process.env.APP_ROOT, 'src/assets/icon.png'),
     title: 'Scribble - Note',
     frame: false,
-    titleBarStyle: 'hidden',
+    // On macOS, use 'hiddenInset' to show the native traffic lights
+    // On Windows, use 'hidden' to completely hide the title bar
+    titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
+    // Additional macOS-specific settings
+    trafficLightPosition: { x: 20, y: 20 },
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,
@@ -183,6 +197,9 @@ function createSettingsWindow() {
     return settingsWindow
   }
 
+  // Configure window differently based on platform
+  const isMac = process.platform === 'darwin'
+
   // Create settings window
   settingsWindow = new BrowserWindow({
     width: 550,
@@ -195,7 +212,11 @@ function createSettingsWindow() {
     parent: mainWindow || undefined,
     modal: true,
     frame: false,
-    titleBarStyle: 'hidden',
+    // On macOS, use 'hiddenInset' to show the native traffic lights
+    // On Windows, use 'hidden' to completely hide the title bar
+    titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
+    // Additional macOS-specific settings
+    trafficLightPosition: { x: 20, y: 20 },
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,

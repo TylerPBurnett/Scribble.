@@ -40,31 +40,9 @@ const TitleBar: React.FC<TitleBarProps> = ({ title, onMinimize, onMaximize, onCl
 
   // Render platform-specific window controls
   const renderWindowControls = () => {
-    if (platform === 'darwin') {
-      // macOS-style controls (left-aligned, colored circles)
-      return (
-        <div className="flex items-center space-x-2">
-          <button
-            className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600 transition-colors"
-            style={noDragStyle}
-            onClick={onClose}
-            title="Close"
-          />
-          <button
-            className="w-3 h-3 rounded-full bg-yellow-500 hover:bg-yellow-600 transition-colors"
-            style={noDragStyle}
-            onClick={onMinimize}
-            title="Minimize"
-          />
-          <button
-            className="w-3 h-3 rounded-full bg-green-500 hover:bg-green-600 transition-colors"
-            style={noDragStyle}
-            onClick={onMaximize}
-            title="Maximize"
-          />
-        </div>
-      );
-    } else {
+    // Only render custom window controls for non-macOS platforms
+    // For macOS, we're using the native traffic lights via Electron's titleBarStyle: 'hiddenInset'
+    if (platform !== 'darwin') {
       // Windows-style controls (right-aligned, monochrome)
       return (
         <div className="flex items-center">
@@ -102,27 +80,32 @@ const TitleBar: React.FC<TitleBarProps> = ({ title, onMinimize, onMaximize, onCl
         </div>
       );
     }
+
+    // Return null for macOS since we're using native controls
+    return null;
   };
 
   return (
     <div
-      className="relative flex flex-col h-12 bg-background-secondary border-b border-border z-10 select-none"
+      className="relative flex flex-col h-12 bg-background-secondary border-b border-border z-20 select-none w-full"
       style={dragStyle}
     >
       <div className="flex justify-between items-center w-full h-full px-4">
         {platform === 'darwin' ? (
-          // macOS layout (controls on left, then title)
+          // macOS layout - we need to leave space for the native traffic lights
+          // and center the title in the remaining space
           <>
-            {renderWindowControls()}
-            <div className="flex items-center">
-              <div className="flex items-center">
-                <img src={logoIcon} alt="Scribble Logo" className="w-7 h-7 mr-3 object-contain" />
-                <h1 className="text-lg font-semibold text-text m-0">{title}</h1>
-              </div>
+            {/* Empty space for traffic lights (80px) - increased for better spacing */}
+            <div className="w-[80px]"></div>
+
+            {/* Centered title and logo */}
+            <div className="flex items-center justify-center flex-grow">
+              <img src={logoIcon} alt="Scribble Logo" className="w-7 h-7 mr-3 object-contain" />
+              <h1 className="text-lg font-semibold text-text m-0">{title}</h1>
             </div>
-            <div className="w-24">
-              {/* Empty space to balance the layout */}
-            </div>
+
+            {/* Empty space to balance the layout */}
+            <div className="w-[80px]"></div>
           </>
         ) : (
           // Windows layout (menu/title on left, controls on right)

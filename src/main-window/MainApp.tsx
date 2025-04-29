@@ -148,18 +148,22 @@ function MainApp() {
 
   // Render the main window
   return (
-    <div className="app-container flex h-screen bg-background text-text">
-      {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+    <div className="app-container flex flex-col h-screen bg-background text-text">
+      {/* Title Bar - Now spans the full width */}
+      <TitleBar
+        title="Scribble"
+        onMinimize={() => window.windowControls.minimize()}
+        onMaximize={() => window.windowControls.maximize()}
+        onClose={() => window.windowControls.close()}
+      />
 
-      {/* Main Content */}
-      <div className="main-content flex flex-col flex-1 h-screen overflow-hidden">
-        <TitleBar
-          title="Scribble"
-          onMinimize={() => window.windowControls.minimize()}
-          onMaximize={() => window.windowControls.maximize()}
-          onClose={() => window.windowControls.close()}
-        />
+      {/* Content area - contains sidebar and main content */}
+      <div className="content-area flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+
+        {/* Main Content */}
+        <div className="main-content flex flex-col flex-1 overflow-hidden">
 
         {/* Header */}
         <div className="app-header flex items-center justify-between px-6 py-3 bg-background-secondary border-b border-border">
@@ -230,6 +234,7 @@ function MainApp() {
         <footer className="app-footer py-2 px-6 bg-background-secondary border-t border-border text-xs text-text-tertiary">
           <div className="save-location italic">Save location: {appSettings.saveLocation}</div>
         </footer>
+      </div>
       </div>
 
       {/* Settings Modal */}

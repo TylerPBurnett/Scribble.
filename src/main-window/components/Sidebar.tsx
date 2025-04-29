@@ -7,7 +7,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen = true }) => {
   return (
-    <div className={`w-sidebar bg-background-secondary border-r border-border flex flex-col h-screen transition-transform duration-300 z-10 ${!isOpen ? '-translate-x-sidebar' : ''}`}>
+    <div className={`w-sidebar bg-background-secondary border-r border-border flex flex-col h-full transition-transform duration-300 z-10 ${!isOpen ? '-translate-x-sidebar' : ''}`}>
       {/* Sidebar Header */}
       <div className="p-4 flex items-center gap-3 border-b border-border">
         <div className="w-8 h-8 bg-primary text-background font-bold text-xl rounded-lg flex items-center justify-center">
