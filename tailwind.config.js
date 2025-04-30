@@ -47,6 +47,11 @@ export default {
       },
       width: {
         'sidebar': '240px',
+        'sidebar-compact': '56px',
+      },
+      translate: {
+        'sidebar': '240px',
+        'sidebar-compact': '56px',
       },
       boxShadow: {
         'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)', // --card-shadow

@@ -179,7 +179,7 @@ function MainApp() {
                 <span className="h-[2px] bg-text-secondary rounded-sm"></span>
               </div>
             </button>
-            <h1 className="app-title text-xl font-semibold">Scribble</h1>
+            <h1 className="text-lg font-semibold text-text">Scribble</h1>
           </div>
 
           <div className="search-container relative w-full max-w-md mx-4">
