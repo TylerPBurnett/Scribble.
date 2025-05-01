@@ -15,6 +15,12 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
   const [content, setContent] = useState(note.content);
   const [isDirty, setIsDirty] = useState(false);
 
+  // Track if we're currently editing the title to prevent premature saves
+  const [isTitleFocused, setIsTitleFocused] = useState(false);
+
+  // Store the temporary title value while editing
+  const [tempTitle, setTempTitle] = useState(note.title);
+
   // Get settings for auto-save
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
   const [autoSaveInterval, setAutoSaveInterval] = useState(5000);
@@ -120,19 +126,48 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
     [saveNote, autoSaveInterval]
   );
 
-  // Trigger auto-save when content or title changes
+  // We're no longer using debounce for title changes
+  // Instead, we'll only update the title when the user clicks away from the input
+
+  // Track if this is a new note that hasn't been saved yet
+  const [isNewNote, setIsNewNote] = useState(note._isNew === true || (note.title === 'Untitled Note' && note.content === '<p></p>'));
+
+  // Detect if this is the first title change for a new note
   useEffect(() => {
-    // Mark as dirty when content or title changes
-    setIsDirty(true);
-  }, [title, content]);
+    if (isNewNote && title !== 'Untitled Note') {
+      console.log('First title change for new note detected');
+      // Once the title has been changed from the default, it's no longer a new note
+      setIsNewNote(false);
+    }
+  }, [title, isNewNote]);
+
+  // Trigger auto-save when content changes (but NEVER during title editing)
+  useEffect(() => {
+    // Only mark as dirty for content changes when not editing the title
+    // For new notes, don't mark as dirty until the title has been changed
+    if (!isTitleFocused && (!isNewNote || title !== 'Untitled Note')) {
+      setIsDirty(true);
+    }
+  }, [content, isTitleFocused, isNewNote, title]);
+
+  // Title changes should only mark as dirty after focus is lost
+  useEffect(() => {
+    // Only mark as dirty for title changes when not currently editing
+    // and only if it's not a new note with default title
+    if (!isTitleFocused && (!isNewNote || title !== 'Untitled Note')) {
+      console.log('Title changed and not focused, marking as dirty');
+      setIsDirty(true);
+    }
+  }, [title, isTitleFocused, isNewNote]);
 
   // Trigger debounced save when isDirty changes
   useEffect(() => {
-    if (isDirty && autoSaveEnabled) {
+    // NEVER save while the title is being edited
+    if (isDirty && autoSaveEnabled && !isTitleFocused) {
       console.log(`Triggering debounced save with interval: ${autoSaveInterval}ms`);
       debouncedSave();
     }
-  }, [isDirty, autoSaveEnabled, debouncedSave]);
+  }, [isDirty, autoSaveEnabled, debouncedSave, isTitleFocused]);
 
   // Last saved time formatting removed
 
@@ -196,11 +231,42 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
             <input
               type="text"
               className="note-title-input"
-              value={title}
+              value={isTitleFocused ? tempTitle : title}
               onChange={(e) => {
+                // Only update the temporary title while editing
+                // This won't trigger any saves
                 const newTitle = e.target.value;
-                console.log('Title changed to:', newTitle);
-                setTitle(newTitle);
+                console.log('Title input change (temp):', newTitle);
+                setTempTitle(newTitle);
+              }}
+              onFocus={() => {
+                // When focusing, set the temporary title to the current title
+                setTempTitle(title);
+                setIsTitleFocused(true);
+                console.log('Title focused, preventing saves');
+              }}
+              onBlur={() => {
+                // When focus is lost, apply the title change if it's valid
+                setIsTitleFocused(false);
+
+                // Only apply the change if the title is not empty and not the default
+                if (tempTitle && tempTitle.trim() !== '') {
+                  if (tempTitle !== title) {
+                    console.log('Applying title change on blur:', tempTitle);
+                    setTitle(tempTitle);
+
+                    // If this was a new note, mark it as no longer new
+                    if (isNewNote && tempTitle !== 'Untitled Note') {
+                      setIsNewNote(false);
+                    }
+                  } else {
+                    console.log('Title unchanged, not marking as dirty');
+                  }
+                } else {
+                  console.log('Not applying empty title on blur');
+                  // Reset to the previous title if empty
+                  setTempTitle(title);
+                }
               }}
               placeholder="Untitled Note"
             />

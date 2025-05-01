@@ -8,9 +8,10 @@ interface NoteListProps {
   onNoteClick: (note: Note) => void;
   activeNoteId?: string;
   onNoteDelete?: (noteId: string) => void;
+  sidebarOpen?: boolean;
 }
 
-const NoteList = ({ notes, onNoteClick, activeNoteId, onNoteDelete }: NoteListProps) => {
+const NoteList = ({ notes, onNoteClick, activeNoteId, onNoteDelete, sidebarOpen = true }: NoteListProps) => {
   const [deletedNotes, setDeletedNotes] = useState<string[]>([]);
 
   // Handle note deletion
@@ -41,7 +42,7 @@ const NoteList = ({ notes, onNoteClick, activeNoteId, onNoteDelete }: NoteListPr
   const otherNotes = filteredNotes.filter(note => !note.pinned);
 
   return (
-    <div className="notes-container flex-1 p-6 overflow-y-auto bg-background">
+    <div className={`notes-container flex-1 ${sidebarOpen ? 'px-8' : 'pl-0 pr-8'} py-6 overflow-y-auto bg-background transition-all duration-300`}>
       {/* Pinned Notes Section */}
       {pinnedNotes.length > 0 && (
         <div className="notes-section mb-8">
@@ -52,7 +53,7 @@ const NoteList = ({ notes, onNoteClick, activeNoteId, onNoteDelete }: NoteListPr
             </svg>
             <span>Pinned</span>
           </div>
-          <div className="notes-grid grid grid-cols-auto-fill-250 gap-4">
+          <div className="notes-grid grid grid-cols-auto-fill-250 gap-5">
             {pinnedNotes.map((note) => (
               <NoteCard
                 key={note.id}
@@ -117,7 +118,7 @@ const NoteList = ({ notes, onNoteClick, activeNoteId, onNoteDelete }: NoteListPr
             </button>
           </div>
         ) : (
-          <div className="notes-grid grid grid-cols-auto-fill-250 gap-4">
+          <div className="notes-grid grid grid-cols-auto-fill-250 gap-5">
             {otherNotes.map((note) => (
               <NoteCard
                 key={note.id}

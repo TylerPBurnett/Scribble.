@@ -112,7 +112,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
       onClick={() => onClick(note)}
     >
       {/* Note Header */}
-      <div className="note-header px-3 py-3 flex items-center justify-between border-b border-border">
+      <div className="note-header px-4 py-3 flex items-center justify-between border-b border-border">
         <h3 className="note-title text-sm font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px] text-text">
           {note.title || 'Untitled Note'}
         </h3>
@@ -190,12 +190,12 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
       </div>
 
       {/* Note Content */}
-      <div className="note-content flex-1 px-3 py-3 text-sm text-text-secondary overflow-hidden">
+      <div className="note-content flex-1 px-4 py-3 text-sm text-text-secondary overflow-hidden">
         {getContentPreview(note.content) || <span className="empty-content italic text-text-tertiary">No content</span>}
       </div>
 
       {/* Note Footer */}
-      <div className="note-footer px-3 py-2 flex items-center justify-between text-xs text-text-tertiary bg-black-10">
+      <div className="note-footer px-4 py-2 flex items-center justify-between text-xs text-text-tertiary bg-black-10">
         <span className="note-date">{formatDate(note.createdAt)}</span>
       </div>
 
