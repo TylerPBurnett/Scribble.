@@ -8,10 +8,9 @@ interface NoteListProps {
   onNoteClick: (note: Note) => void;
   activeNoteId?: string;
   onNoteDelete?: (noteId: string) => void;
-  sidebarOpen?: boolean;
 }
 
-const NoteList = ({ notes, onNoteClick, activeNoteId, onNoteDelete, sidebarOpen = true }: NoteListProps) => {
+const NoteList = ({ notes, onNoteClick, activeNoteId, onNoteDelete }: NoteListProps) => {
   const [deletedNotes, setDeletedNotes] = useState<string[]>([]);
 
   // Handle note deletion
@@ -42,7 +41,7 @@ const NoteList = ({ notes, onNoteClick, activeNoteId, onNoteDelete, sidebarOpen 
   const otherNotes = filteredNotes.filter(note => !note.pinned);
 
   return (
-    <div className={`notes-container flex-1 ${sidebarOpen ? 'px-8' : 'pl-0 pr-8'} py-6 overflow-y-auto bg-background transition-all duration-300`}>
+    <div className="notes-container flex-1 px-8 py-6 overflow-y-auto bg-background-notes transition-all duration-300">
       {/* Pinned Notes Section */}
       {pinnedNotes.length > 0 && (
         <div className="notes-section mb-8">

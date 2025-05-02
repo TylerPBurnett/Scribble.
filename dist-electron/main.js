@@ -136,16 +136,18 @@ function createSettingsWindow() {
     return settingsWindow;
   }
   const isMac = process.platform === "darwin";
+  const mainWindowSize = mainWindow ? mainWindow.getSize() : [1200, 800];
   settingsWindow = new BrowserWindow({
-    width: 550,
-    height: 600,
+    width: mainWindowSize[0],
+    height: mainWindowSize[1],
     minWidth: 250,
     minHeight: 300,
     backgroundColor: "#1a1a1a",
     icon: path.join(process.env.APP_ROOT, "src/assets/icon.png"),
     title: "Scribble - Settings",
     parent: mainWindow || void 0,
-    modal: true,
+    modal: false,
+    // Changed to false to allow it to be a full window
     frame: false,
     // On macOS, use 'hiddenInset' to show the native traffic lights
     // On Windows, use 'hidden' to completely hide the title bar

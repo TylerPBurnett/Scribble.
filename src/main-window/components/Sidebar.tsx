@@ -3,13 +3,12 @@ import React from 'react';
 interface SidebarProps {
   isOpen?: boolean;
   onToggle?: () => void;
-  onOpenSettings?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onToggle, onOpenSettings }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onToggle }) => {
   return (
     <div className={`relative ${!isOpen ? '-translate-x-sidebar-compact' : ''} transition-transform duration-300`}>
-      <div className={`w-sidebar-compact bg-background-secondary border-r border-border flex flex-col h-full z-10`}>
+      <div className={`w-sidebar-compact bg-background-sidebar border-r-0 flex flex-col h-full z-10`}>
         {/* Sidebar Navigation - Icon Only */}
         <nav className="flex-1 py-4 overflow-y-auto">
           <ul className="flex flex-col items-center space-y-4">
@@ -85,25 +84,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, onToggle, onOpenSettin
           </ul>
         </nav>
 
-        {/* Sidebar Footer - Settings Icon Only */}
-        <div className="py-4 flex justify-center border-t border-border">
-          <button
-            className="flex items-center justify-center w-10 h-10 text-text-secondary rounded-md hover:bg-background-tertiary transition-colors"
-            onClick={onOpenSettings}
-            title="Settings"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-            </svg>
-          </button>
+        {/* Empty footer space */}
+        <div className="py-4 flex justify-center border-t-0">
+          {/* Settings button removed */}
         </div>
       </div>
 
       {/* Toggle button */}
       <button
         onClick={onToggle}
-        className={`absolute top-1/2 -right-6 transform -translate-y-1/2 w-6 h-16 bg-background-secondary border border-border border-l-0 rounded-r-md flex items-center justify-center text-text-tertiary hover:text-text-secondary transition-colors z-20 focus:outline-none`}
+        className={`absolute top-1/2 -right-6 transform -translate-y-1/2 w-6 h-16 bg-background-sidebar border-0 rounded-r-md flex items-center justify-center text-text-tertiary hover:text-text-secondary transition-colors z-20 focus:outline-none`}
         title={isOpen ? "Hide sidebar" : "Show sidebar"}
       >
         <svg

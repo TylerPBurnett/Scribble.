@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import NoteList from './components/NoteList'
-import SettingsWindow from '../settings-window/SettingsWindow'
+import { SettingsDialog } from '../settings-window/SettingsDialog'
 import TitleBar from '../shared/components/TitleBar'
-import Sidebar from './components/Sidebar'
 import { Note } from '../shared/types/Note'
 import { getNotes, createNote, deleteNote } from '../shared/services/noteService'
 import { initSettings, saveSettings, AppSettings } from '../shared/services/settingsService'
@@ -12,7 +11,6 @@ function MainApp() {
   const [activeNote, setActiveNote] = useState<Note | null>(null)
   const [showSettings, setShowSettings] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [sidebarOpen, setSidebarOpen] = useState(true)
   const [appSettings, setAppSettings] = useState<AppSettings>({
     saveLocation: '',
     autoSave: true,
@@ -148,29 +146,23 @@ function MainApp() {
 
   // Render the main window
   return (
-    <div className="app-container flex flex-col h-screen bg-background text-text">
+    <div className="app-container flex flex-col h-screen bg-background-notes text-text">
       {/* Title Bar - Now spans the full width */}
       <TitleBar
-        title="Scribble"
+        title=""
         onMinimize={() => window.windowControls.minimize()}
         onMaximize={() => window.windowControls.maximize()}
         onClose={() => window.windowControls.close()}
+        className="bg-background-titlebar"
       />
 
-      {/* Content area - contains sidebar and main content */}
+      {/* Content area - main content */}
       <div className="content-area flex flex-1 overflow-hidden">
-        {/* Sidebar with integrated toggle button */}
-        <Sidebar
-          isOpen={sidebarOpen}
-          onToggle={() => setSidebarOpen(!sidebarOpen)}
-          onOpenSettings={handleOpenSettings}
-        />
-
         {/* Main Content */}
-        <div className="main-content flex flex-col flex-1 overflow-hidden">
+        <div className="main-content flex flex-col w-full overflow-hidden">
 
         {/* Header */}
-        <div className={`app-header flex items-center justify-between ${sidebarOpen ? 'pl-6' : 'pl-0'} pr-6 py-3 bg-background-secondary border-b border-border transition-all duration-300`}>
+        <div className="app-header flex items-center justify-between px-6 py-3 bg-background-titlebar border-b-0 transition-all duration-300">
           {/* Search container */}
           <div className="search-container relative w-full max-w-md">
             <div className="search-icon absolute left-3 top-1/2 transform -translate-y-1/2 text-text-tertiary">
@@ -181,7 +173,7 @@ function MainApp() {
             </div>
             <input
               type="text"
-              className="search-input w-full py-2 pl-10 pr-4 bg-background-tertiary border border-transparent rounded-md text-sm text-text placeholder-text-tertiary focus:outline-none focus:border-primary transition-colors"
+              className="search-input w-full py-2 pl-10 pr-4 bg-background-notes/30 border-0 rounded-md text-sm text-text placeholder-text-tertiary focus:outline-none focus:ring-1 focus:ring-primary/30 transition-colors"
               placeholder="Search notes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -189,6 +181,16 @@ function MainApp() {
           </div>
 
           <div className="header-actions flex items-center gap-3">
+            <button
+              className="settings-button flex items-center justify-center w-10 h-10 text-text-secondary rounded-md hover:bg-background-tertiary transition-colors"
+              onClick={handleOpenSettings}
+              title="Settings"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+            </button>
             <button
               className="new-note-button flex items-center justify-center w-10 h-10 bg-primary text-black rounded-md hover:bg-primary-dark transition-colors"
               onClick={handleNewNote}
@@ -208,19 +210,17 @@ function MainApp() {
           onNoteClick={handleNoteClick}
           activeNoteId={activeNote?.id}
           onNoteDelete={handleNoteDelete}
-          sidebarOpen={sidebarOpen}
         />
       </div>
       </div>
 
       {/* Settings Modal */}
-      {showSettings && (
-        <SettingsWindow
-          onClose={() => setShowSettings(false)}
-          initialSettings={appSettings}
-          onSave={handleSaveSettings}
-        />
-      )}
+      <SettingsDialog
+        open={showSettings}
+        onOpenChange={setShowSettings}
+        initialSettings={appSettings}
+        onSave={handleSaveSettings}
+      />
     </div>
   )
 }

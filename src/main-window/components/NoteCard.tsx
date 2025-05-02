@@ -107,12 +107,12 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
 
   return (
     <div
-      className={`note-card ${colorInfo.className} ${isActive ? 'selected' : ''} bg-background-secondary rounded-lg overflow-hidden flex flex-col ${colorInfo.border} border-l-3 shadow-card transition-all duration-200 cursor-pointer h-note-card
-        hover:translate-y-[-2px] hover:shadow-card-hover`}
+      className={`note-card ${colorInfo.className} ${isActive ? 'selected' : ''} bg-background-titlebar rounded-lg overflow-hidden flex flex-col ${colorInfo.border} border-l-3 shadow-none transition-all duration-200 cursor-pointer h-note-card
+        hover:translate-y-[-2px] hover:shadow-none`}
       onClick={() => onClick(note)}
     >
       {/* Note Header */}
-      <div className="note-header px-4 py-3 flex items-center justify-between border-b border-border">
+      <div className="note-header px-4 py-3 flex items-center justify-between border-b-0">
         <h3 className="note-title text-sm font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px] text-text">
           {note.title || 'Untitled Note'}
         </h3>
@@ -127,7 +127,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
 
           {/* More options button */}
           <button
-            className="more-button w-6 h-6 flex items-center justify-center bg-transparent border-none text-text-tertiary rounded hover:bg-background-tertiary hover:text-text"
+            className="more-button w-6 h-6 flex items-center justify-center bg-transparent border-none text-text-tertiary rounded hover:bg-background-notes/30 hover:text-text"
             onClick={toggleMenu}
             title="More options"
           >
@@ -141,11 +141,11 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
           {/* Dropdown Menu */}
           {showMenu && (
             <div
-              className="dropdown-menu absolute top-full right-0 bg-background-tertiary rounded-md shadow-card-hover z-10 min-w-[150px] overflow-hidden"
+              className="dropdown-menu absolute top-full right-0 bg-background-titlebar rounded-md shadow-none z-10 min-w-[150px] overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <button
-                className="flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none text-text-secondary text-left cursor-pointer transition-colors hover:bg-white-5"
+                className="flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none text-text-secondary text-left cursor-pointer transition-colors hover:bg-background-notes/30"
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowMenu(false);
@@ -159,7 +159,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
                 <span>Edit</span>
               </button>
               <button
-                className="flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none text-text-secondary text-left cursor-pointer transition-colors hover:bg-white-5"
+                className="flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none text-text-secondary text-left cursor-pointer transition-colors hover:bg-background-notes/30"
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowMenu(false);
@@ -173,7 +173,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
                 <span>Duplicate</span>
               </button>
               <button
-                className="delete-action flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none text-danger text-left cursor-pointer transition-colors hover:bg-white-5"
+                className="delete-action flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none text-danger text-left cursor-pointer transition-colors hover:bg-background-notes/30"
                 onClick={handleDeleteClick}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -195,14 +195,14 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
       </div>
 
       {/* Note Footer */}
-      <div className="note-footer px-4 py-2 flex items-center justify-between text-xs text-text-tertiary bg-black-10">
+      <div className="note-footer px-4 py-2 flex items-center justify-between text-xs text-text-tertiary bg-background-titlebar/80">
         <span className="note-date">{formatDate(note.createdAt)}</span>
       </div>
 
       {/* Confirmation dialog */}
       {showConfirmDelete && (
         <div
-          className="absolute inset-0 bg-background-secondary/95 flex items-center justify-center z-10 rounded-lg"
+          className="absolute inset-0 bg-background-titlebar/95 flex items-center justify-center z-10 rounded-lg"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="text-center p-4">
@@ -215,7 +215,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
                 Delete
               </button>
               <button
-                className="px-4 py-2 rounded bg-transparent text-text border border-border text-sm cursor-pointer transition-all duration-200 hover:bg-white-5"
+                className="px-4 py-2 rounded bg-transparent text-text border border-border/20 text-sm cursor-pointer transition-all duration-200 hover:bg-background-notes/30"
                 onClick={handleCancelDelete}
               >
                 Cancel
