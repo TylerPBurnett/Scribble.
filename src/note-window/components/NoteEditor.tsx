@@ -34,6 +34,9 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
   // Ref for the DOM element
   const editorDomRef = useRef<HTMLDivElement>(null);
 
+  // Ref for the title input element
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
   // Update refs when state changes
   useEffect(() => {
     titleRef.current = title;
@@ -160,6 +163,17 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
     }
   }, [title, isTitleFocused, isNewNote]);
 
+  // Effect to adjust input width based on content
+  useEffect(() => {
+    if (titleInputRef.current) {
+      const inputWidth = isTitleFocused
+        ? Math.min(Math.max((tempTitle?.length || 1) * 12, 50), 300)
+        : Math.min(Math.max((title?.length || 1) * 12, 50), 300);
+
+      titleInputRef.current.style.width = `${inputWidth}px`;
+    }
+  }, [tempTitle, title, isTitleFocused]);
+
   // Trigger debounced save when isDirty changes
   useEffect(() => {
     // NEVER save while the title is being edited
@@ -175,8 +189,13 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Only allow dragging from the title bar
-    if ((e.target as HTMLElement).closest('.note-drag-handle')) {
+    // Allow dragging from the title bar, but not from input fields or buttons
+    const target = e.target as HTMLElement;
+    const isInput = target.tagName === 'INPUT';
+    const isButton = target.tagName === 'BUTTON' || target.closest('button');
+    const isSvg = target.tagName === 'svg' || target.tagName === 'path' || target.closest('svg');
+
+    if (!isInput && !isButton && !isSvg) {
       setIsDragging(true);
     }
   };
@@ -223,14 +242,30 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
   }, []);
 
   return (
-    <div className="note-editor" ref={editorDomRef}>
-      <div className="note-editor-header" onMouseDown={handleMouseDown}>
-        <div className="note-drag-handle">
-          <div className="note-title-container">
-            {/* Back to basics with a simple input */}
+    <div className="note-editor flex flex-col h-screen bg-[#fff9c4] shadow-lg relative overflow-hidden" ref={editorDomRef}>
+      {/* Compact header with reduced height */}
+      <div
+        className="flex items-center justify-between py-2 px-3 bg-[#fff5b1] border-b border-black/10 cursor-grab shadow-sm"
+        onMouseDown={handleMouseDown}
+        style={{
+          WebkitAppRegion: 'drag',
+          borderBottomColor: 'rgba(0,0,0,0.08)'
+        }}
+      >
+        <div className="flex items-center justify-between w-full">
+          {/* Title container that expands with content */}
+          <div className="flex-1 min-w-0 mr-2">
             <input
               type="text"
-              className="note-title-input"
+              className="note-title-input text-lg font-semibold bg-transparent border-none outline-none focus:outline-none focus:ring-0 font-['Chirp',_'Segoe_UI',_sans-serif] cursor-text caret-black"
+              style={{
+                WebkitAppRegion: 'no-drag',
+                boxShadow: 'none',
+                width: isTitleFocused ?
+                  `${Math.min(Math.max((tempTitle?.length || 1) * 12, 50), 300)}px` :
+                  `${Math.min(Math.max((title?.length || 1) * 12, 50), 300)}px`
+              }}
+              ref={titleInputRef}
               value={isTitleFocused ? tempTitle : title}
               onChange={(e) => {
                 // Only update the temporary title while editing
@@ -238,6 +273,10 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
                 const newTitle = e.target.value;
                 console.log('Title input change (temp):', newTitle);
                 setTempTitle(newTitle);
+
+                // Dynamically adjust width as user types
+                const inputWidth = Math.min(Math.max((newTitle.length || 1) * 12, 50), 300);
+                e.target.style.width = `${inputWidth}px`;
               }}
               onFocus={() => {
                 // When focusing, set the temporary title to the current title
@@ -272,46 +311,50 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
             />
           </div>
 
-          <div className="note-header-right">
-            <div className="note-header-actions">
-              {!autoSaveEnabled && (
+          <div className="flex items-center gap-2" style={{ WebkitAppRegion: 'no-drag' }}>
+            {!autoSaveEnabled && (
+              <button
+                onClick={handleManualSave}
+                className="text-black/50 hover:text-blue-600 transition-colors p-1 cursor-pointer"
+                title="Save now"
+                style={{ WebkitAppRegion: 'no-drag' }}
+              >
                 <svg
-                  className="save-icon"
-                  width="18"
-                  height="18"
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  onClick={handleManualSave}
                 >
-                  <title>Save now</title>
                   <path d="M19 21H5C3.89543 21 3 20.1046 3 19V5C3 3.89543 3.89543 3 5 3H16L21 8V19C21 20.1046 20.1046 21 19 21Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M17 21V13H7V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M7 3V8H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-              )}
-              {/* Last saved timestamp removed */}
-            </div>
+              </button>
+            )}
 
-            <div className="note-controls">
+            <button
+              onClick={handleClose}
+              className="text-black/50 hover:text-red-600 transition-colors p-1 cursor-pointer"
+              title="Close note"
+              style={{ WebkitAppRegion: 'no-drag' }}
+            >
               <svg
-                className="note-close-icon"
-                onClick={handleClose}
-                width="18"
-                height="18"
+                width="16"
+                height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
-                <title>Close note</title>
                 <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-            </div>
+            </button>
           </div>
         </div>
       </div>
-      <div className="note-editor-content">
+
+      <div className="flex-1 overflow-hidden flex flex-col bg-[#fff9c4]">
         <Tiptap
           content={content}
           onUpdate={handleContentUpdate}
@@ -319,6 +362,9 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
           autofocus={true}
         />
       </div>
+
+      {/* Keep the shadow effect at the top */}
+      <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-b from-black/10 to-transparent z-10"></div>
     </div>
   );
 };
