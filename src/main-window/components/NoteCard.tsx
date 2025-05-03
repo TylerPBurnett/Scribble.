@@ -153,10 +153,19 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
 
   // Get a preview of the content (strip HTML and limit length)
   const getContentPreview = (content: string) => {
-    // Remove HTML tags
-    const plainText = content.replace(/<[^>]*>/g, '');
-    // Limit to 60 characters for more compact display
-    return plainText.length > 60 ? plainText.substring(0, 60) + '...' : plainText;
+    // Remove HTML tags but preserve line breaks and basic formatting
+    const plainText = content
+      .replace(/<br\s*\/?>/gi, '\n')  // Convert <br> to newlines
+      .replace(/<p[^>]*>/gi, '')      // Remove opening <p> tags
+      .replace(/<\/p>/gi, '\n')       // Convert closing </p> tags to newlines
+      .replace(/<h[1-6][^>]*>/gi, '') // Remove opening heading tags
+      .replace(/<\/h[1-6]>/gi, '\n')  // Convert closing heading tags to newlines
+      .replace(/<li[^>]*>/gi, '• ')   // Convert list items to bullets
+      .replace(/<\/li>/gi, '\n')      // Add newlines after list items
+      .replace(/<[^>]*>/g, '');       // Remove all other HTML tags
+
+    // Limit to 120 characters for more content display
+    return plainText.length > 120 ? plainText.substring(0, 120) + '...' : plainText;
   };
 
   const colorInfo = getNoteColor();
@@ -169,7 +178,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
       onContextMenu={handleContextMenu}
     >
       {/* Note Header */}
-      <div className="note-header px-3 py-2 flex items-center justify-between border-b-0">
+      <div className="note-header px-3 py-1.5 flex items-center justify-between border-b-0">
         <h3 className="note-title text-xs font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px] text-text">
           {note.title || 'Untitled Note'}
         </h3>
@@ -254,7 +263,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
       </div>
 
       {/* Note Content */}
-      <div className="note-content flex-1 px-3 py-2 text-xs text-text-secondary overflow-hidden">
+      <div className="note-content flex-1 px-3 py-1 text-[10px] text-text-secondary overflow-hidden whitespace-pre-line">
         {getContentPreview(note.content) || <span className="empty-content italic text-text-tertiary">No content</span>}
       </div>
 
