@@ -222,6 +222,38 @@ ipcMain.handle("window-move", (event, moveX, moveY) => {
     win.setPosition(x + moveX, y + moveY);
   }
 });
+ipcMain.handle("window-toggle-pin", (event, shouldPin) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win) {
+    win.setAlwaysOnTop(shouldPin);
+    let noteId = null;
+    for (const [id, noteWin] of noteWindows.entries()) {
+      if (noteWin === win) {
+        noteId = id;
+        break;
+      }
+    }
+    console.log(`Window pin state changed for note ${noteId}: ${shouldPin}`);
+    return win.isAlwaysOnTop();
+  }
+  return false;
+});
+ipcMain.handle("window-is-pinned", (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (win) {
+    return win.isAlwaysOnTop();
+  }
+  return false;
+});
+ipcMain.handle("window-set-pin-state", (_, noteId, isPinned) => {
+  const win = noteWindows.get(noteId);
+  if (win) {
+    win.setAlwaysOnTop(isPinned);
+    console.log(`Set window pin state for note ${noteId}: ${isPinned}`);
+    return true;
+  }
+  return false;
+});
 ipcMain.handle("create-note", () => {
   const noteId = `new-${Date.now().toString(36)}`;
   console.log("IPC: create-note called, generated ID:", noteId);

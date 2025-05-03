@@ -14,6 +14,7 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
   const [title, setTitle] = useState(note.title);
   const [content, setContent] = useState(note.content);
   const [isDirty, setIsDirty] = useState(false);
+  const [isPinned, setIsPinned] = useState(note.pinned || false);
 
   // Track if we're currently editing the title to prevent premature saves
   const [isTitleFocused, setIsTitleFocused] = useState(false);
@@ -241,6 +242,48 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
     setContent(newContent);
   }, []);
 
+  // Check window pin state on mount
+  useEffect(() => {
+    const checkPinState = async () => {
+      try {
+        const isWindowPinned = await window.windowControls.isPinned();
+        setIsPinned(isWindowPinned);
+      } catch (error) {
+        console.error('Error checking window pin state:', error);
+      }
+    };
+
+    checkPinState();
+  }, []);
+
+  // Toggle pin state
+  const togglePinState = async () => {
+    try {
+      const newPinState = !isPinned;
+      const result = await window.windowControls.togglePin(newPinState);
+      setIsPinned(result);
+
+      // Update the note's pinned property
+      // Create a deep copy of the note to ensure we don't lose any properties
+      const updatedNote = {
+        ...noteDataRef.current,
+        pinned: result,
+        // Ensure content is preserved exactly as it was
+        content: contentRef.current
+      };
+
+      // Save the updated note
+      const savedNote = await updateNote(updatedNote);
+      noteDataRef.current = savedNote;
+      onSave?.(savedNote);
+
+      // Notify other windows that this note has been updated
+      window.noteWindow.noteUpdated(savedNote.id);
+    } catch (error) {
+      console.error('Error toggling pin state:', error);
+    }
+  };
+
   return (
     <div className="note-editor flex flex-col h-screen bg-[#fff9c4] shadow-lg relative overflow-hidden" ref={editorDomRef}>
       {/* Compact header with reduced height */}
@@ -332,6 +375,29 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
                 </svg>
               </button>
             )}
+
+            <button
+              onClick={togglePinState}
+              className={`transition-colors p-1 cursor-pointer ${
+                isPinned ? 'text-amber-600' : 'text-black/50 hover:text-amber-600'
+              }`}
+              title={isPinned ? "Unpin note" : "Pin note on top"}
+              style={{ WebkitAppRegion: 'no-drag' }}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill={isPinned ? "currentColor" : "none"}
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+            </button>
 
             <button
               onClick={handleClose}

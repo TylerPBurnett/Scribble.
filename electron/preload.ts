@@ -26,6 +26,9 @@ contextBridge.exposeInMainWorld('windowControls', {
   maximize: () => ipcRenderer.invoke('window-maximize'),
   close: () => ipcRenderer.invoke('window-close'),
   moveWindow: (moveX: number, moveY: number) => ipcRenderer.invoke('window-move', moveX, moveY),
+  togglePin: (shouldPin: boolean) => ipcRenderer.invoke('window-toggle-pin', shouldPin),
+  isPinned: () => ipcRenderer.invoke('window-is-pinned'),
+  setPinState: (noteId: string, isPinned: boolean) => ipcRenderer.invoke('window-set-pin-state', noteId, isPinned),
 })
 
 // Expose specific APIs for note management

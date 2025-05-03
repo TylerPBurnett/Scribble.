@@ -314,6 +314,47 @@ ipcMain.handle('window-move', (event, moveX, moveY) => {
   }
 })
 
+ipcMain.handle('window-toggle-pin', (event, shouldPin) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (win) {
+    win.setAlwaysOnTop(shouldPin)
+
+    // Find the noteId for this window
+    let noteId = null
+    for (const [id, noteWin] of noteWindows.entries()) {
+      if (noteWin === win) {
+        noteId = id
+        break
+      }
+    }
+
+    // Log the pin state change
+    console.log(`Window pin state changed for note ${noteId}: ${shouldPin}`)
+
+    return win.isAlwaysOnTop()
+  }
+  return false
+})
+
+ipcMain.handle('window-is-pinned', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (win) {
+    return win.isAlwaysOnTop()
+  }
+  return false
+})
+
+ipcMain.handle('window-set-pin-state', (_, noteId, isPinned) => {
+  // Find the window for this note
+  const win = noteWindows.get(noteId)
+  if (win) {
+    win.setAlwaysOnTop(isPinned)
+    console.log(`Set window pin state for note ${noteId}: ${isPinned}`)
+    return true
+  }
+  return false
+})
+
 ipcMain.handle('create-note', () => {
   // Generate a unique ID for the new note
   const noteId = `new-${Date.now().toString(36)}`

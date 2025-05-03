@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Note } from '../../shared/types/Note';
-import { deleteNote } from '../../shared/services/noteService';
+import { deleteNote, updateNote } from '../../shared/services/noteService';
 
 interface NoteCardProps {
   note: Note;
@@ -244,6 +244,43 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                 </svg>
                 <span>Duplicate</span>
+              </button>
+              <button
+                className={`flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none ${isPinned ? 'text-amber-500' : 'text-text-secondary'} text-left cursor-pointer transition-colors hover:bg-background-notes/30`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowMenu(false);
+                  // Toggle pin state
+                  // Create a deep copy of the note to ensure we don't lose any properties
+                  const updatedNote = {
+                    ...note,
+                    pinned: !isPinned,
+                    // Ensure content is preserved exactly as it was
+                    content: note.content
+                  };
+                  // Update the note in the database
+                  updateNote(updatedNote).then(() => {
+                    // Notify other windows that this note has been updated
+                    window.noteWindow.noteUpdated(note.id);
+                    // Reload the main window to reflect the changes
+                    window.location.reload();
+                  });
+                }}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill={isPinned ? "currentColor" : "none"}
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <span>{isPinned ? 'Unpin' : 'Pin'}</span>
               </button>
               <button
                 className="delete-action flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none text-danger text-left cursor-pointer transition-colors hover:bg-background-notes/30"

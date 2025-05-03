@@ -22,7 +22,10 @@ electron.contextBridge.exposeInMainWorld("windowControls", {
   minimize: () => electron.ipcRenderer.invoke("window-minimize"),
   maximize: () => electron.ipcRenderer.invoke("window-maximize"),
   close: () => electron.ipcRenderer.invoke("window-close"),
-  moveWindow: (moveX, moveY) => electron.ipcRenderer.invoke("window-move", moveX, moveY)
+  moveWindow: (moveX, moveY) => electron.ipcRenderer.invoke("window-move", moveX, moveY),
+  togglePin: (shouldPin) => electron.ipcRenderer.invoke("window-toggle-pin", shouldPin),
+  isPinned: () => electron.ipcRenderer.invoke("window-is-pinned"),
+  setPinState: (noteId, isPinned) => electron.ipcRenderer.invoke("window-set-pin-state", noteId, isPinned)
 });
 electron.contextBridge.exposeInMainWorld("noteWindow", {
   openNote: (noteId) => electron.ipcRenderer.invoke("open-note", noteId),

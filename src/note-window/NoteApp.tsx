@@ -44,6 +44,15 @@ function NoteApp() {
           console.log('Loaded note:', note)
           if (note) {
             setActiveNote(note)
+
+            // Set the window's pin state based on the note's pinned property
+            if (note.pinned) {
+              try {
+                await window.windowControls.setPinState(noteId, true)
+              } catch (error) {
+                console.error('Error setting window pin state:', error)
+              }
+            }
           } else {
             setError(`Note not found with ID: ${noteId}`)
           }
@@ -60,8 +69,21 @@ function NoteApp() {
   }, [])
 
   // Handle note save
-  const handleNoteSave = (updatedNote: Note) => {
+  const handleNoteSave = async (updatedNote: Note) => {
     setActiveNote(updatedNote)
+
+    // Get the note ID from the URL query parameters
+    const urlParams = new URLSearchParams(window.location.search)
+    const noteId = urlParams.get('noteId')
+
+    // Update the window's pin state if the note ID is available
+    if (noteId) {
+      try {
+        await window.windowControls.setPinState(noteId, !!updatedNote.pinned)
+      } catch (error) {
+        console.error('Error updating window pin state:', error)
+      }
+    }
   }
 
   // Show loading state
