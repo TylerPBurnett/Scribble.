@@ -4,7 +4,7 @@
   border: none;
   border-radius: 0;
   overflow: hidden;
-  background-color: #fff9c4;
+  /* Background color is now set by the parent component */
   color: #333;
   width: 100%;
   height: 100%;
@@ -15,7 +15,7 @@
   display: flex;
   flex-wrap: nowrap; /* Prevent wrapping to multiple lines */
   padding: 4px; /* Further reduced padding */
-  background-color: #fff5b1;
+  background-color: rgba(0, 0, 0, 0.05); /* Slightly darker than the note background */
   border-top: 1px solid rgba(0, 0, 0, 0.1);
   gap: 2px; /* Further reduced gap */
   width: 100%; /* Full width of the container */
@@ -69,7 +69,7 @@
   padding: 16px 16px 8px 16px; /* Reduced bottom padding */
   overflow-y: auto;
   line-height: 1.5;
-  background-color: #fff9c4;
+  /* Background color is now set by the parent component */
   color: #333;
   font-family: 'Chirp', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   caret-color: #333 !important; /* Force cursor visibility */
@@ -363,6 +363,69 @@
   pointer-events: none;
   z-index: 100;
   display: block !important;
+}
+
+/* Dark theme styles */
+.dark-theme .ProseMirror-cursor,
+.dark-theme .ProseMirror-textblock-cursor {
+  border-left: 2px solid #fff !important;
+}
+
+.dark-theme.tiptap-content,
+.dark-theme .ProseMirror,
+.dark-theme .ProseMirror p,
+.dark-theme .ProseMirror h1,
+.dark-theme .ProseMirror h2,
+.dark-theme .ProseMirror h3,
+.dark-theme .ProseMirror li,
+.dark-theme .ProseMirror blockquote {
+  color: #fff !important;
+  caret-color: #fff !important;
+}
+
+.dark-theme .ProseMirror a {
+  color: #66b2ff !important;
+}
+
+.dark-theme .ProseMirror code {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.dark-theme .ProseMirror pre {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.dark-theme .ProseMirror blockquote {
+  border-left-color: rgba(255, 255, 255, 0.4);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ccc;
+}
+
+.dark-theme .toolbar-toggle {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark-theme .tiptap-toolbar {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark-theme .tiptap-toolbar button {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.dark-theme .tiptap-toolbar button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.dark-theme .tiptap-toolbar button.is-active {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.dark-theme .ProseMirror p.is-editor-empty:first-child::before {
+  color: #aaa;
 }
 
 /* Toolbar toggle button */

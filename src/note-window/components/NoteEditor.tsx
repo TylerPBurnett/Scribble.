@@ -15,6 +15,8 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
   const [content, setContent] = useState(note.content);
   const [isDirty, setIsDirty] = useState(false);
   const [isPinned, setIsPinned] = useState(note.pinned || false);
+  const [noteColor, setNoteColor] = useState(note.color || '#fff9c4'); // Default yellow sticky note color
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
   // Track if we're currently editing the title to prevent premature saves
   const [isTitleFocused, setIsTitleFocused] = useState(false);
@@ -256,6 +258,40 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
     checkPinState();
   }, []);
 
+  // Add click outside handler for color picker
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (showColorPicker) {
+        // Check if the click was outside the color picker
+        const target = e.target as HTMLElement;
+        const isColorPickerClick = target.closest('.color-picker-container');
+        const isSettingsButtonClick = target.closest('.settings-button');
+
+        if (!isColorPickerClick && !isSettingsButtonClick) {
+          setShowColorPicker(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showColorPicker]);
+
+  // Define color options
+  const colorOptions = [
+    { name: 'Yellow', value: '#fff9c4' }, // Default sticky note color
+    { name: 'White', value: '#ffffff' },
+    { name: 'Black', value: '#333333' },
+    { name: 'Pastel Green', value: '#d0f0c0' },
+    { name: 'Pastel Blue', value: '#b5d8eb' },
+    { name: 'Pastel Purple', value: '#d8c2ef' },
+    { name: 'Pastel Pink', value: '#f4c2c2' },
+    { name: 'Pastel Gray', value: '#d3d3d3' }
+  ];
+
   // Toggle pin state
   const togglePinState = async () => {
     try {
@@ -284,15 +320,87 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
     }
   };
 
+  // Change note color
+  const changeNoteColor = async (color: string) => {
+    try {
+      setNoteColor(color);
+      setShowColorPicker(false);
+
+      // Update the note's color property
+      const updatedNote = {
+        ...noteDataRef.current,
+        color: color,
+        // Ensure content is preserved exactly as it was
+        content: contentRef.current
+      };
+
+      // Save the updated note
+      const savedNote = await updateNote(updatedNote);
+      noteDataRef.current = savedNote;
+      onSave?.(savedNote);
+
+      // Notify other windows that this note has been updated
+      window.noteWindow.noteUpdated(savedNote.id);
+    } catch (error) {
+      console.error('Error changing note color:', error);
+    }
+  };
+
+  // Function to darken a color for the header
+  const getDarkerShade = (color: string): string => {
+    // For specific colors, return predefined darker shades
+    if (color === '#ffffff') return '#f8f8f8';
+    if (color === '#333333') return '#444444';
+    if (color === '#fff9c4') return '#fff5b1';
+
+    // For other colors, calculate a slightly darker shade
+    try {
+      // Parse the hex color
+      const r = parseInt(color.slice(1, 3), 16);
+      const g = parseInt(color.slice(3, 5), 16);
+      const b = parseInt(color.slice(5, 7), 16);
+
+      // Darken by 10%
+      const darkenFactor = 0.9;
+      const newR = Math.floor(r * darkenFactor);
+      const newG = Math.floor(g * darkenFactor);
+      const newB = Math.floor(b * darkenFactor);
+
+      // Convert back to hex
+      return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+    } catch (error) {
+      console.error('Error darkening color:', error);
+      return color; // Return original color if there's an error
+    }
+  };
+
+  // Determine text color based on background color
+  const getTextColor = () => {
+    // For dark backgrounds, use white text
+    if (noteColor === '#333333') {
+      return '#ffffff';
+    }
+    // For all other colors, use default (dark) text
+    return '';
+  };
+
   return (
-    <div className="note-editor flex flex-col h-screen bg-[#fff9c4] shadow-lg relative overflow-hidden" ref={editorDomRef}>
+    <div
+      className="note-editor flex flex-col h-screen shadow-lg relative overflow-hidden"
+      style={{
+        backgroundColor: noteColor,
+        color: getTextColor()
+      }}
+      ref={editorDomRef}
+    >
       {/* Compact header with reduced height */}
       <div
-        className="flex items-center justify-between py-2 px-3 bg-[#fff5b1] border-b border-black/10 cursor-grab shadow-sm"
+        className="flex items-center justify-between py-2 px-3 border-b border-black/10 cursor-grab shadow-sm"
         onMouseDown={handleMouseDown}
         style={{
           WebkitAppRegion: 'drag',
-          borderBottomColor: 'rgba(0,0,0,0.08)'
+          borderBottomColor: 'rgba(0,0,0,0.08)',
+          backgroundColor: getDarkerShade(noteColor)
         }}
       >
         <div className="flex items-center justify-between w-full">
@@ -354,7 +462,7 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
             />
           </div>
 
-          <div className="flex items-center gap-2" style={{ WebkitAppRegion: 'no-drag' }}>
+          <div className="flex items-center gap-2 relative" style={{ WebkitAppRegion: 'no-drag' }}>
             {!autoSaveEnabled && (
               <button
                 onClick={handleManualSave}
@@ -375,6 +483,65 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
                 </svg>
               </button>
             )}
+
+            {/* Settings button */}
+            <div className="relative">
+              <button
+                onClick={() => setShowColorPicker(!showColorPicker)}
+                className={`settings-button transition-colors p-1 cursor-pointer ${
+                  showColorPicker ? 'text-blue-600' : 'text-black/50 hover:text-blue-600'
+                }`}
+                title="Note settings"
+                style={{ WebkitAppRegion: 'no-drag' }}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+              </button>
+
+              {/* Color picker dropdown */}
+              {showColorPicker && (
+                <div
+                  className="color-picker-container fixed rounded-md shadow-lg p-2 z-50 w-36"
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    backgroundColor: '#192734', // Match noteslist gray
+                    top: '50px', // Position below the header
+                    left: '50%',
+                    transform: 'translateX(-50%)', // Center horizontally
+                    border: '1px solid rgba(255,255,255,0.1)'
+                  }}
+                >
+                  <div className="text-xs font-medium text-gray-400 mb-2 px-1">Note Color</div>
+                  <div className="grid grid-cols-3 gap-1">
+                    {colorOptions.map((color) => (
+                      <button
+                        key={color.value}
+                        className={`w-6 h-6 rounded-full border ${
+                          noteColor === color.value ? 'border-blue-500 border-2' : 'border-gray-300/30'
+                        } transition-all hover:scale-110`}
+                        style={{
+                          backgroundColor: color.value,
+                          boxShadow: noteColor === color.value ? '0 0 0 2px rgba(59, 130, 246, 0.3)' : 'none'
+                        }}
+                        title={color.name}
+                        onClick={() => changeNoteColor(color.value)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <button
               onClick={togglePinState}
@@ -420,12 +587,21 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden flex flex-col bg-[#fff9c4]">
+      <div
+        className="flex-1 overflow-hidden flex flex-col"
+        style={{
+          backgroundColor: noteColor,
+          color: getTextColor()
+        }}
+      >
         <Tiptap
           content={content}
           onUpdate={handleContentUpdate}
           placeholder="Start typing here..."
           autofocus={true}
+          editorClass={noteColor === '#333333' ? 'dark-theme' : ''}
+          backgroundColor={noteColor}
+          toolbarColor={getDarkerShade(noteColor)}
         />
       </div>
 

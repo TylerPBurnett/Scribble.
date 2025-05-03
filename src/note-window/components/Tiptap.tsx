@@ -24,6 +24,9 @@ interface TiptapProps {
   placeholder?: string;
   autofocus?: boolean;
   editable?: boolean;
+  editorClass?: string; // Additional class for the editor
+  backgroundColor?: string; // Background color for the editor
+  toolbarColor?: string; // Background color for the toolbar
 }
 
 const Tiptap = ({
@@ -32,6 +35,9 @@ const Tiptap = ({
   placeholder = 'Start typing here...',
   autofocus = true,
   editable = true,
+  editorClass = '',
+  backgroundColor,
+  toolbarColor,
 }: TiptapProps) => {
   // State to track toolbar visibility
   const [isToolbarVisible, setIsToolbarVisible] = useState(true);
@@ -228,8 +234,14 @@ const Tiptap = ({
   }
 
   return (
-    <div className="tiptap-editor" ref={editorContainerRef}>
-      <div className={`tiptap-toolbar ${isToolbarVisible ? '' : 'hidden'}`}>
+    <div
+      className="tiptap-editor"
+      ref={editorContainerRef}
+      style={{ backgroundColor: backgroundColor || '' }}
+    >
+      <div
+        className={`tiptap-toolbar ${isToolbarVisible ? '' : 'hidden'}`}
+        style={{ backgroundColor: toolbarColor || '' }}>
         <button
           onClick={() => editor.chain().focus().toggleBold().run()}
           className={editor.isActive('bold') ? 'is-active' : ''}
@@ -359,7 +371,8 @@ const Tiptap = ({
 
       <EditorContent
         editor={editor}
-        className="tiptap-content"
+        className={`tiptap-content ${editorClass}`}
+        style={{ backgroundColor: backgroundColor || '' }}
         onClick={(e) => {
           if (editor && !editor.isFocused) {
             editor.commands.focus('end');
@@ -369,7 +382,7 @@ const Tiptap = ({
           if (cursor) {
             (cursor as HTMLElement).style.display = 'block';
             (cursor as HTMLElement).style.borderLeftWidth = '2px';
-            (cursor as HTMLElement).style.borderLeftColor = '#000';
+            (cursor as HTMLElement).style.borderLeftColor = editorClass.includes('dark-theme') ? '#fff' : '#000';
           }
         }}
         onFocus={() => {

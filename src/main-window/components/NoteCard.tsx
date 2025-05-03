@@ -12,9 +12,22 @@ interface NoteCardProps {
 
 const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false }: NoteCardProps) => {
   const [showMenu, setShowMenu] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [isContextMenu, setIsContextMenu] = useState(false);
+
+  // Define color options
+  const colorOptions = [
+    { name: 'Yellow', value: '#fff9c4' }, // Default sticky note color
+    { name: 'White', value: '#ffffff' },
+    { name: 'Black', value: '#333333' },
+    { name: 'Pastel Green', value: '#d0f0c0' },
+    { name: 'Pastel Blue', value: '#b5d8eb' },
+    { name: 'Pastel Purple', value: '#d8c2ef' },
+    { name: 'Pastel Pink', value: '#f4c2c2' },
+    { name: 'Pastel Gray', value: '#d3d3d3' }
+  ];
 
   // Effect to close context menu when clicking outside
   useEffect(() => {
@@ -168,18 +181,68 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
     return plainText.length > 120 ? plainText.substring(0, 120) + '...' : plainText;
   };
 
+  // Get note color styling
+  const getNoteColorStyle = () => {
+    // If note has a custom color, use it
+    if (note.color) {
+      // For dark background, use light text
+      if (note.color === '#333333') {
+        return {
+          backgroundColor: note.color,
+          color: '#ffffff',
+          headerBg: '#444444',
+          footerBg: '#444444'
+        };
+      }
+      // For white background, use dark text
+      else if (note.color === '#ffffff') {
+        return {
+          backgroundColor: note.color,
+          color: '#333333',
+          headerBg: '#f8f8f8',
+          footerBg: '#f8f8f8'
+        };
+      }
+      // For other colors, use default text color
+      else {
+        return {
+          backgroundColor: note.color,
+          color: '',
+          headerBg: note.color,
+          footerBg: note.color
+        };
+      }
+    }
+
+    // Default styling
+    return {
+      backgroundColor: '#192734',
+      color: '',
+      headerBg: '',
+      footerBg: ''
+    };
+  };
+
+  const colorStyle = getNoteColorStyle();
   const colorInfo = getNoteColor();
 
   return (
     <div
-      className={`note-card ${colorInfo.className} ${isActive ? 'selected' : ''} bg-background-titlebar rounded-lg overflow-hidden flex flex-col ${colorInfo.border} border-l-3 shadow-none transition-all duration-200 cursor-pointer h-note-card-compact
+      className={`note-card ${colorInfo.className} ${isActive ? 'selected' : ''} rounded-lg overflow-hidden flex flex-col ${colorInfo.border} border-l-3 shadow-none transition-all duration-200 cursor-pointer h-note-card-compact
         hover:translate-y-[-2px] hover:shadow-none group`}
       onClick={() => onClick(note)}
       onContextMenu={handleContextMenu}
+      style={{
+        backgroundColor: colorStyle.backgroundColor,
+        color: colorStyle.color
+      }}
     >
       {/* Note Header */}
-      <div className="note-header px-3 py-1.5 flex items-center justify-between border-b-0">
-        <h3 className="note-title text-xs font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px] text-text">
+      <div
+        className="note-header px-3 py-1.5 flex items-center justify-between border-b-0"
+        style={{ backgroundColor: colorStyle.headerBg || '' }}
+      >
+        <h3 className="note-title text-xs font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px]">
           {note.title || 'Untitled Note'}
         </h3>
         <div className="note-actions flex items-center gap-1 relative">
@@ -207,15 +270,21 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
           {/* Dropdown Menu */}
           {showMenu && (
             <div
-              className={`dropdown-menu absolute ${
+              className={`dropdown-menu ${
                 isContextMenu
                   ? 'fixed'
-                  : 'top-full right-0'
-              } bg-background-titlebar rounded-md ${
+                  : 'absolute'
+              } bg-[#192734] rounded-md ${
                 isContextMenu ? 'shadow-[0_5px_15px_rgba(0,0,0,0.3)]' : 'shadow-md'
-              } z-50 min-w-[150px] overflow-hidden`}
+              } z-50 min-w-[150px] overflow-hidden border border-white/10`}
               onClick={(e) => e.stopPropagation()}
-              style={isContextMenu ? { top: menuPosition.y, left: menuPosition.x } : {}}
+              style={isContextMenu
+                ? { top: menuPosition.y, left: menuPosition.x }
+                : {
+                    top: '30px',
+                    right: '0px',
+                    transform: 'none'
+                  }} // Shift it slightly to the left
             >
               <button
                 className="flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none text-text-secondary text-left cursor-pointer transition-colors hover:bg-background-notes/30"
@@ -282,6 +351,22 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
                 </svg>
                 <span>{isPinned ? 'Unpin' : 'Pin'}</span>
               </button>
+
+              {/* Color option */}
+              <button
+                className="flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none text-text-secondary text-left cursor-pointer transition-colors hover:bg-background-notes/30"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowMenu(false);
+                  setShowColorPicker(true);
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <circle cx="12" cy="12" r="4"></circle>
+                </svg>
+                <span>Change Color</span>
+              </button>
               <button
                 className="delete-action flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none text-danger text-left cursor-pointer transition-colors hover:bg-background-notes/30"
                 onClick={handleDeleteClick}
@@ -300,12 +385,15 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
       </div>
 
       {/* Note Content */}
-      <div className="note-content flex-1 px-3 py-1 text-[10px] text-text-secondary overflow-hidden whitespace-pre-line">
-        {getContentPreview(note.content) || <span className="empty-content italic text-text-tertiary">No content</span>}
+      <div className="note-content flex-1 px-3 py-1 text-[10px] overflow-hidden whitespace-pre-line">
+        {getContentPreview(note.content) || <span className="empty-content italic opacity-60">No content</span>}
       </div>
 
       {/* Note Footer */}
-      <div className="note-footer px-3 py-1 flex items-center justify-between text-[10px] text-text-tertiary bg-background-titlebar/80">
+      <div
+        className="note-footer px-3 py-1 flex items-center justify-between text-[10px] text-text-tertiary"
+        style={{ backgroundColor: colorStyle.footerBg || '' }}
+      >
         <span className="note-date">{formatDate(note.createdAt)}</span>
       </div>
 
@@ -330,6 +418,62 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
               >
                 Cancel
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Color picker dialog */}
+      {showColorPicker && (
+        <div
+          className="absolute inset-0 bg-background-titlebar/95 flex items-center justify-center z-10 rounded-lg"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="p-3 bg-[#192734] rounded-lg shadow-lg" style={{ maxWidth: '180px' }}>
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-xs font-medium text-gray-300 m-0">Choose Color</h3>
+              <button
+                className="text-text-tertiary hover:text-text bg-transparent border-none cursor-pointer"
+                onClick={() => setShowColorPicker(false)}
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6L6 18"></path>
+                  <path d="M6 6L18 18"></path>
+                </svg>
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-1">
+              {colorOptions.map((color) => (
+                <button
+                  key={color.value}
+                  className={`w-6 h-6 rounded-full border ${
+                    note.color === color.value ? 'border-blue-500 border-2' : 'border-gray-300/30'
+                  } transition-all hover:scale-110`}
+                  style={{
+                    backgroundColor: color.value,
+                    boxShadow: note.color === color.value ? '0 0 0 2px rgba(59, 130, 246, 0.3)' : 'none'
+                  }}
+                  title={color.name}
+                  onClick={() => {
+                    // Update note color
+                    const updatedNote = {
+                      ...note,
+                      color: color.value,
+                      // Ensure content is preserved exactly as it was
+                      content: note.content
+                    };
+                    // Update the note in the database
+                    updateNote(updatedNote).then(() => {
+                      // Notify other windows that this note has been updated
+                      window.noteWindow.noteUpdated(note.id);
+                      // Close the color picker
+                      setShowColorPicker(false);
+                      // Reload the main window to reflect the changes
+                      window.location.reload();
+                    });
+                  }}
+                />
+              ))}
             </div>
           </div>
         </div>
