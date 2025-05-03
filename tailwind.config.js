@@ -8,6 +8,14 @@ export default {
     "./settings.html"
   ],
   theme: {
+    screens: {
+      'xs': '450px',
+      'sm': '640px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
+      '2xl': '1536px',
+    },
   	extend: {
   		colors: {
   			primary: {
@@ -75,10 +83,16 @@ export default {
   			'primary-10': 'rgba(245, 158, 11, 0.1)'
   		},
   		gridTemplateColumns: {
-  			'auto-fill-250': 'repeat(auto-fill, minmax(250px, 1fr))'
+  			'auto-fill-250': 'repeat(auto-fill, minmax(250px, 1fr))',
+  			'auto-fill-200': 'repeat(auto-fill, minmax(200px, 1fr))',
+  			'auto-fill-180': 'repeat(auto-fill, minmax(180px, 1fr))',
+  			'1-col': 'repeat(1, 1fr)',
+  			'2-col': 'repeat(2, 1fr)',
+  			'3-col': 'repeat(3, 1fr)'
   		},
   		height: {
-  			'note-card': '180px'
+  			'note-card': '180px',
+  			'note-card-compact': '140px'
   		},
   		width: {
   			sidebar: '240px',

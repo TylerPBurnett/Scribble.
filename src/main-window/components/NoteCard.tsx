@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Note } from '../../shared/types/Note';
 import { deleteNote } from '../../shared/services/noteService';
 
@@ -13,6 +13,28 @@ interface NoteCardProps {
 const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false }: NoteCardProps) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  const [isContextMenu, setIsContextMenu] = useState(false);
+
+  // Effect to close context menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (isContextMenu && showMenu) {
+        setShowMenu(false);
+        setIsContextMenu(false);
+      }
+    };
+
+    // Add event listener when context menu is open
+    if (isContextMenu && showMenu) {
+      document.addEventListener('click', handleClickOutside);
+    }
+
+    // Clean up event listener
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [isContextMenu, showMenu]);
 
   // Assign a color based on the note ID (for consistent colors)
   const getNoteColor = () => {
@@ -40,6 +62,40 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
   const toggleMenu = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering the note click
     setShowMenu(!showMenu);
+    setIsContextMenu(false);
+  };
+
+  // Handle right-click context menu
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent default browser context menu
+    e.stopPropagation(); // Prevent triggering the note click
+
+    // Get viewport dimensions
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Menu dimensions (approximate)
+    const menuWidth = 150;
+    const menuHeight = 120;
+
+    // Calculate position to ensure menu stays within viewport
+    let x = e.clientX;
+    let y = e.clientY;
+
+    // Adjust if menu would go off right edge
+    if (x + menuWidth > viewportWidth) {
+      x = viewportWidth - menuWidth - 10;
+    }
+
+    // Adjust if menu would go off bottom edge
+    if (y + menuHeight > viewportHeight) {
+      y = viewportHeight - menuHeight - 10;
+    }
+
+    // Position the menu at the adjusted cursor location
+    setMenuPosition({ x, y });
+    setIsContextMenu(true);
+    setShowMenu(true);
   };
 
   // Handle delete button click
@@ -99,39 +155,40 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
   const getContentPreview = (content: string) => {
     // Remove HTML tags
     const plainText = content.replace(/<[^>]*>/g, '');
-    // Limit to 100 characters
-    return plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText;
+    // Limit to 60 characters for more compact display
+    return plainText.length > 60 ? plainText.substring(0, 60) + '...' : plainText;
   };
 
   const colorInfo = getNoteColor();
 
   return (
     <div
-      className={`note-card ${colorInfo.className} ${isActive ? 'selected' : ''} bg-background-titlebar rounded-lg overflow-hidden flex flex-col ${colorInfo.border} border-l-3 shadow-none transition-all duration-200 cursor-pointer h-note-card
-        hover:translate-y-[-2px] hover:shadow-none`}
+      className={`note-card ${colorInfo.className} ${isActive ? 'selected' : ''} bg-background-titlebar rounded-lg overflow-hidden flex flex-col ${colorInfo.border} border-l-3 shadow-none transition-all duration-200 cursor-pointer h-note-card-compact
+        hover:translate-y-[-2px] hover:shadow-none group`}
       onClick={() => onClick(note)}
+      onContextMenu={handleContextMenu}
     >
       {/* Note Header */}
-      <div className="note-header px-4 py-3 flex items-center justify-between border-b-0">
-        <h3 className="note-title text-sm font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px] text-text">
+      <div className="note-header px-3 py-2 flex items-center justify-between border-b-0">
+        <h3 className="note-title text-xs font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px] text-text">
           {note.title || 'Untitled Note'}
         </h3>
         <div className="note-actions flex items-center gap-1 relative">
           {/* Pin icon */}
           {isPinned && (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="pin-icon text-primary">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="pin-icon text-primary">
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
               <circle cx="12" cy="10" r="3"></circle>
             </svg>
           )}
 
-          {/* More options button */}
+          {/* More options button - only visible on hover */}
           <button
-            className="more-button w-6 h-6 flex items-center justify-center bg-transparent border-none text-text-tertiary rounded hover:bg-background-notes/30 hover:text-text"
+            className="more-button w-5 h-5 flex items-center justify-center bg-transparent border-none text-text-tertiary rounded hover:bg-background-notes/30 hover:text-text opacity-0 group-hover:opacity-100"
             onClick={toggleMenu}
             title="More options"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="1" />
               <circle cx="12" cy="5" r="1" />
               <circle cx="12" cy="19" r="1" />
@@ -141,8 +198,15 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
           {/* Dropdown Menu */}
           {showMenu && (
             <div
-              className="dropdown-menu absolute top-full right-0 bg-background-titlebar rounded-md shadow-none z-10 min-w-[150px] overflow-hidden"
+              className={`dropdown-menu absolute ${
+                isContextMenu
+                  ? 'fixed'
+                  : 'top-full right-0'
+              } bg-background-titlebar rounded-md ${
+                isContextMenu ? 'shadow-[0_5px_15px_rgba(0,0,0,0.3)]' : 'shadow-md'
+              } z-50 min-w-[150px] overflow-hidden`}
               onClick={(e) => e.stopPropagation()}
+              style={isContextMenu ? { top: menuPosition.y, left: menuPosition.x } : {}}
             >
               <button
                 className="flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none text-text-secondary text-left cursor-pointer transition-colors hover:bg-background-notes/30"
@@ -190,12 +254,12 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
       </div>
 
       {/* Note Content */}
-      <div className="note-content flex-1 px-4 py-3 text-sm text-text-secondary overflow-hidden">
+      <div className="note-content flex-1 px-3 py-2 text-xs text-text-secondary overflow-hidden">
         {getContentPreview(note.content) || <span className="empty-content italic text-text-tertiary">No content</span>}
       </div>
 
       {/* Note Footer */}
-      <div className="note-footer px-4 py-2 flex items-center justify-between text-xs text-text-tertiary bg-background-titlebar/80">
+      <div className="note-footer px-3 py-1 flex items-center justify-between text-[10px] text-text-tertiary bg-background-titlebar/80">
         <span className="note-date">{formatDate(note.createdAt)}</span>
       </div>
 
