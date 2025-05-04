@@ -91,8 +91,8 @@ export default {
   			'3-col': 'repeat(3, 1fr)'
   		},
   		height: {
-  			'note-card': '180px',
-  			'note-card-compact': '140px'
+  			'note-card': '200px',
+  			'note-card-compact': '170px'
   		},
   		width: {
   			sidebar: '240px',

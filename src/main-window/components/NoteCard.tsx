@@ -177,8 +177,8 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
       .replace(/<\/li>/gi, '\n')      // Add newlines after list items
       .replace(/<[^>]*>/g, '');       // Remove all other HTML tags
 
-    // Limit to 120 characters for more content display
-    return plainText.length > 120 ? plainText.substring(0, 120) + '...' : plainText;
+    // Limit to 180 characters for more content display
+    return plainText.length > 180 ? plainText.substring(0, 180) + '...' : plainText;
   };
 
   // Get note color styling
@@ -228,7 +228,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
 
   return (
     <div
-      className={`note-card ${colorInfo.className} ${isActive ? 'selected' : ''} rounded-lg overflow-hidden flex flex-col ${colorInfo.border} border-l-3 shadow-none transition-all duration-200 cursor-pointer h-note-card-compact
+      className={`note-card ${colorInfo.className} ${isActive ? 'selected' : ''} rounded-lg overflow-hidden flex flex-col ${colorInfo.border} border-l-3 shadow-none transition-all duration-200 cursor-pointer h-note-card
         hover:translate-y-[-2px] hover:shadow-none group`}
       onClick={() => onClick(note)}
       onContextMenu={handleContextMenu}
@@ -242,7 +242,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
         className="note-header px-3 py-1.5 flex items-center justify-between border-b-0"
         style={{ backgroundColor: colorStyle.headerBg || '' }}
       >
-        <h3 className="note-title text-xs font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px]">
+        <h3 className="note-title text-sm font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px]">
           {note.title || 'Untitled Note'}
         </h3>
         <div className="note-actions flex items-center gap-1 relative">
@@ -385,13 +385,13 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
       </div>
 
       {/* Note Content */}
-      <div className="note-content flex-1 px-3 py-1 text-[10px] overflow-hidden whitespace-pre-line">
+      <div className="note-content flex-1 px-3 py-2 text-xs overflow-hidden whitespace-pre-line">
         {getContentPreview(note.content) || <span className="empty-content italic opacity-60">No content</span>}
       </div>
 
       {/* Note Footer */}
       <div
-        className="note-footer px-3 py-1 flex items-center justify-between text-[10px] text-text-tertiary"
+        className="note-footer px-3 py-1.5 flex items-center justify-between text-xs text-text-tertiary"
         style={{ backgroundColor: colorStyle.footerBg || '' }}
       >
         <span className="note-date">{formatDate(note.createdAt)}</span>
