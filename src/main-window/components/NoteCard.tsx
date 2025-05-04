@@ -29,25 +29,31 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
     { name: 'Pastel Gray', value: '#d3d3d3' }
   ];
 
-  // Effect to close context menu when clicking outside
+  // Effect to handle context menu
   useEffect(() => {
-    const handleClickOutside = () => {
-      if (isContextMenu && showMenu) {
+    // Function to close the menu when clicking anywhere
+    const handleGlobalClick = () => {
+      if (showMenu) {
         setShowMenu(false);
         setIsContextMenu(false);
       }
     };
 
-    // Add event listener when context menu is open
-    if (isContextMenu && showMenu) {
-      document.addEventListener('click', handleClickOutside);
+    // Add global click listener to close menu
+    if (showMenu) {
+      // Add with a slight delay to prevent immediate closing
+      const timeoutId = setTimeout(() => {
+        window.addEventListener('click', handleGlobalClick);
+      }, 50);
+
+      return () => {
+        clearTimeout(timeoutId);
+        window.removeEventListener('click', handleGlobalClick);
+      };
     }
 
-    // Clean up event listener
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [isContextMenu, showMenu]);
+    return undefined;
+  }, [showMenu]);
 
   // Assign a color based on the note ID (for consistent colors)
   const getNoteColor = () => {
@@ -80,35 +86,29 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
 
   // Handle right-click context menu
   const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent default browser context menu
-    e.stopPropagation(); // Prevent triggering the note click
+    // Prevent default browser context menu and note click
+    e.preventDefault();
+    e.stopPropagation();
 
-    // Get viewport dimensions
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+    // Close any existing menu first
+    setShowMenu(false);
+    setIsContextMenu(false);
 
-    // Menu dimensions (approximate)
-    const menuWidth = 150;
-    const menuHeight = 120;
+    // Calculate position, ensuring menu stays within viewport
+    const x = Math.min(e.clientX, window.innerWidth - 160);
+    const y = Math.min(e.clientY, window.innerHeight - 200);
 
-    // Calculate position to ensure menu stays within viewport
-    let x = e.clientX;
-    let y = e.clientY;
+    console.log('Opening context menu at:', x, y);
 
-    // Adjust if menu would go off right edge
-    if (x + menuWidth > viewportWidth) {
-      x = viewportWidth - menuWidth - 10;
-    }
+    // Use setTimeout to ensure state updates happen after current event cycle
+    setTimeout(() => {
+      setMenuPosition({ x, y });
+      setIsContextMenu(true);
+      setShowMenu(true);
+    }, 0);
 
-    // Adjust if menu would go off bottom edge
-    if (y + menuHeight > viewportHeight) {
-      y = viewportHeight - menuHeight - 10;
-    }
-
-    // Position the menu at the adjusted cursor location
-    setMenuPosition({ x, y });
-    setIsContextMenu(true);
-    setShowMenu(true);
+    // Stop event propagation
+    return false;
   };
 
   // Handle delete button click
@@ -227,16 +227,179 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
   const colorInfo = getNoteColor();
 
   return (
-    <div
-      className={`note-card ${colorInfo.className} ${isActive ? 'selected' : ''} rounded-lg overflow-hidden flex flex-col ${colorInfo.border} border-l-3 shadow-none transition-all duration-200 cursor-pointer h-note-card
-        hover:translate-y-[-2px] hover:shadow-none group`}
-      onClick={() => onClick(note)}
-      onContextMenu={handleContextMenu}
-      style={{
-        backgroundColor: colorStyle.backgroundColor,
-        color: colorStyle.color
-      }}
-    >
+    <>
+      {/* Context Menu Overlay - rendered at the root level */}
+      {showMenu && isContextMenu && (
+        <div
+          className="fixed inset-0 z-[9998] bg-transparent"
+          onClick={() => {
+            setShowMenu(false);
+            setIsContextMenu(false);
+          }}
+        >
+          <div
+            className="fixed bg-[#192734] rounded-md shadow-[0_5px_15px_rgba(0,0,0,0.3)] z-[9999] min-w-[160px] overflow-hidden border border-white/10"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{
+              top: menuPosition.y,
+              left: menuPosition.x,
+            }}
+          >
+            <button
+              className="flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none text-text-secondary text-left cursor-pointer transition-colors hover:bg-background-notes/30"
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setShowMenu(false);
+                setIsContextMenu(false);
+                // Small delay to ensure menu is closed before action
+                setTimeout(() => {
+                  onClick(note); // Open the note for editing
+                }, 10);
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+              <span>Edit</span>
+            </button>
+            <button
+              className="flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none text-text-secondary text-left cursor-pointer transition-colors hover:bg-background-notes/30"
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setShowMenu(false);
+                setIsContextMenu(false);
+                // Small delay to ensure menu is closed before action
+                setTimeout(() => {
+                  console.log('Duplicate note:', note.id);
+                }, 10);
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span>Duplicate</span>
+            </button>
+            <button
+              className={`flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none ${isPinned ? 'text-amber-500' : 'text-text-secondary'} text-left cursor-pointer transition-colors hover:bg-background-notes/30`}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setShowMenu(false);
+                setIsContextMenu(false);
+                // Small delay to ensure menu is closed before action
+                setTimeout(() => {
+                  // Toggle pin state
+                  // Create a deep copy of the note to ensure we don't lose any properties
+                  const updatedNote = {
+                    ...note,
+                    pinned: !isPinned,
+                    // Ensure content is preserved exactly as it was
+                    content: note.content
+                  };
+                  // Update the note in the database
+                  updateNote(updatedNote).then(() => {
+                    // Notify other windows that this note has been updated
+                    window.noteWindow.noteUpdated(note.id);
+                    // Reload the main window to reflect the changes
+                    window.location.reload();
+                  });
+                }, 10);
+              }}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill={isPinned ? "currentColor" : "none"}
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <span>{isPinned ? 'Unpin' : 'Pin'}</span>
+            </button>
+            <button
+              className="flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none text-text-secondary text-left cursor-pointer transition-colors hover:bg-background-notes/30"
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setShowMenu(false);
+                setIsContextMenu(false);
+                // Small delay to ensure menu is closed before action
+                setTimeout(() => {
+                  setShowColorPicker(true);
+                }, 10);
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="4"></circle>
+              </svg>
+              <span>Change Color</span>
+            </button>
+            <button
+              className="delete-action flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none text-danger text-left cursor-pointer transition-colors hover:bg-background-notes/30"
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setShowMenu(false);
+                setIsContextMenu(false);
+                // Small delay to ensure menu is closed before action
+                setTimeout(() => {
+                  handleDeleteClick(e);
+                }, 10);
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                <line x1="10" y1="11" x2="10" y2="17" />
+                <line x1="14" y1="11" x2="14" y2="17" />
+              </svg>
+              <span>Delete</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div
+        className={`note-card ${colorInfo.className} ${isActive ? 'selected' : ''} rounded-lg overflow-hidden flex flex-col ${colorInfo.border} border-l-3 shadow-none transition-all duration-200 cursor-pointer h-note-card
+          hover:translate-y-[-2px] hover:shadow-none group`}
+        onClick={() => onClick(note)}
+        onContextMenu={handleContextMenu}
+        style={{
+          backgroundColor: colorStyle.backgroundColor,
+          color: colorStyle.color
+        }}
+      >
       {/* Note Header */}
       <div
         className="note-header px-3 py-1.5 flex items-center justify-between border-b-0"
@@ -267,31 +430,38 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
             </svg>
           </button>
 
-          {/* Dropdown Menu */}
-          {showMenu && (
+          {/* Regular Dropdown Menu (non-context menu) */}
+          {showMenu && !isContextMenu && (
             <div
-              className={`dropdown-menu ${
-                isContextMenu
-                  ? 'fixed'
-                  : 'absolute'
-              } bg-[#192734] rounded-md ${
-                isContextMenu ? 'shadow-[0_5px_15px_rgba(0,0,0,0.3)]' : 'shadow-md'
-              } z-50 min-w-[150px] overflow-hidden border border-white/10`}
-              onClick={(e) => e.stopPropagation()}
-              style={isContextMenu
-                ? { top: menuPosition.y, left: menuPosition.x }
-                : {
-                    top: '30px',
-                    right: '0px',
-                    transform: 'none'
-                  }} // Shift it slightly to the left
+              className="dropdown-menu absolute bg-[#192734] rounded-md shadow-[0_5px_15px_rgba(0,0,0,0.3)] z-[100] min-w-[160px] overflow-hidden border border-white/10"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+              style={{
+                top: '30px',
+                right: '0px',
+              }}
             >
               <button
                 className="flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none text-text-secondary text-left cursor-pointer transition-colors hover:bg-background-notes/30"
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
                 onClick={(e) => {
                   e.stopPropagation();
+                  e.preventDefault();
                   setShowMenu(false);
-                  onClick(note); // Open the note for editing
+                  setIsContextMenu(false);
+                  // Small delay to ensure menu is closed before action
+                  setTimeout(() => {
+                    onClick(note); // Open the note for editing
+                  }, 10);
                 }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -302,10 +472,19 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
               </button>
               <button
                 className="flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none text-text-secondary text-left cursor-pointer transition-colors hover:bg-background-notes/30"
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
                 onClick={(e) => {
                   e.stopPropagation();
+                  e.preventDefault();
                   setShowMenu(false);
-                  console.log('Duplicate note:', note.id);
+                  setIsContextMenu(false);
+                  // Small delay to ensure menu is closed before action
+                  setTimeout(() => {
+                    console.log('Duplicate note:', note.id);
+                  }, 10);
                 }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -316,24 +495,33 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
               </button>
               <button
                 className={`flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none ${isPinned ? 'text-amber-500' : 'text-text-secondary'} text-left cursor-pointer transition-colors hover:bg-background-notes/30`}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
                 onClick={(e) => {
                   e.stopPropagation();
+                  e.preventDefault();
                   setShowMenu(false);
-                  // Toggle pin state
-                  // Create a deep copy of the note to ensure we don't lose any properties
-                  const updatedNote = {
-                    ...note,
-                    pinned: !isPinned,
-                    // Ensure content is preserved exactly as it was
-                    content: note.content
-                  };
-                  // Update the note in the database
-                  updateNote(updatedNote).then(() => {
-                    // Notify other windows that this note has been updated
-                    window.noteWindow.noteUpdated(note.id);
-                    // Reload the main window to reflect the changes
-                    window.location.reload();
-                  });
+                  setIsContextMenu(false);
+                  // Small delay to ensure menu is closed before action
+                  setTimeout(() => {
+                    // Toggle pin state
+                    // Create a deep copy of the note to ensure we don't lose any properties
+                    const updatedNote = {
+                      ...note,
+                      pinned: !isPinned,
+                      // Ensure content is preserved exactly as it was
+                      content: note.content
+                    };
+                    // Update the note in the database
+                    updateNote(updatedNote).then(() => {
+                      // Notify other windows that this note has been updated
+                      window.noteWindow.noteUpdated(note.id);
+                      // Reload the main window to reflect the changes
+                      window.location.reload();
+                    });
+                  }, 10);
                 }}
               >
                 <svg
@@ -355,10 +543,19 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
               {/* Color option */}
               <button
                 className="flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none text-text-secondary text-left cursor-pointer transition-colors hover:bg-background-notes/30"
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
                 onClick={(e) => {
                   e.stopPropagation();
+                  e.preventDefault();
                   setShowMenu(false);
-                  setShowColorPicker(true);
+                  setIsContextMenu(false);
+                  // Small delay to ensure menu is closed before action
+                  setTimeout(() => {
+                    setShowColorPicker(true);
+                  }, 10);
                 }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -369,7 +566,20 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
               </button>
               <button
                 className="delete-action flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none text-danger text-left cursor-pointer transition-colors hover:bg-background-notes/30"
-                onClick={handleDeleteClick}
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setShowMenu(false);
+                  setIsContextMenu(false);
+                  // Small delay to ensure menu is closed before action
+                  setTimeout(() => {
+                    handleDeleteClick(e);
+                  }, 10);
+                }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="3 6 5 6 21 6" />
@@ -479,6 +689,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
         </div>
       )}
     </div>
+    </>
   );
 };
 
