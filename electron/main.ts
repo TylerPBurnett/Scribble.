@@ -1,7 +1,22 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, screen } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs'
+import Store from 'electron-store'
+
+// Create a store for window state
+const windowStateStore = new Store({
+  name: 'window-state',
+  defaults: {
+    mainWindow: {
+      width: 1200,
+      height: 800,
+      x: undefined,
+      y: undefined,
+      isMaximized: false
+    }
+  }
+});
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -33,9 +48,36 @@ function createMainWindow() {
   // Configure window differently based on platform
   const isMac = process.platform === 'darwin'
 
+  // Get stored window state
+  const mainWindowState = windowStateStore.get('mainWindow') as {
+    width: number;
+    height: number;
+    x?: number;
+    y?: number;
+    isMaximized: boolean;
+  };
+
+  // Check if the saved position is still on a connected screen
+  let validPosition = false;
+  if (mainWindowState.x !== undefined && mainWindowState.y !== undefined) {
+    const displays = screen.getAllDisplays();
+    validPosition = displays.some(display => {
+      const bounds = display.bounds;
+      return (
+        mainWindowState.x! >= bounds.x &&
+        mainWindowState.y! >= bounds.y &&
+        mainWindowState.x! < bounds.x + bounds.width &&
+        mainWindowState.y! < bounds.y + bounds.height
+      );
+    });
+  }
+
+  // Create the browser window with saved state or defaults
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: mainWindowState.width,
+    height: mainWindowState.height,
+    x: validPosition ? mainWindowState.x : undefined,
+    y: validPosition ? mainWindowState.y : undefined,
     minWidth: 250,
     minHeight: 300,
     backgroundColor: '#1a1a1a',
@@ -54,6 +96,11 @@ function createMainWindow() {
     },
   })
 
+  // Maximize window if it was maximized before
+  if (mainWindowState.isMaximized) {
+    mainWindow.maximize();
+  }
+
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow?.webContents.send('main-process-message', (new Date).toLocaleString())
   })
@@ -64,8 +111,42 @@ function createMainWindow() {
     mainWindow.loadFile(path.join(RENDERER_DIST, 'index.html'))
   }
 
+  // Save window state on resize, move, maximize, and unmaximize
+  const saveWindowState = () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+
+    const isMaximized = mainWindow.isMaximized();
+
+    // Only update position if the window is not maximized
+    if (!isMaximized) {
+      const [width, height] = mainWindow.getSize();
+      const [x, y] = mainWindow.getPosition();
+
+      windowStateStore.set('mainWindow', {
+        width,
+        height,
+        x,
+        y,
+        isMaximized
+      });
+    } else {
+      // Just update the maximized state
+      windowStateStore.set('mainWindow.isMaximized', isMaximized);
+    }
+  };
+
+  // Add event listeners to save window state
+  mainWindow.on('resize', saveWindowState);
+  mainWindow.on('move', saveWindowState);
+  mainWindow.on('maximize', saveWindowState);
+  mainWindow.on('unmaximize', saveWindowState);
+
+  // Save window state before the window is destroyed
+  mainWindow.on('close', saveWindowState);
+
+  // Clean up when window is closed
   mainWindow.on('closed', () => {
-    mainWindow = null
+    mainWindow = null;
   })
 }
 
@@ -87,9 +168,16 @@ function createNoteWindow(noteId: string) {
 
   // Create new window
   console.log('Creating new BrowserWindow for note')
+
+  // Get stored note window state or use defaults
+  const noteWindowDefaults = windowStateStore.get('noteWindowDefaults', {
+    width: 600,
+    height: 500
+  }) as { width: number; height: number };
+
   const noteWindow = new BrowserWindow({
-    width: 900,
-    height: 700,
+    width: noteWindowDefaults.width,
+    height: noteWindowDefaults.height,
     minWidth: 250,
     minHeight: 300,
     backgroundColor: '#1a1a1a',
@@ -181,6 +269,15 @@ function createNoteWindow(noteId: string) {
     }
   });
 
+  // Save note window size when closed to use as default for future windows
+  noteWindow.on('close', () => {
+    // Only save size if the window is not maximized and not destroyed
+    if (!noteWindow.isDestroyed() && !noteWindow.isMaximized()) {
+      const [width, height] = noteWindow.getSize();
+      windowStateStore.set('noteWindowDefaults', { width, height });
+    }
+  });
+
   // Clean up when window is closed
   noteWindow.on('closed', () => {
     console.log(`Note window closed: ${noteId}`);
@@ -200,12 +297,32 @@ function createSettingsWindow() {
   // Configure window differently based on platform
   const isMac = process.platform === 'darwin'
 
-  // Create settings window with the same size as the main window
-  const mainWindowSize = mainWindow ? mainWindow.getSize() : [1200, 800];
+  // Get stored settings window state or use main window size as default
+  const settingsWindowState = windowStateStore.get('settingsWindow', {
+    width: 800,
+    height: 600,
+    x: undefined,
+    y: undefined
+  }) as { width: number; height: number; x?: number; y?: number };
+
+  // If main window exists, center the settings window relative to it
+  let x: number | undefined = settingsWindowState.x;
+  let y: number | undefined = settingsWindowState.y;
+
+  if (mainWindow && (x === undefined || y === undefined)) {
+    const mainBounds = mainWindow.getBounds();
+    const settingsSize = { width: settingsWindowState.width, height: settingsWindowState.height };
+
+    // Center the settings window on the main window
+    x = Math.round(mainBounds.x + (mainBounds.width - settingsSize.width) / 2);
+    y = Math.round(mainBounds.y + (mainBounds.height - settingsSize.height) / 2);
+  }
 
   settingsWindow = new BrowserWindow({
-    width: mainWindowSize[0],
-    height: mainWindowSize[1],
+    width: settingsWindowState.width,
+    height: settingsWindowState.height,
+    x,
+    y,
     minWidth: 250,
     minHeight: 300,
     backgroundColor: '#1a1a1a',
@@ -246,6 +363,22 @@ function createSettingsWindow() {
   } else {
     settingsWindow.loadFile(url)
   }
+
+  // Save window state before closing
+  settingsWindow.on('close', () => {
+    if (!settingsWindow || settingsWindow.isDestroyed()) return;
+
+    // Save the current window state
+    const [width, height] = settingsWindow.getSize();
+    const [x, y] = settingsWindow.getPosition();
+
+    windowStateStore.set('settingsWindow', {
+      width,
+      height,
+      x,
+      y
+    });
+  });
 
   // Clean up when window is closed
   settingsWindow.on('closed', () => {

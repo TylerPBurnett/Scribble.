@@ -7,6 +7,35 @@ const generateId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
 };
 
+// Helper function to parse metadata from HTML comments
+const parseMetadata = (content: string): { metadata: Record<string, any>, content: string } => {
+  // Look for metadata in HTML comment at the end of the file
+  // Format: <!-- scribble-metadata: {"color":"#fff9c4","pinned":true} -->
+  const metadataRegex = /<!-- scribble-metadata: (.*?) -->\s*$/;
+  const match = content.match(metadataRegex);
+
+  if (!match) {
+    return { metadata: {}, content };
+  }
+
+  try {
+    // Parse the JSON metadata
+    const metadataJson = match[1];
+    const metadata = JSON.parse(metadataJson);
+
+    // Remove the metadata comment from content
+    const contentWithoutMetadata = content.replace(metadataRegex, '');
+
+    return {
+      metadata,
+      content: contentWithoutMetadata
+    };
+  } catch (error) {
+    console.error('Error parsing metadata JSON:', error);
+    return { metadata: {}, content };
+  }
+};
+
 // Get notes from file system
 export const getNotes = async (): Promise<Note[]> => {
   const settings = getSettings();
@@ -19,7 +48,10 @@ export const getNotes = async (): Promise<Note[]> => {
     for (const file of files) {
       try {
         // Read the file content
-        const content = await window.fileOps.readNoteFile(file.path);
+        const fileContent = await window.fileOps.readNoteFile(file.path);
+
+        // Parse metadata from HTML comments
+        const { metadata, content } = parseMetadata(fileContent);
 
         // Extract title from the first line if it's a heading
         let title = file.name.replace(/\.md$/, '');
@@ -44,14 +76,19 @@ export const getNotes = async (): Promise<Note[]> => {
           title,
           content: htmlContent,
           createdAt: new Date(file.createdAt),
-          updatedAt: new Date(file.modifiedAt)
+          updatedAt: new Date(file.modifiedAt),
+          // Add metadata properties
+          color: metadata.color,
+          pinned: metadata.pinned
         };
 
         console.log('Created note from file:', {
           fileId: file.id,
           fileName: file.name,
           noteId: note.id,
-          noteTitle: note.title
+          noteTitle: note.title,
+          color: note.color,
+          pinned: note.pinned
         });
 
         notes.push(note);
@@ -117,7 +154,22 @@ export const updateNote = async (updatedNote: Note): Promise<Note> => {
 
       // Add title as H1 at the beginning if it exists
       const titlePrefix = finalNote.title ? `# ${finalNote.title}\n\n` : '';
-      const fullContent = titlePrefix + markdownContent;
+
+      // Create metadata as JSON in HTML comment at the end of the file
+      const metadata: Record<string, any> = {};
+      if (finalNote.color) {
+        metadata.color = finalNote.color;
+      }
+      if (finalNote.pinned !== undefined) {
+        metadata.pinned = finalNote.pinned;
+      }
+
+      // Only add metadata comment if there's actual metadata to store
+      const metadataComment = Object.keys(metadata).length > 0
+        ? `\n\n<!-- scribble-metadata: ${JSON.stringify(metadata)} -->`
+        : '';
+
+      const fullContent = titlePrefix + markdownContent + metadataComment;
 
       // Save directly with the custom title
       try {
@@ -205,7 +257,22 @@ export const updateNote = async (updatedNote: Note): Promise<Note> => {
 
       // Add title as H1 at the beginning if it exists
       const titlePrefix = finalNote.title ? `# ${finalNote.title}\n\n` : '';
-      const fullContent = titlePrefix + markdownContent;
+
+      // Create metadata as JSON in HTML comment at the end of the file
+      const metadata: Record<string, any> = {};
+      if (finalNote.color) {
+        metadata.color = finalNote.color;
+      }
+      if (finalNote.pinned !== undefined) {
+        metadata.pinned = finalNote.pinned;
+      }
+
+      // Only add metadata comment if there's actual metadata to store
+      const metadataComment = Object.keys(metadata).length > 0
+        ? `\n\n<!-- scribble-metadata: ${JSON.stringify(metadata)} -->`
+        : '';
+
+      const fullContent = titlePrefix + markdownContent + metadataComment;
 
       // Save to file
       console.log('Calling saveNoteToFile with:', {
