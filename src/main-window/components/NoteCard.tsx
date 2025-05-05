@@ -203,6 +203,22 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
           footerBg: '#f8f8f8'
         };
       }
+      // For pastel colors, use black text for better readability
+      else if (
+        note.color === '#fff9c4' || // Yellow
+        note.color === '#d0f0c0' || // Pastel Green
+        note.color === '#b5d8eb' || // Pastel Blue
+        note.color === '#d8c2ef' || // Pastel Purple
+        note.color === '#f4c2c2' || // Pastel Pink
+        note.color === '#d3d3d3'    // Pastel Gray
+      ) {
+        return {
+          backgroundColor: note.color,
+          color: '#333333',
+          headerBg: note.color,
+          footerBg: note.color
+        };
+      }
       // For other colors, use default text color
       else {
         return {
