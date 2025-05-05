@@ -238,7 +238,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
           }}
         >
           <div
-            className="fixed bg-[#192734] rounded-md shadow-[0_5px_15px_rgba(0,0,0,0.3)] z-[9999] min-w-[160px] overflow-hidden border border-white/10"
+            className="fixed bg-[#21222c] rounded-md shadow-[0_5px_15px_rgba(0,0,0,0.3)] z-[9999] min-w-[140px] overflow-hidden border border-white/5 text-xs font-twitter"
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             style={{
@@ -247,7 +247,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
             }}
           >
             <button
-              className="flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none text-text-secondary text-left cursor-pointer transition-colors hover:bg-background-notes/30"
+              className="flex items-center gap-1.5 w-full px-2.5 py-1.5 bg-transparent border-none text-text-secondary text-left cursor-pointer transition-colors hover:bg-background-notes/20"
               onMouseDown={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
@@ -263,7 +263,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
                 }, 10);
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
               </svg>
@@ -405,7 +405,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
         className="note-header px-3 py-1.5 flex items-center justify-between border-b-0"
         style={{ backgroundColor: colorStyle.headerBg || '' }}
       >
-        <h3 className="note-title text-sm font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px]">
+        <h3 className="note-title text-sm font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px] font-twitter">
           {note.title || 'Untitled Note'}
         </h3>
         <div className="note-actions flex items-center gap-1 relative">
@@ -419,11 +419,11 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
 
           {/* More options button - only visible on hover */}
           <button
-            className="more-button w-5 h-5 flex items-center justify-center bg-transparent border-none text-text-tertiary rounded hover:bg-background-notes/30 hover:text-text opacity-0 group-hover:opacity-100"
+            className="more-button w-4 h-4 flex items-center justify-center bg-transparent border-none text-text-tertiary rounded-full hover:bg-background-notes/20 hover:text-text opacity-0 group-hover:opacity-100 transition-all duration-150"
             onClick={toggleMenu}
             title="More options"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="1" />
               <circle cx="12" cy="5" r="1" />
               <circle cx="12" cy="19" r="1" />
@@ -433,7 +433,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
           {/* Regular Dropdown Menu (non-context menu) */}
           {showMenu && !isContextMenu && (
             <div
-              className="dropdown-menu absolute bg-[#192734] rounded-md shadow-[0_5px_15px_rgba(0,0,0,0.3)] z-[100] min-w-[160px] overflow-hidden border border-white/10"
+              className="dropdown-menu absolute bg-[#21222c] rounded-md shadow-[0_5px_15px_rgba(0,0,0,0.3)] z-[100] min-w-[140px] overflow-hidden border border-white/5 text-xs font-twitter"
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
@@ -448,7 +448,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
               }}
             >
               <button
-                className="flex items-center gap-2 w-full px-3 py-2 bg-transparent border-none text-text-secondary text-left cursor-pointer transition-colors hover:bg-background-notes/30"
+                className="flex items-center gap-1.5 w-full px-2.5 py-1.5 bg-transparent border-none text-text-secondary text-left cursor-pointer transition-colors hover:bg-background-notes/20"
                 onMouseDown={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
@@ -464,7 +464,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
                   }, 10);
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                 </svg>
@@ -595,13 +595,13 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
       </div>
 
       {/* Note Content */}
-      <div className="note-content flex-1 px-3 py-2 text-xs overflow-hidden whitespace-pre-line">
+      <div className="note-content flex-1 px-3 py-2 text-xs overflow-hidden whitespace-pre-line font-twitter">
         {getContentPreview(note.content) || <span className="empty-content italic opacity-60">No content</span>}
       </div>
 
       {/* Note Footer */}
       <div
-        className="note-footer px-3 py-1.5 flex items-center justify-between text-xs text-text-tertiary"
+        className="note-footer px-3 py-1.5 flex items-center justify-between text-xs text-text-tertiary font-twitter"
         style={{ backgroundColor: colorStyle.footerBg || '' }}
       >
         <span className="note-date">{formatDate(note.createdAt)}</span>
@@ -613,7 +613,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
           className="absolute inset-0 bg-background-titlebar/95 flex items-center justify-center z-10 rounded-lg"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="text-center p-4">
+          <div className="text-center p-4 font-twitter">
             <p className="m-0 mb-4 text-text">Are you sure you want to delete this note?</p>
             <div className="flex justify-center gap-3">
               <button
@@ -639,7 +639,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
           className="absolute inset-0 bg-background-titlebar/95 flex items-center justify-center z-10 rounded-lg"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="p-3 bg-[#192734] rounded-lg shadow-lg" style={{ maxWidth: '180px' }}>
+          <div className="p-3 bg-[#21222c] rounded-lg shadow-lg font-twitter" style={{ maxWidth: '180px' }}>
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-xs font-medium text-gray-300 m-0">Choose Color</h3>
               <button
