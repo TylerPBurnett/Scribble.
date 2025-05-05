@@ -407,8 +407,8 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
       )}
 
       <div
-        className={`note-card ${colorInfo.className} ${isActive ? 'selected' : ''} rounded-lg overflow-hidden flex flex-col ${colorInfo.border} border-l-3 shadow-none transition-all duration-200 cursor-pointer h-note-card
-          hover:translate-y-[-2px] hover:shadow-none group`}
+        className={`note-card ${colorInfo.className} ${isActive ? 'selected' : ''} rounded-xl overflow-hidden flex flex-col ${colorInfo.border} border-l-3 shadow-sm transition-all duration-200 cursor-pointer h-note-card
+          hover:translate-y-[-2px] hover:shadow-md group`}
         onClick={() => onClick(note)}
         onContextMenu={handleContextMenu}
         style={{
@@ -418,7 +418,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
       >
       {/* Note Header */}
       <div
-        className="note-header px-3 py-1.5 flex items-center justify-between border-b-0"
+        className="note-header px-3 py-2 flex items-center justify-between border-b border-black/5"
         style={{ backgroundColor: colorStyle.headerBg || '' }}
       >
         <h3 className="note-title text-sm font-semibold whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px] font-twitter">
@@ -611,13 +611,13 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
       </div>
 
       {/* Note Content */}
-      <div className="note-content flex-1 px-3 py-2 text-xs overflow-hidden whitespace-pre-line font-twitter">
+      <div className="note-content flex-1 px-4 py-3 text-xs overflow-hidden whitespace-pre-line font-twitter">
         {getContentPreview(note.content) || <span className="empty-content italic opacity-60">No content</span>}
       </div>
 
       {/* Note Footer */}
       <div
-        className="note-footer px-3 py-1.5 flex items-center justify-between text-xs text-text-tertiary font-twitter"
+        className="note-footer px-3 py-2 flex items-center justify-end text-xs text-text-tertiary font-twitter"
         style={{ backgroundColor: colorStyle.footerBg || '' }}
       >
         <span className="note-date">{formatDate(note.createdAt)}</span>
