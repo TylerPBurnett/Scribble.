@@ -1,7 +1,17 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Note } from '../../shared/types/Note';
 import { deleteNote } from '../../shared/services/noteService';
 import NoteCard from './NoteCard';
+
+// Define sort options
+type SortField = 'title' | 'createdAt' | 'updatedAt';
+type SortDirection = 'asc' | 'desc';
+
+interface SortOption {
+  label: string;
+  field: SortField;
+  direction: SortDirection;
+}
 
 interface NoteListProps {
   notes: Note[];
@@ -12,6 +22,60 @@ interface NoteListProps {
 
 const NoteList = ({ notes, onNoteClick, activeNoteId, onNoteDelete }: NoteListProps) => {
   const [deletedNotes, setDeletedNotes] = useState<string[]>([]);
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const [sortOption, setSortOption] = useState<SortOption>({
+    label: 'Title (A-Z)',
+    field: 'title',
+    direction: 'asc'
+  });
+  const sortMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close sort menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sortMenuRef.current && !sortMenuRef.current.contains(event.target as Node)) {
+        setShowSortMenu(false);
+      }
+    };
+
+    if (showSortMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showSortMenu]);
+
+  // Sort notes based on current sort option
+  const sortNotes = (notesToSort: Note[]): Note[] => {
+    return [...notesToSort].sort((a, b) => {
+      if (sortOption.field === 'title') {
+        const titleA = a.title.toLowerCase();
+        const titleB = b.title.toLowerCase();
+        return sortOption.direction === 'asc'
+          ? titleA.localeCompare(titleB)
+          : titleB.localeCompare(titleA);
+      } else {
+        const dateA = a[sortOption.field].getTime();
+        const dateB = b[sortOption.field].getTime();
+        return sortOption.direction === 'asc'
+          ? dateA - dateB
+          : dateB - dateA;
+      }
+    });
+  };
+
+  // Toggle sort menu
+  const toggleSortMenu = () => {
+    setShowSortMenu(!showSortMenu);
+  };
+
+  // Handle sort option selection
+  const handleSortOptionSelect = (option: SortOption) => {
+    setSortOption(option);
+    setShowSortMenu(false);
+  };
 
   // Handle note deletion
   const handleNoteDelete = async (noteId: string) => {
@@ -36,21 +100,26 @@ const NoteList = ({ notes, onNoteClick, activeNoteId, onNoteDelete }: NoteListPr
   // Filter out deleted notes
   const filteredNotes = notes.filter(note => !deletedNotes.includes(note.id));
 
+  // Apply sorting to notes
+  const sortedFilteredNotes = sortNotes(filteredNotes);
+
   // Separate pinned notes from other notes
-  const pinnedNotes = filteredNotes.filter(note => note.pinned);
-  const otherNotes = filteredNotes.filter(note => !note.pinned);
+  const pinnedNotes = sortedFilteredNotes.filter(note => note.pinned);
+  const otherNotes = sortedFilteredNotes.filter(note => !note.pinned);
 
   return (
     <div className="notes-container flex-1 px-4 py-4 overflow-y-auto bg-background-notes transition-all duration-300">
       {/* Pinned Notes Section */}
       {pinnedNotes.length > 0 && (
         <div className="notes-section mb-4">
-          <div className="section-title flex items-center gap-2 text-xs font-medium text-text-tertiary mb-2 uppercase tracking-wider">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-              <circle cx="12" cy="10" r="3"></circle>
-            </svg>
-            <span>Pinned</span>
+          <div className="section-title flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 text-xs font-medium text-text-tertiary uppercase tracking-wider">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <span>Pinned</span>
+            </div>
           </div>
           <div className="notes-grid grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-3">
             {pinnedNotes.map((note) => (
@@ -67,20 +136,86 @@ const NoteList = ({ notes, onNoteClick, activeNoteId, onNoteDelete }: NoteListPr
         </div>
       )}
 
-      {/* Other Notes Section */}
+      {/* Notes Section */}
       <div className="notes-section mb-4">
-        <div className="section-title flex items-center gap-2 text-xs font-medium text-text-tertiary mb-2 uppercase tracking-wider">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-            <line x1="16" y1="13" x2="8" y2="13"></line>
-            <line x1="16" y1="17" x2="8" y2="17"></line>
-            <polyline points="10 9 9 9 8 9"></polyline>
-          </svg>
-          <span>Other Notes</span>
-          <span className="text-[10px] bg-background-tertiary px-1.5 py-0.5 rounded-full">
-            {otherNotes.length}
-          </span>
+        <div className="section-title flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2 text-xs font-medium text-text-tertiary uppercase tracking-wider">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span>Notes</span>
+            <span className="text-[10px] bg-background-tertiary px-1.5 py-0.5 rounded-full">
+              {otherNotes.length}
+            </span>
+          </div>
+
+          {/* Sort Button */}
+          <div className="relative">
+            <button
+              className="sort-button flex items-center justify-center w-6 h-6 text-text-tertiary rounded-full hover:bg-background-tertiary/30 transition-colors"
+              onClick={toggleSortMenu}
+              title="Sort notes"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 5h10"></path>
+                <path d="M11 9h7"></path>
+                <path d="M11 13h4"></path>
+                <path d="M3 17h18"></path>
+                <path d="M3 5l4 8"></path>
+                <path d="M7 5l-4 8"></path>
+              </svg>
+            </button>
+
+            {/* Sort Menu */}
+            {showSortMenu && (
+              <div
+                ref={sortMenuRef}
+                className="absolute right-0 top-8 bg-[#21222c] rounded-md shadow-[0_5px_15px_rgba(0,0,0,0.3)] z-[100] min-w-[180px] overflow-hidden border border-white/5 text-xs font-twitter"
+              >
+                <div className="py-1.5 px-3 text-text-tertiary border-b border-white/5">Sort by</div>
+                <button
+                  className={`flex items-center gap-2 w-full px-3 py-1.5 bg-transparent border-none text-left cursor-pointer transition-colors hover:bg-background-notes/20 ${sortOption.field === 'title' && sortOption.direction === 'asc' ? 'text-primary' : 'text-text-secondary'}`}
+                  onClick={() => handleSortOptionSelect({ label: 'Title (A-Z)', field: 'title', direction: 'asc' })}
+                >
+                  <span>Title (A-Z)</span>
+                </button>
+                <button
+                  className={`flex items-center gap-2 w-full px-3 py-1.5 bg-transparent border-none text-left cursor-pointer transition-colors hover:bg-background-notes/20 ${sortOption.field === 'title' && sortOption.direction === 'desc' ? 'text-primary' : 'text-text-secondary'}`}
+                  onClick={() => handleSortOptionSelect({ label: 'Title (Z-A)', field: 'title', direction: 'desc' })}
+                >
+                  <span>Title (Z-A)</span>
+                </button>
+                <button
+                  className={`flex items-center gap-2 w-full px-3 py-1.5 bg-transparent border-none text-left cursor-pointer transition-colors hover:bg-background-notes/20 ${sortOption.field === 'createdAt' && sortOption.direction === 'desc' ? 'text-primary' : 'text-text-secondary'}`}
+                  onClick={() => handleSortOptionSelect({ label: 'Date Created (Newest)', field: 'createdAt', direction: 'desc' })}
+                >
+                  <span>Date Created (Newest)</span>
+                </button>
+                <button
+                  className={`flex items-center gap-2 w-full px-3 py-1.5 bg-transparent border-none text-left cursor-pointer transition-colors hover:bg-background-notes/20 ${sortOption.field === 'createdAt' && sortOption.direction === 'asc' ? 'text-primary' : 'text-text-secondary'}`}
+                  onClick={() => handleSortOptionSelect({ label: 'Date Created (Oldest)', field: 'createdAt', direction: 'asc' })}
+                >
+                  <span>Date Created (Oldest)</span>
+                </button>
+                <button
+                  className={`flex items-center gap-2 w-full px-3 py-1.5 bg-transparent border-none text-left cursor-pointer transition-colors hover:bg-background-notes/20 ${sortOption.field === 'updatedAt' && sortOption.direction === 'desc' ? 'text-primary' : 'text-text-secondary'}`}
+                  onClick={() => handleSortOptionSelect({ label: 'Date Modified (Newest)', field: 'updatedAt', direction: 'desc' })}
+                >
+                  <span>Date Modified (Newest)</span>
+                </button>
+                <button
+                  className={`flex items-center gap-2 w-full px-3 py-1.5 bg-transparent border-none text-left cursor-pointer transition-colors hover:bg-background-notes/20 ${sortOption.field === 'updatedAt' && sortOption.direction === 'asc' ? 'text-primary' : 'text-text-secondary'}`}
+                  onClick={() => handleSortOptionSelect({ label: 'Date Modified (Oldest)', field: 'updatedAt', direction: 'asc' })}
+                >
+                  <span>Date Modified (Oldest)</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {filteredNotes.length === 0 ? (
