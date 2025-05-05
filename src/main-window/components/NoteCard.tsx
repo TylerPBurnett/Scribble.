@@ -216,7 +216,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
 
     // Default styling
     return {
-      backgroundColor: '#192734',
+      backgroundColor: '#21222c',
       color: '',
       headerBg: '',
       footerBg: ''
