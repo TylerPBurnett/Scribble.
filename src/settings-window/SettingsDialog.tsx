@@ -139,7 +139,7 @@ export function SettingsDialog({
                         <Input
                           {...field}
                           readOnly
-                          className="bg-[#252525] border border-gray-700/30 text-gray-300 flex-1 focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
+                          className="bg-gradient-to-b from-[#2a2a2a] to-[#222222] border border-gray-700/30 text-gray-300 flex-1 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 shadow-sm"
                         />
                       </FormControl>
                       <Button
@@ -147,7 +147,7 @@ export function SettingsDialog({
                         variant="outline"
                         onClick={handleSaveLocationSelect}
                         disabled={isSelectingLocation}
-                        className="shrink-0 border-gray-700 bg-[#252525] hover:bg-[#333333] text-white"
+                        className="shrink-0 border-gray-700/50 bg-gradient-to-b from-[#333333] to-[#252525] hover:from-[#3a3a3a] hover:to-[#2a2a2a] text-white font-medium px-4 shadow-sm transition-all duration-200 active:scale-95"
                       >
                         Browse...
                       </Button>
@@ -198,7 +198,7 @@ export function SettingsDialog({
                           type="number"
                           min={1}
                           max={60}
-                          className="bg-[#252525] border border-gray-700/30 text-gray-300 mt-3 w-full md:w-1/3 focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
+                          className="bg-gradient-to-b from-[#2a2a2a] to-[#222222] border border-gray-700/30 text-gray-300 mt-3 w-full md:w-1/3 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 shadow-sm"
                           {...field}
                           onChange={(e) => field.onChange(Number(e.target.value))}
                         />
@@ -255,13 +255,13 @@ export function SettingsDialog({
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="px-6 border-gray-700 bg-[#252525] hover:bg-[#333333] text-white"
+                className="px-6 py-2.5 border-gray-700/50 bg-gradient-to-b from-[#333333] to-[#252525] hover:from-[#3a3a3a] hover:to-[#2a2a2a] text-white font-medium shadow-sm transition-all duration-200 active:scale-95"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="px-6 bg-primary hover:bg-primary/80 text-white font-medium"
+                className="px-6 py-2.5 bg-gradient-to-b from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-medium shadow-md transition-all duration-200 active:scale-95 border-0"
               >
                 Save Changes
               </Button>

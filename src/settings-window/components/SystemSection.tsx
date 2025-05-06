@@ -93,7 +93,7 @@ export function SystemSection({ form }: SystemSectionProps) {
               <FormControl>
                 <Input
                   {...field}
-                  className="w-48 bg-[#252525] border border-gray-700/30 text-gray-300 focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
+                  className="w-48 bg-gradient-to-b from-[#2a2a2a] to-[#222222] border border-gray-700/30 text-gray-300 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 shadow-sm font-mono"
                   placeholder="e.g. CommandOrControl+Alt+N"
                 />
               </FormControl>
@@ -116,7 +116,7 @@ export function SystemSection({ form }: SystemSectionProps) {
               <FormControl>
                 <Input
                   {...field}
-                  className="w-48 bg-[#252525] border border-gray-700/30 text-gray-300 focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
+                  className="w-48 bg-gradient-to-b from-[#2a2a2a] to-[#222222] border border-gray-700/30 text-gray-300 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 shadow-sm font-mono"
                   placeholder="e.g. CommandOrControl+Alt+S"
                 />
               </FormControl>

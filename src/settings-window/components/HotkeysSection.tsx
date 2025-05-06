@@ -33,9 +33,13 @@ export function HotkeysSection({ hotkeys, onChange }: HotkeysSectionProps) {
       <h3 className="text-2xl font-semibold text-white border-b border-gray-800 pb-4 flex items-center justify-between">
         <span>Keyboard Shortcuts</span>
         <button
-          className="px-3 py-1.5 text-sm bg-[#252525] hover:bg-[#333333] text-primary border border-gray-700/30 rounded-md transition-colors"
+          className="px-3 py-1.5 text-sm bg-gradient-to-b from-[#333333] to-[#252525] hover:from-[#3a3a3a] hover:to-[#2a2a2a] text-primary font-medium border border-gray-700/50 rounded-md shadow-sm transition-all duration-200 active:scale-95 flex items-center gap-1"
           onClick={handleResetToDefaults}
         >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="opacity-80">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+            <path d="M3 3v5h5"></path>
+          </svg>
           Reset to defaults
         </button>
       </h3>
@@ -48,10 +52,10 @@ export function HotkeysSection({ hotkeys, onChange }: HotkeysSectionProps) {
               <button
                 key={key}
                 className={`
-                  text-left px-4 py-3 rounded-md text-sm transition-colors
+                  text-left px-4 py-3 rounded-md text-sm transition-all duration-200 border
                   ${activeCategory === key
-                    ? 'bg-primary/20 text-primary font-medium'
-                    : 'hover:bg-[#1a1a1a] text-gray-300'}
+                    ? 'bg-gradient-to-r from-primary/20 to-primary/5 text-primary font-medium border-primary/30 shadow-sm'
+                    : 'hover:bg-[#1a1a1a] text-gray-300 border-transparent hover:border-gray-800/50'}
                 `}
                 onClick={() => setActiveCategory(key)}
               >
