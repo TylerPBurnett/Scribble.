@@ -3,7 +3,17 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs'
 import Store from 'electron-store'
+// @ts-expect-error no type definitions available
 import AutoLaunch from 'auto-launch'
+
+// Type for settings
+interface SettingsType {
+  hotkeys?: {
+    newNote?: string;
+    [key: string]: string | undefined;
+  };
+  [key: string]: unknown;
+}
 
 // Create a store for window state
 const windowStateStore = new Store({
@@ -170,7 +180,7 @@ function createMainWindow() {
   })
 
   // Handle minimize event - minimize to tray
-  mainWindow.on('minimize', (event) => {
+  mainWindow.on('minimize', (event: Electron.Event) => {
     event.preventDefault()
     mainWindow?.hide()
   })
@@ -487,7 +497,7 @@ function createTray() {
 function registerGlobalHotkeys() {
   // Get settings to check for custom hotkeys
   const settingsStore = new Store({ name: 'settings' })
-  const settings = settingsStore.get('settings') || {}
+  const settings = settingsStore.get('settings') as SettingsType || {}
   const hotkeys = settings.hotkeys || {}
 
   // Register global hotkey for creating a new note
@@ -746,9 +756,10 @@ ipcMain.handle('save-note-to-file', async (_, noteId, title, content, saveLocati
     console.log('File written successfully')
 
     return { success: true, filePath }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error saving note to file:', error)
-    return { success: false, error: error.message || 'Unknown error' }
+    return { success: false, error: errorMessage }
   }
 })
 
@@ -770,9 +781,10 @@ ipcMain.handle('delete-note-file', async (_, noteId, title, saveLocation) => {
     }
 
     return { success: true }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error deleting note file:', error)
-    return { success: false, error: error.message || 'Unknown error' }
+    return { success: false, error: errorMessage }
   }
 })
 
@@ -803,7 +815,7 @@ ipcMain.handle('list-note-files', async (_, directoryPath) => {
         modifiedAt: stats.mtime
       }
     }))
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error listing note files:', error)
     return []
   }
@@ -818,7 +830,7 @@ ipcMain.handle('read-note-file', async (_, filePath) => {
 
     const content = fs.readFileSync(filePath, 'utf8')
     return content
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error reading note file:', error)
     throw error
   }
