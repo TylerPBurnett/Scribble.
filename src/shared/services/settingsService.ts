@@ -5,7 +5,7 @@ const DEFAULT_SETTINGS = {
   saveLocation: '', // Will be set to app data directory by default in main process
   autoSave: true,
   autoSaveInterval: 5, // seconds
-  darkMode: true,
+  theme: 'dim', // Default theme (replaces darkMode)
   hotkeys: DEFAULT_HOTKEYS,
   autoLaunch: false,
   minimizeToTray: true,
@@ -20,7 +20,8 @@ export interface AppSettings {
   saveLocation: string;
   autoSave: boolean;
   autoSaveInterval: number;
-  darkMode: boolean;
+  theme: string; // Theme name (replaces darkMode)
+  darkMode?: boolean; // Kept for backward compatibility
   hotkeys?: Partial<Record<HotkeyAction, string>>;
   autoLaunch?: boolean;
   minimizeToTray?: boolean;
@@ -131,6 +132,21 @@ export const initSettings = async (): Promise<AppSettings> => {
     }
   } catch (error) {
     console.error('Error getting auto-launch status:', error);
+  }
+
+  // Handle migration from darkMode to theme
+  if (updatedSettings.theme === undefined && updatedSettings.darkMode !== undefined) {
+    console.log('Migrating from darkMode to theme...');
+    // If darkMode is true, use 'dim' theme, otherwise use 'light' theme
+    updatedSettings.theme = updatedSettings.darkMode ? 'dim' : 'light';
+    needsUpdate = true;
+  }
+
+  // Ensure theme is set to a valid value
+  if (!updatedSettings.theme || !['dim', 'dark', 'light'].includes(updatedSettings.theme)) {
+    console.log('Setting default theme to dim');
+    updatedSettings.theme = 'dim';
+    needsUpdate = true;
   }
 
   // Save updated settings if needed

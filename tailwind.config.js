@@ -26,14 +26,14 @@ export default {
         },
         'primary-dark': '#e69009',
         background: 'hsl(var(--background))',
-        'background-notes': '#282a36',
-        'background-titlebar': '#21222c',
-        'background-sidebar': '#21222c',
+        'background-notes': 'hsl(var(--background-notes))',
+        'background-titlebar': 'hsl(var(--background-titlebar))',
+        'background-sidebar': 'hsl(var(--background-sidebar))',
         border: 'hsl(var(--border))',
         text: {
-          DEFAULT: '#f8fafc',
-          secondary: '#cbd5e1',
-          tertiary: '#94a3b8'
+          DEFAULT: 'hsl(var(--foreground))',
+          secondary: 'hsl(var(--muted-foreground))',
+          tertiary: 'hsl(var(--muted-foreground) / 0.8)'
         },
         note: {
           slate: '#64748b',

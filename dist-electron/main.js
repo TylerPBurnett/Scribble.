@@ -16957,6 +16957,18 @@ ipcMain$1.on("settings-updated", () => {
   globalShortcut.unregisterAll();
   registerGlobalHotkeys();
 });
+ipcMain$1.on("theme-changed", (event, theme) => {
+  console.log("Theme changed in main process:", theme);
+  const senderWindow = BrowserWindow.fromWebContents(event.sender);
+  BrowserWindow.getAllWindows().forEach((win) => {
+    if (win !== senderWindow) {
+      console.log(`Sending theme-changed event to window ${win.id}`);
+      win.webContents.send("theme-changed", theme);
+    } else {
+      console.log(`Skipping sender window ${win.id}`);
+    }
+  });
+});
 if (process.platform === "win32") {
   app$1.setAppUserModelId("com.tylerburnett.scribble");
 }

@@ -230,10 +230,10 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
       }
     }
 
-    // Default styling
+    // Default styling using CSS variables
     return {
-      backgroundColor: '#21222c',
-      color: '',
+      backgroundColor: 'hsl(var(--card))',
+      color: 'hsl(var(--card-foreground))',
       headerBg: '',
       footerBg: ''
     };
@@ -254,7 +254,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
           }}
         >
           <div
-            className="fixed bg-[#21222c] rounded-md shadow-[0_5px_15px_rgba(0,0,0,0.3)] z-[9999] min-w-[140px] overflow-hidden border border-white/5 text-xs font-twitter"
+            className="fixed bg-popover rounded-md shadow-[0_5px_15px_rgba(0,0,0,0.3)] z-[9999] min-w-[140px] overflow-hidden border border-border text-xs font-twitter"
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             style={{
@@ -449,7 +449,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
           {/* Regular Dropdown Menu (non-context menu) */}
           {showMenu && !isContextMenu && (
             <div
-              className="dropdown-menu absolute bg-[#21222c] rounded-md shadow-[0_5px_15px_rgba(0,0,0,0.3)] z-[100] min-w-[140px] overflow-hidden border border-white/5 text-xs font-twitter"
+              className="dropdown-menu absolute bg-popover rounded-md shadow-[0_5px_15px_rgba(0,0,0,0.3)] z-[100] min-w-[140px] overflow-hidden border border-border text-xs font-twitter"
               onClick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
@@ -655,9 +655,9 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
           className="absolute inset-0 bg-background-titlebar/95 flex items-center justify-center z-10 rounded-lg"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="p-3 bg-[#21222c] rounded-lg shadow-lg font-twitter" style={{ maxWidth: '180px' }}>
+          <div className="p-3 bg-popover rounded-lg shadow-lg font-twitter" style={{ maxWidth: '180px' }}>
             <div className="flex justify-between items-center mb-2">
-              <h3 className="text-xs font-medium text-gray-300 m-0">Choose Color</h3>
+              <h3 className="text-xs font-medium text-popover-foreground m-0">Choose Color</h3>
               <button
                 className="text-text-tertiary hover:text-text bg-transparent border-none cursor-pointer"
                 onClick={() => setShowColorPicker(false)}

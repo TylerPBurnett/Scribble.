@@ -4,8 +4,10 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { AppSettings } from '../shared/services/settingsService';
 import { DEFAULT_HOTKEYS, HotkeyAction } from '../shared/services/hotkeyService';
+import { ThemeName } from '../shared/services/themeService';
 import { HotkeysSection } from './components/HotkeysSection';
 import { SystemSection } from './components/SystemSection';
+import { ThemesSection } from './components/ThemesSection';
 
 import {
   Dialog,
@@ -34,7 +36,7 @@ const formSchema = z.object({
   }),
   autoSave: z.boolean(),
   autoSaveInterval: z.number().min(1).max(60),
-  darkMode: z.boolean(),
+  theme: z.string(), // Theme name instead of darkMode
   // System integration settings
   autoLaunch: z.boolean().optional(),
   minimizeToTray: z.boolean().optional(),
@@ -70,7 +72,7 @@ export function SettingsDialog({
       saveLocation: initialSettings.saveLocation,
       autoSave: initialSettings.autoSave,
       autoSaveInterval: initialSettings.autoSaveInterval,
-      darkMode: initialSettings.darkMode,
+      theme: initialSettings.theme || 'dim',
       autoLaunch: initialSettings.autoLaunch || false,
       minimizeToTray: initialSettings.minimizeToTray || true,
       globalHotkeys: initialSettings.globalHotkeys || {
@@ -213,29 +215,10 @@ export function SettingsDialog({
             </div>
 
             {/* Appearance Section */}
-            <div className="space-y-6 bg-[#121212] p-6 rounded-lg border border-gray-800/50 shadow-md">
-              <h3 className="text-2xl font-semibold text-white border-b border-gray-800 pb-4">Appearance</h3>
-
-              <FormField
-                control={form.control}
-                name="darkMode"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-800/30 p-5 bg-[#1a1a1a]">
-                    <div className="space-y-2">
-                      <FormLabel className="text-base font-medium text-white">Dark Mode</FormLabel>
-                      <FormDescription className="text-sm text-gray-400">
-                        Use dark theme for the application
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="data-[state=checked]:bg-primary"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
+            <div className="space-y-6 bg-card p-6 rounded-lg border border-border shadow-md">
+              <ThemesSection
+                currentTheme={form.watch('theme') as ThemeName}
+                onChange={(theme) => form.setValue('theme', theme)}
               />
             </div>
 
@@ -243,25 +226,25 @@ export function SettingsDialog({
             <SystemSection form={form} />
 
             {/* Hotkeys Section */}
-            <div className="space-y-6 bg-[#121212] p-6 rounded-lg border border-gray-800/50 shadow-md">
+            <div className="space-y-6 bg-card p-6 rounded-lg border border-border shadow-md">
               <HotkeysSection
                 hotkeys={hotkeys}
                 onChange={handleHotkeyChange}
               />
             </div>
 
-            <DialogFooter className="pt-8 border-t border-gray-800 mt-6">
+            <DialogFooter className="pt-8 border-t border-border mt-6">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="px-6 py-2.5 border-gray-700/50 bg-gradient-to-b from-[#333333] to-[#252525] hover:from-[#3a3a3a] hover:to-[#2a2a2a] text-white font-medium shadow-sm transition-all duration-200 active:scale-95"
+                className="px-6 py-2.5 border-border bg-secondary hover:bg-secondary/90 text-secondary-foreground font-medium shadow-sm transition-all duration-200 active:scale-95"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="px-6 py-2.5 bg-gradient-to-b from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-medium shadow-md transition-all duration-200 active:scale-95 border-0"
+                className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-md transition-all duration-200 active:scale-95 border-0"
               >
                 Save Changes
               </Button>

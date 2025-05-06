@@ -887,6 +887,25 @@ ipcMain.on('settings-updated', () => {
   registerGlobalHotkeys()
 })
 
+// Handle theme changes
+ipcMain.on('theme-changed', (event, theme) => {
+  console.log('Theme changed in main process:', theme);
+
+  // Get the sender window
+  const senderWindow = BrowserWindow.fromWebContents(event.sender);
+
+  // Relay the theme change to all windows
+  BrowserWindow.getAllWindows().forEach(win => {
+    // Don't send back to the sender window to avoid loops
+    if (win !== senderWindow) {
+      console.log(`Sending theme-changed event to window ${win.id}`);
+      win.webContents.send('theme-changed', theme);
+    } else {
+      console.log(`Skipping sender window ${win.id}`);
+    }
+  });
+})
+
 // Set the app user model id for Windows
 if (process.platform === 'win32') {
   app.setAppUserModelId('com.tylerburnett.scribble')

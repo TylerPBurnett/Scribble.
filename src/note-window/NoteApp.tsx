@@ -3,12 +3,19 @@ import './NoteApp.css'
 import NoteEditor from './components/NoteEditor'
 import { Note } from '../shared/types/Note'
 import { getNoteById, createNote } from '../shared/services/noteService'
-import { initSettings } from '../shared/services/settingsService'
+import { initSettings, AppSettings } from '../shared/services/settingsService'
+import { ThemeProvider } from '../shared/services/themeService'
 
 function NoteApp() {
   const [activeNote, setActiveNote] = useState<Note | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [appSettings, setAppSettings] = useState<AppSettings>({
+    saveLocation: '',
+    autoSave: true,
+    autoSaveInterval: 5,
+    theme: 'dim',
+  })
 
   // Load note on startup
   useEffect(() => {
@@ -18,7 +25,9 @@ function NoteApp() {
         console.log('Window location:', window.location.href);
 
         // Initialize settings (needed for note operations)
-        await initSettings()
+        const settings = await initSettings()
+        console.log('NoteApp - Settings initialized:', settings)
+        setAppSettings(settings)
 
         // Get the note ID from the URL query parameters
         const urlParams = new URLSearchParams(window.location.search)
@@ -99,9 +108,11 @@ function NoteApp() {
   // Show note editor
   if (activeNote) {
     return (
-      <div className="note-window">
-        <NoteEditor note={activeNote} onSave={handleNoteSave} />
-      </div>
+      <ThemeProvider initialSettings={appSettings}>
+        <div className="note-window">
+          <NoteEditor note={activeNote} onSave={handleNoteSave} />
+        </div>
+      </ThemeProvider>
     )
   }
 
