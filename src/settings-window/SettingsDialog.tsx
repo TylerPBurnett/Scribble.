@@ -5,6 +5,7 @@ import * as z from 'zod';
 import { AppSettings } from '../shared/services/settingsService';
 import { DEFAULT_HOTKEYS, HotkeyAction } from '../shared/services/hotkeyService';
 import { HotkeysSection } from './components/HotkeysSection';
+import { SystemSection } from './components/SystemSection';
 
 import {
   Dialog,
@@ -34,6 +35,13 @@ const formSchema = z.object({
   autoSave: z.boolean(),
   autoSaveInterval: z.number().min(1).max(60),
   darkMode: z.boolean(),
+  // System integration settings
+  autoLaunch: z.boolean().optional(),
+  minimizeToTray: z.boolean().optional(),
+  globalHotkeys: z.object({
+    newNote: z.string(),
+    showApp: z.string(),
+  }).optional(),
   // Hotkeys are handled separately from the form
 });
 
@@ -63,6 +71,12 @@ export function SettingsDialog({
       autoSave: initialSettings.autoSave,
       autoSaveInterval: initialSettings.autoSaveInterval,
       darkMode: initialSettings.darkMode,
+      autoLaunch: initialSettings.autoLaunch || false,
+      minimizeToTray: initialSettings.minimizeToTray || true,
+      globalHotkeys: initialSettings.globalHotkeys || {
+        newNote: 'CommandOrControl+Alt+N',
+        showApp: 'CommandOrControl+Alt+S',
+      },
     },
   });
 
@@ -224,6 +238,9 @@ export function SettingsDialog({
                 )}
               />
             </div>
+
+            {/* System Integration Section */}
+            <SystemSection form={form} />
 
             {/* Hotkeys Section */}
             <div className="space-y-6 bg-background-titlebar/90 p-6 rounded-lg border-0">

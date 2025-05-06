@@ -46,6 +46,9 @@ contextBridge.exposeInMainWorld('settings', {
   isSettingsWindow: () => ipcRenderer.invoke('is-settings-window'),
   selectDirectory: () => ipcRenderer.invoke('select-directory'),
   getDefaultSaveLocation: () => ipcRenderer.invoke('get-default-save-location'),
+  setAutoLaunch: (enabled: boolean) => ipcRenderer.invoke('set-auto-launch', enabled),
+  getAutoLaunch: () => ipcRenderer.invoke('get-auto-launch'),
+  settingsUpdated: () => ipcRenderer.send('settings-updated'),
 })
 
 // Expose file operation APIs

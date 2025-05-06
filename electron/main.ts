@@ -1,8 +1,9 @@
-import { app, BrowserWindow, ipcMain, dialog, screen } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, screen, Tray, Menu, globalShortcut, nativeImage } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs'
 import Store from 'electron-store'
+import AutoLaunch from 'auto-launch'
 
 // Create a store for window state
 const windowStateStore = new Store({
@@ -43,6 +44,14 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 let mainWindow: BrowserWindow | null
 let settingsWindow: BrowserWindow | null = null
 const noteWindows = new Map<string, BrowserWindow>()
+let tray: Tray | null = null
+let isQuitting = false
+
+// Create auto launcher
+const scribbleAutoLauncher = new AutoLaunch({
+  name: 'Scribble',
+  path: app.getPath('exe'),
+})
 
 function createMainWindow() {
   // Configure window differently based on platform
@@ -144,9 +153,26 @@ function createMainWindow() {
   // Save window state before the window is destroyed
   mainWindow.on('close', saveWindowState);
 
+  // Handle close event - minimize to tray instead of closing
+  mainWindow.on('close', (event) => {
+    // If we're not actually quitting the app, just hide the window
+    if (!isQuitting) {
+      event.preventDefault()
+      mainWindow?.hide()
+      return false
+    }
+    return true
+  })
+
   // Clean up when window is closed
   mainWindow.on('closed', () => {
     mainWindow = null;
+  })
+
+  // Handle minimize event - minimize to tray
+  mainWindow.on('minimize', (event) => {
+    event.preventDefault()
+    mainWindow?.hide()
   })
 }
 
@@ -386,6 +412,108 @@ function createSettingsWindow() {
   })
 
   return settingsWindow
+}
+
+// Create tray icon
+function createTray() {
+  // Create tray icon
+  const iconPath = path.join(process.env.APP_ROOT, 'src/assets/icon.png')
+  const trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 })
+
+  tray = new Tray(trayIcon)
+
+  // Create context menu
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Open Scribble',
+      click: () => {
+        if (mainWindow) {
+          mainWindow.show()
+          mainWindow.focus()
+        } else {
+          createMainWindow()
+        }
+      }
+    },
+    {
+      label: 'New Note',
+      click: () => {
+        // Generate a unique ID for the new note
+        const noteId = `new-${Date.now().toString(36)}`
+        createNoteWindow(noteId)
+
+        // Show main window if it's hidden
+        if (mainWindow && !mainWindow.isVisible()) {
+          mainWindow.show()
+        }
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Settings',
+      click: () => {
+        createSettingsWindow()
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Quit',
+      click: () => {
+        isQuitting = true
+        app.quit()
+      }
+    }
+  ])
+
+  // Set tray properties
+  tray.setToolTip('Scribble')
+  tray.setContextMenu(contextMenu)
+
+  // Show window on tray icon click
+  tray.on('click', () => {
+    if (mainWindow) {
+      if (mainWindow.isVisible()) {
+        mainWindow.focus()
+      } else {
+        mainWindow.show()
+      }
+    } else {
+      createMainWindow()
+    }
+  })
+}
+
+// Register global hotkeys
+function registerGlobalHotkeys() {
+  // Get settings to check for custom hotkeys
+  const settingsStore = new Store({ name: 'settings' })
+  const settings = settingsStore.get('settings') || {}
+  const hotkeys = settings.hotkeys || {}
+
+  // Register global hotkey for creating a new note
+  const newNoteHotkey = hotkeys.newNote || 'CommandOrControl+Alt+N'
+  globalShortcut.register(newNoteHotkey, () => {
+    // Generate a unique ID for the new note
+    const noteId = `new-${Date.now().toString(36)}`
+    createNoteWindow(noteId)
+
+    // Show main window if it's hidden
+    if (mainWindow && !mainWindow.isVisible()) {
+      mainWindow.show()
+    }
+  })
+
+  // Register global hotkey for showing the app
+  globalShortcut.register('CommandOrControl+Alt+S', () => {
+    if (mainWindow) {
+      mainWindow.show()
+      mainWindow.focus()
+    } else {
+      createMainWindow()
+    }
+  })
+
+  console.log('Global hotkeys registered')
 }
 
 // Get default save location
@@ -714,9 +842,60 @@ app.on('activate', () => {
   }
 })
 
+// Auto-launch IPC handlers
+ipcMain.handle('set-auto-launch', async (_, enabled) => {
+  try {
+    if (enabled) {
+      await scribbleAutoLauncher.enable()
+    } else {
+      await scribbleAutoLauncher.disable()
+    }
+    return enabled
+  } catch (error) {
+    console.error('Error setting auto-launch:', error)
+    return false
+  }
+})
+
+ipcMain.handle('get-auto-launch', async () => {
+  try {
+    return await scribbleAutoLauncher.isEnabled()
+  } catch (error) {
+    console.error('Error getting auto-launch status:', error)
+    return false
+  }
+})
+
+// Update global hotkeys when settings change
+ipcMain.on('settings-updated', () => {
+  // Unregister all shortcuts
+  globalShortcut.unregisterAll()
+
+  // Register them again with new settings
+  registerGlobalHotkeys()
+})
+
 // Set the app user model id for Windows
 if (process.platform === 'win32') {
   app.setAppUserModelId('com.tylerburnett.scribble')
 }
 
-app.whenReady().then(createMainWindow)
+// When app is ready
+app.whenReady().then(() => {
+  // Create main window
+  createMainWindow()
+
+  // Create tray icon
+  createTray()
+
+  // Register global hotkeys
+  registerGlobalHotkeys()
+})
+
+// Handle the before-quit event
+app.on('before-quit', () => {
+  isQuitting = true
+
+  // Unregister all shortcuts
+  globalShortcut.unregisterAll()
+})

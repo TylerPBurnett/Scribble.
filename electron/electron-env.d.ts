@@ -36,6 +36,9 @@ interface Window {
     isSettingsWindow: () => Promise<boolean>
     selectDirectory: () => Promise<{ canceled: boolean, filePaths: string[] }>
     getDefaultSaveLocation: () => Promise<string>
+    setAutoLaunch: (enabled: boolean) => Promise<boolean>
+    getAutoLaunch: () => Promise<boolean>
+    settingsUpdated: () => void
   }
   fileOps: {
     saveNoteToFile: (noteId: string, title: string, content: string, saveLocation: string, oldTitle?: string) => Promise<{ success: boolean, filePath?: string, error?: string }>

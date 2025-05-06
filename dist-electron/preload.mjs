@@ -38,7 +38,10 @@ electron.contextBridge.exposeInMainWorld("settings", {
   openSettings: () => electron.ipcRenderer.invoke("open-settings"),
   isSettingsWindow: () => electron.ipcRenderer.invoke("is-settings-window"),
   selectDirectory: () => electron.ipcRenderer.invoke("select-directory"),
-  getDefaultSaveLocation: () => electron.ipcRenderer.invoke("get-default-save-location")
+  getDefaultSaveLocation: () => electron.ipcRenderer.invoke("get-default-save-location"),
+  setAutoLaunch: (enabled) => electron.ipcRenderer.invoke("set-auto-launch", enabled),
+  getAutoLaunch: () => electron.ipcRenderer.invoke("get-auto-launch"),
+  settingsUpdated: () => electron.ipcRenderer.send("settings-updated")
 });
 electron.contextBridge.exposeInMainWorld("fileOps", {
   saveNoteToFile: (noteId, title, content, saveLocation, oldTitle) => electron.ipcRenderer.invoke("save-note-to-file", noteId, title, content, saveLocation, oldTitle),
