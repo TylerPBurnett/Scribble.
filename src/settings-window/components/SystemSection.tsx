@@ -21,15 +21,15 @@ type SystemSectionProps = {
 
 export function SystemSection({ form }: SystemSectionProps) {
   return (
-    <div className="space-y-6 bg-card p-6 rounded-lg border border-border shadow-md">
-      <h3 className="text-2xl font-semibold text-foreground border-b border-border pb-4">System Integration</h3>
+    <div className="space-y-6 bg-card/95 backdrop-blur-sm p-6 rounded-lg border border-border/50 shadow-md">
+      <h3 className="text-2xl font-semibold text-foreground border-b border-border/50 pb-4">System Integration</h3>
 
       {/* Auto Launch */}
       <FormField
         control={form.control}
         name="autoLaunch"
         render={({ field }) => (
-          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-5 bg-card/80">
+          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-5 bg-card/95 backdrop-blur-sm">
             <div className="space-y-2">
               <FormLabel className="text-base font-medium text-foreground">Start with Windows</FormLabel>
               <FormDescription className="text-sm text-muted-foreground">
@@ -52,7 +52,7 @@ export function SystemSection({ form }: SystemSectionProps) {
         control={form.control}
         name="minimizeToTray"
         render={({ field }) => (
-          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-5 bg-card/80 mt-4">
+          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-5 bg-card/95 backdrop-blur-sm mt-4">
             <div className="space-y-2">
               <FormLabel className="text-base font-medium text-foreground">Minimize to System Tray</FormLabel>
               <FormDescription className="text-sm text-muted-foreground">
@@ -83,7 +83,7 @@ export function SystemSection({ form }: SystemSectionProps) {
           control={form.control}
           name="globalHotkeys.newNote"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-5 bg-card/80">
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-5 bg-card/95 backdrop-blur-sm">
               <div className="space-y-2">
                 <FormLabel className="text-base font-medium text-foreground">New Note</FormLabel>
                 <FormDescription className="text-sm text-muted-foreground">
@@ -93,7 +93,7 @@ export function SystemSection({ form }: SystemSectionProps) {
               <FormControl>
                 <Input
                   {...field}
-                  className="w-48 bg-secondary/80 border border-border/50 text-secondary-foreground focus:border-primary/50 focus:ring-1 focus:ring-primary/30 shadow-sm font-mono"
+                  className="w-48 bg-secondary border border-border/50 text-secondary-foreground focus:border-primary/50 focus:ring-1 focus:ring-primary/30 shadow-sm font-mono"
                   placeholder="e.g. CommandOrControl+Alt+N"
                 />
               </FormControl>
@@ -106,7 +106,7 @@ export function SystemSection({ form }: SystemSectionProps) {
           control={form.control}
           name="globalHotkeys.showApp"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-5 bg-card/80">
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-5 bg-card/95 backdrop-blur-sm">
               <div className="space-y-2">
                 <FormLabel className="text-base font-medium text-foreground">Show App</FormLabel>
                 <FormDescription className="text-sm text-muted-foreground">
@@ -116,7 +116,7 @@ export function SystemSection({ form }: SystemSectionProps) {
               <FormControl>
                 <Input
                   {...field}
-                  className="w-48 bg-secondary/80 border border-border/50 text-secondary-foreground focus:border-primary/50 focus:ring-1 focus:ring-primary/30 shadow-sm font-mono"
+                  className="w-48 bg-secondary border border-border/50 text-secondary-foreground focus:border-primary/50 focus:ring-1 focus:ring-primary/30 shadow-sm font-mono"
                   placeholder="e.g. CommandOrControl+Alt+S"
                 />
               </FormControl>

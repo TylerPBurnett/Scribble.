@@ -49,7 +49,7 @@ export function HotkeysSection({ hotkeys, onChange }: HotkeysSectionProps) {
       <div className="flex flex-col md:flex-row gap-6 mt-6">
         {/* Category tabs */}
         <div className="w-full md:w-1/4">
-          <div className="flex flex-col space-y-2 bg-card/50 rounded-lg p-2 border border-border/30">
+          <div className="flex flex-col space-y-2 bg-card/95 backdrop-blur-sm rounded-lg p-2 border border-border/30">
             {Object.entries(HOTKEY_CATEGORIES).map(([key, category]) => (
               <button
                 key={key}
@@ -72,7 +72,7 @@ export function HotkeysSection({ hotkeys, onChange }: HotkeysSectionProps) {
         </div>
 
         {/* Hotkey editors */}
-        <div className="w-full md:w-3/4 bg-card/80 rounded-lg p-5 border border-border/30">
+        <div className="w-full md:w-3/4 bg-card/95 backdrop-blur-sm rounded-lg p-5 border border-border/30">
           <div className="space-y-3">
             {HOTKEY_CATEGORIES[activeCategory as keyof typeof HOTKEY_CATEGORIES]?.actions.map((action) => (
               <HotkeyEditor

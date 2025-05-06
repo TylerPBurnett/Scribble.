@@ -118,24 +118,24 @@ input, textarea {
 
   /* Dim theme (original Scribble theme) */
   :root.dim, [data-theme="dim"] {
-    --background: 231 15% 18%;
+    --background: 231 15% 20%;
     --foreground: 60 9.1% 97.8%;
-    --card: 232 14% 15%;
+    --card: 232 14% 17%;
     --card-foreground: 60 9.1% 97.8%;
-    --popover: 232 14% 15%;
+    --popover: 232 14% 17%;
     --popover-foreground: 60 9.1% 97.8%;
     --primary: 39 100% 50%;
     --primary-foreground: 0 0% 0%;
-    --secondary: 232 14% 13%;
+    --secondary: 232 14% 22%;
     --secondary-foreground: 60 9.1% 97.8%;
-    --muted: 232 14% 13%;
-    --muted-foreground: 24 5.4% 63.9%;
-    --accent: 232 14% 13%;
+    --muted: 232 14% 22%;
+    --muted-foreground: 24 5.4% 75%;
+    --accent: 232 14% 22%;
     --accent-foreground: 60 9.1% 97.8%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 60 9.1% 97.8%;
-    --border: 232 14% 13%;
-    --input: 232 14% 13%;
+    --border: 232 14% 25%;
+    --input: 232 14% 22%;
     --ring: 24 5.7% 82.9%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
@@ -151,24 +151,24 @@ input, textarea {
 
   /* Dark theme (true dark) */
   :root.dark, [data-theme="dark"] {
-    --background: 0 0% 7%;
+    --background: 0 0% 10%;
     --foreground: 0 0% 100%;
-    --card: 0 0% 10%;
+    --card: 0 0% 13%;
     --card-foreground: 0 0% 100%;
-    --popover: 0 0% 7%;
+    --popover: 0 0% 10%;
     --popover-foreground: 0 0% 100%;
     --primary: 39 100% 50%;
     --primary-foreground: 0 0% 0%;
-    --secondary: 0 0% 12%;
+    --secondary: 0 0% 16%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 70%;
-    --accent: 0 0% 12%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 75%;
+    --accent: 0 0% 16%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
+    --border: 0 0% 20%;
+    --input: 0 0% 16%;
     --ring: 0 0% 80%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
@@ -217,12 +217,12 @@ input, textarea {
 
   /* Direct color application for better compatibility */
   :root.dim, [data-theme="dim"] {
-    background-color: hsl(231, 15%, 18%);
+    background-color: hsl(231, 15%, 20%);
     color: hsl(60, 9.1%, 97.8%);
   }
 
   :root.dark, [data-theme="dark"] {
-    background-color: hsl(0, 0%, 7%);
+    background-color: hsl(0, 0%, 10%);
     color: hsl(0, 0%, 100%);
   }
 

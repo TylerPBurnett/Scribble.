@@ -78,7 +78,7 @@ export function HotkeyEditor({ action, label, currentValue, onChange }: HotkeyEd
       <div className="flex items-center gap-2">
         <div
           className={`
-            px-4 py-2 rounded-md border bg-secondary/80
+            px-4 py-2 rounded-md border bg-secondary
             text-sm font-mono cursor-pointer min-w-[150px] text-center shadow-sm
             ${isRecording
               ? 'border-primary text-primary ring-1 ring-primary/30'
