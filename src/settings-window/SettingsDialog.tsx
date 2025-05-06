@@ -114,10 +114,10 @@ export function SettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] max-h-[calc(100vh-80px)] overflow-y-auto border-none bg-background-notes font-twitter">
-        <DialogHeader className="mb-6">
-          <DialogTitle className="text-2xl">Settings</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="sm:max-w-[800px] max-h-[calc(100vh-80px)] overflow-y-auto border-none bg-black font-twitter shadow-2xl">
+        <DialogHeader className="mb-8">
+          <DialogTitle className="text-3xl font-semibold text-white">Settings</DialogTitle>
+          <DialogDescription className="text-gray-400 mt-2 text-base">
             Configure your Scribble application preferences.
           </DialogDescription>
         </DialogHeader>
@@ -125,34 +125,34 @@ export function SettingsDialog({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 py-4">
             {/* Storage Section */}
-            <div className="space-y-6 bg-background-titlebar/90 p-6 rounded-lg border-0">
-              <h3 className="text-xl font-medium border-b-0 pb-3">Storage</h3>
+            <div className="space-y-6 bg-[#121212] p-6 rounded-lg border border-gray-800/50 shadow-md">
+              <h3 className="text-2xl font-semibold text-white border-b border-gray-800 pb-4">Storage</h3>
 
               <FormField
                 control={form.control}
                 name="saveLocation"
                 render={({ field }) => (
-                  <FormItem className="bg-background-notes/50 p-4 rounded-lg border-0">
-                    <FormLabel className="text-base">Save Location</FormLabel>
-                    <div className="flex gap-2 mt-2">
+                  <FormItem className="bg-[#1a1a1a] p-5 rounded-lg border border-gray-800/30">
+                    <FormLabel className="text-base font-medium text-white">Save Location</FormLabel>
+                    <div className="flex gap-2 mt-3">
                       <FormControl>
                         <Input
                           {...field}
                           readOnly
-                          className="bg-background-titlebar border-0 flex-1"
+                          className="bg-[#252525] border border-gray-700/30 text-gray-300 flex-1 focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
                         />
                       </FormControl>
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="outline"
                         onClick={handleSaveLocationSelect}
                         disabled={isSelectingLocation}
-                        className="shrink-0"
+                        className="shrink-0 border-gray-700 bg-[#252525] hover:bg-[#333333] text-white"
                       >
                         Browse...
                       </Button>
                     </div>
-                    <FormDescription className="mt-2">
+                    <FormDescription className="mt-3 text-gray-400 text-sm">
                       Choose where to save your notes
                     </FormDescription>
                   </FormItem>
@@ -161,17 +161,17 @@ export function SettingsDialog({
             </div>
 
             {/* Auto Save Section */}
-            <div className="space-y-6 bg-background-titlebar/90 p-6 rounded-lg border-0">
-              <h3 className="text-xl font-medium border-b-0 pb-3">Auto Save</h3>
+            <div className="space-y-6 bg-[#121212] p-6 rounded-lg border border-gray-800/50 shadow-md">
+              <h3 className="text-2xl font-semibold text-white border-b border-gray-800 pb-4">Auto Save</h3>
 
               <FormField
                 control={form.control}
                 name="autoSave"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border-0 p-4 bg-background-notes/50">
-                    <div className="space-y-1">
-                      <FormLabel className="text-base">Auto Save</FormLabel>
-                      <FormDescription className="text-sm">
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-800/30 p-5 bg-[#1a1a1a]">
+                    <div className="space-y-2">
+                      <FormLabel className="text-base font-medium text-white">Auto Save</FormLabel>
+                      <FormDescription className="text-sm text-gray-400">
                         Automatically save notes while typing
                       </FormDescription>
                     </div>
@@ -191,19 +191,19 @@ export function SettingsDialog({
                   control={form.control}
                   name="autoSaveInterval"
                   render={({ field }) => (
-                    <FormItem className="bg-background-notes/50 p-4 rounded-lg border-0">
-                      <FormLabel className="text-base">Auto Save Interval (seconds)</FormLabel>
+                    <FormItem className="bg-[#1a1a1a] p-5 rounded-lg border border-gray-800/30 mt-4">
+                      <FormLabel className="text-base font-medium text-white">Auto Save Interval (seconds)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
                           min={1}
                           max={60}
-                          className="bg-background-titlebar border-0 mt-2"
+                          className="bg-[#252525] border border-gray-700/30 text-gray-300 mt-3 w-full md:w-1/3 focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
                           {...field}
                           onChange={(e) => field.onChange(Number(e.target.value))}
                         />
                       </FormControl>
-                      <FormDescription className="mt-2">
+                      <FormDescription className="mt-3 text-gray-400 text-sm">
                         How often to automatically save notes (1-60 seconds)
                       </FormDescription>
                     </FormItem>
@@ -213,17 +213,17 @@ export function SettingsDialog({
             </div>
 
             {/* Appearance Section */}
-            <div className="space-y-6 bg-background-titlebar/90 p-6 rounded-lg border-0">
-              <h3 className="text-xl font-medium border-b-0 pb-3">Appearance</h3>
+            <div className="space-y-6 bg-[#121212] p-6 rounded-lg border border-gray-800/50 shadow-md">
+              <h3 className="text-2xl font-semibold text-white border-b border-gray-800 pb-4">Appearance</h3>
 
               <FormField
                 control={form.control}
                 name="darkMode"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border-0 p-4 bg-background-notes/50">
-                    <div className="space-y-1">
-                      <FormLabel className="text-base">Dark Mode</FormLabel>
-                      <FormDescription className="text-sm">
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-800/30 p-5 bg-[#1a1a1a]">
+                    <div className="space-y-2">
+                      <FormLabel className="text-base font-medium text-white">Dark Mode</FormLabel>
+                      <FormDescription className="text-sm text-gray-400">
                         Use dark theme for the application
                       </FormDescription>
                     </div>
@@ -243,25 +243,25 @@ export function SettingsDialog({
             <SystemSection form={form} />
 
             {/* Hotkeys Section */}
-            <div className="space-y-6 bg-background-titlebar/90 p-6 rounded-lg border-0">
+            <div className="space-y-6 bg-[#121212] p-6 rounded-lg border border-gray-800/50 shadow-md">
               <HotkeysSection
                 hotkeys={hotkeys}
                 onChange={handleHotkeyChange}
               />
             </div>
 
-            <DialogFooter className="pt-6">
+            <DialogFooter className="pt-8 border-t border-gray-800 mt-6">
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="px-6"
+                className="px-6 border-gray-700 bg-[#252525] hover:bg-[#333333] text-white"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="px-6 bg-primary hover:bg-primary-dark"
+                className="px-6 bg-primary hover:bg-primary/80 text-white font-medium"
               >
                 Save Changes
               </Button>

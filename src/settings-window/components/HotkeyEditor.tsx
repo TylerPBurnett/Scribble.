@@ -33,21 +33,21 @@ export function HotkeyEditor({ action, label, currentValue, onChange }: HotkeyEd
   // Handle key down events to record hotkeys
   const handleKeyDown = (e: ReactKeyboardEvent<HTMLInputElement>) => {
     if (!isRecording) return;
-    
+
     e.preventDefault();
-    
+
     // Get the key combination
     const keys: string[] = [];
     if (e.ctrlKey) keys.push('ctrl');
     if (e.altKey) keys.push('alt');
     if (e.shiftKey) keys.push('shift');
     if (e.metaKey) keys.push('meta');
-    
+
     // Add the key if it's not a modifier
     if (!['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
       keys.push(e.key.toLowerCase());
     }
-    
+
     // If there's at least one key, update the value
     if (keys.length > 0) {
       const newValue = keys.join('+');
@@ -71,14 +71,17 @@ export function HotkeyEditor({ action, label, currentValue, onChange }: HotkeyEd
   };
 
   return (
-    <div className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
-      <div className="text-sm text-text-secondary">{label}</div>
+    <div className="flex items-center justify-between py-3 border-b border-gray-800/30 last:border-0">
+      <div className="text-sm font-medium text-white">{label}</div>
       <div className="flex items-center gap-2">
         <div
           className={`
-            px-3 py-1.5 rounded border border-border/50 bg-background-tertiary/50
-            text-sm font-mono cursor-pointer min-w-[120px] text-center
-            ${isRecording ? 'border-primary text-primary' : 'text-text-secondary'}
+            px-4 py-2 rounded border bg-[#252525]
+            text-sm font-mono cursor-pointer min-w-[150px] text-center
+            ${isRecording
+              ? 'border-primary text-primary ring-1 ring-primary/30'
+              : 'border-gray-700/30 text-gray-300 hover:border-gray-600/50'}
+            transition-colors
           `}
           onClick={handleClick}
         >
@@ -96,7 +99,7 @@ export function HotkeyEditor({ action, label, currentValue, onChange }: HotkeyEd
         </div>
         {currentValue && (
           <button
-            className="text-text-tertiary hover:text-text-secondary"
+            className="text-gray-500 hover:text-gray-300 transition-colors p-1 rounded-full hover:bg-[#252525]"
             onClick={handleClear}
             title="Clear hotkey"
           >

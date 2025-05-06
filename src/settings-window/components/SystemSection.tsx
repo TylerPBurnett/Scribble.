@@ -21,18 +21,18 @@ type SystemSectionProps = {
 
 export function SystemSection({ form }: SystemSectionProps) {
   return (
-    <div className="space-y-6 bg-background-titlebar/90 p-6 rounded-lg border-0">
-      <h3 className="text-xl font-medium border-b-0 pb-3">System Integration</h3>
+    <div className="space-y-6 bg-[#121212] p-6 rounded-lg border border-gray-800/50 shadow-md">
+      <h3 className="text-2xl font-semibold text-white border-b border-gray-800 pb-4">System Integration</h3>
 
       {/* Auto Launch */}
       <FormField
         control={form.control}
         name="autoLaunch"
         render={({ field }) => (
-          <FormItem className="flex flex-row items-center justify-between rounded-lg border-0 p-4 bg-background-notes/50">
-            <div className="space-y-1">
-              <FormLabel className="text-base">Start with Windows</FormLabel>
-              <FormDescription className="text-sm">
+          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-800/30 p-5 bg-[#1a1a1a]">
+            <div className="space-y-2">
+              <FormLabel className="text-base font-medium text-white">Start with Windows</FormLabel>
+              <FormDescription className="text-sm text-gray-400">
                 Launch Scribble automatically when you log in
               </FormDescription>
             </div>
@@ -52,10 +52,10 @@ export function SystemSection({ form }: SystemSectionProps) {
         control={form.control}
         name="minimizeToTray"
         render={({ field }) => (
-          <FormItem className="flex flex-row items-center justify-between rounded-lg border-0 p-4 bg-background-notes/50">
-            <div className="space-y-1">
-              <FormLabel className="text-base">Minimize to System Tray</FormLabel>
-              <FormDescription className="text-sm">
+          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-800/30 p-5 bg-[#1a1a1a] mt-4">
+            <div className="space-y-2">
+              <FormLabel className="text-base font-medium text-white">Minimize to System Tray</FormLabel>
+              <FormDescription className="text-sm text-gray-400">
                 Keep Scribble running in the system tray when closed
               </FormDescription>
             </div>
@@ -70,28 +70,30 @@ export function SystemSection({ form }: SystemSectionProps) {
         )}
       />
 
-      <div className="space-y-4 mt-6">
-        <h4 className="text-lg font-medium">Global Hotkeys</h4>
-        <FormDescription className="text-sm">
-          These hotkeys work even when Scribble is minimized to the system tray
-        </FormDescription>
+      <div className="space-y-5 mt-8 pt-6 border-t border-gray-800/50">
+        <div>
+          <h4 className="text-xl font-semibold text-white">Global Hotkeys</h4>
+          <FormDescription className="text-sm text-gray-400 mt-1">
+            These hotkeys work even when Scribble is minimized to the system tray
+          </FormDescription>
+        </div>
 
         {/* New Note Global Hotkey */}
         <FormField
           control={form.control}
           name="globalHotkeys.newNote"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border-0 p-4 bg-background-notes/50">
-              <div className="space-y-1">
-                <FormLabel className="text-base">New Note</FormLabel>
-                <FormDescription className="text-sm">
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-800/30 p-5 bg-[#1a1a1a]">
+              <div className="space-y-2">
+                <FormLabel className="text-base font-medium text-white">New Note</FormLabel>
+                <FormDescription className="text-sm text-gray-400">
                   Global hotkey to create a new note
                 </FormDescription>
               </div>
               <FormControl>
                 <Input
                   {...field}
-                  className="w-40 bg-background-tertiary/50 border-border/50"
+                  className="w-48 bg-[#252525] border border-gray-700/30 text-gray-300 focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
                   placeholder="e.g. CommandOrControl+Alt+N"
                 />
               </FormControl>
@@ -104,17 +106,17 @@ export function SystemSection({ form }: SystemSectionProps) {
           control={form.control}
           name="globalHotkeys.showApp"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border-0 p-4 bg-background-notes/50">
-              <div className="space-y-1">
-                <FormLabel className="text-base">Show App</FormLabel>
-                <FormDescription className="text-sm">
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-800/30 p-5 bg-[#1a1a1a]">
+              <div className="space-y-2">
+                <FormLabel className="text-base font-medium text-white">Show App</FormLabel>
+                <FormDescription className="text-sm text-gray-400">
                   Global hotkey to show the main window
                 </FormDescription>
               </div>
               <FormControl>
                 <Input
                   {...field}
-                  className="w-40 bg-background-tertiary/50 border-border/50"
+                  className="w-48 bg-[#252525] border border-gray-700/30 text-gray-300 focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
                   placeholder="e.g. CommandOrControl+Alt+S"
                 />
               </FormControl>
