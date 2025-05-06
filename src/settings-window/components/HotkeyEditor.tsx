@@ -59,7 +59,9 @@ export function HotkeyEditor({ action, label, currentValue, onChange }: HotkeyEd
   };
 
   // Handle click to focus the input
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     inputRef.current?.focus();
   };
 
@@ -71,17 +73,17 @@ export function HotkeyEditor({ action, label, currentValue, onChange }: HotkeyEd
   };
 
   return (
-    <div className="flex items-center justify-between py-3 border-b border-gray-800/30 last:border-0">
-      <div className="text-sm font-medium text-white">{label}</div>
+    <div className="flex items-center justify-between py-3 border-b border-border/30 last:border-0">
+      <div className="text-sm font-medium text-foreground">{label}</div>
       <div className="flex items-center gap-2">
         <div
           className={`
-            px-4 py-2 rounded-md border bg-gradient-to-b from-[#2a2a2a] to-[#222222]
+            px-4 py-2 rounded-md border bg-secondary/80
             text-sm font-mono cursor-pointer min-w-[150px] text-center shadow-sm
             ${isRecording
-              ? 'border-primary text-primary ring-1 ring-primary/30 from-[#2a2a2a]/80 to-[#222222]/80'
-              : 'border-gray-700/30 text-gray-300 hover:border-gray-600/50 hover:from-[#333333] hover:to-[#252525]'}
-            transition-all duration-200
+              ? 'border-primary text-primary ring-1 ring-primary/30'
+              : 'border-border/50 text-secondary-foreground hover:border-border hover:bg-secondary'}
+            transition-colors duration-200
           `}
           onClick={handleClick}
         >
@@ -99,7 +101,7 @@ export function HotkeyEditor({ action, label, currentValue, onChange }: HotkeyEd
         </div>
         {currentValue && (
           <button
-            className="text-gray-500 hover:text-gray-300 transition-all duration-200 p-1.5 rounded-full hover:bg-[#333333] active:scale-90 shadow-sm border border-transparent hover:border-gray-700/30"
+            className="text-muted-foreground hover:text-foreground transition-colors duration-200 p-1.5 rounded-full hover:bg-secondary active:scale-95 shadow-sm border border-transparent hover:border-border/50"
             onClick={handleClear}
             title="Clear hotkey"
           >
