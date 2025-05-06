@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { AppSettings } from '../shared/services/settingsService';
 import { DEFAULT_HOTKEYS, HotkeyAction } from '../shared/services/hotkeyService';
-import { ThemeName } from '../shared/services/themeService';
+import { ThemeName, useTheme } from '../shared/services/themeService';
 import { HotkeysSection } from './components/HotkeysSection';
 import { SystemSection } from './components/SystemSection';
 import { ThemesSection } from './components/ThemesSection';
@@ -60,6 +60,7 @@ export function SettingsDialog({
   initialSettings,
   onSave,
 }: SettingsDialogProps) {
+  const { theme } = useTheme();
   const [isSelectingLocation, setIsSelectingLocation] = useState(false);
   const [hotkeys, setHotkeys] = useState<Record<HotkeyAction, string>>(
     initialSettings.hotkeys as Record<HotkeyAction, string> || DEFAULT_HOTKEYS
@@ -116,10 +117,15 @@ export function SettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px] max-h-[calc(100vh-80px)] overflow-y-auto border border-border/30 bg-background/80 backdrop-blur-md font-twitter shadow-2xl">
+      <DialogContent
+        className={`sm:max-w-[800px] max-h-[calc(100vh-80px)] overflow-y-auto border border-border/30 backdrop-blur-md font-twitter shadow-2xl
+          ${theme === 'light'
+            ? 'bg-background/95 text-foreground'
+            : 'bg-background/80'}`}
+      >
         <DialogHeader className="mb-8">
-          <DialogTitle className="text-3xl font-semibold text-foreground">Settings</DialogTitle>
-          <DialogDescription className="text-muted-foreground mt-2 text-base">
+          <DialogTitle className={`text-3xl font-semibold ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>Settings</DialogTitle>
+          <DialogDescription className={`mt-2 text-base ${theme === 'light' ? 'text-black/80' : 'text-muted-foreground'}`}>
             Configure your Scribble application preferences.
           </DialogDescription>
         </DialogHeader>
@@ -128,20 +134,20 @@ export function SettingsDialog({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 py-4">
             {/* Storage Section */}
             <div className="space-y-6 bg-card/95 backdrop-blur-sm p-6 rounded-lg border border-border/50 shadow-md">
-              <h3 className="text-2xl font-semibold text-foreground border-b border-border/50 pb-4">Storage</h3>
+              <h3 className={`text-2xl font-semibold border-b border-border/50 pb-4 ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>Storage</h3>
 
               <FormField
                 control={form.control}
                 name="saveLocation"
                 render={({ field }) => (
                   <FormItem className="bg-card/95 backdrop-blur-sm p-5 rounded-lg border border-border/30">
-                    <FormLabel className="text-base font-medium text-foreground">Save Location</FormLabel>
+                    <FormLabel className={`text-base font-medium ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>Save Location</FormLabel>
                     <div className="flex gap-2 mt-3">
                       <FormControl>
                         <Input
                           {...field}
                           readOnly
-                          className="bg-secondary border border-border/50 text-secondary-foreground flex-1 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 shadow-sm"
+                          className={`bg-secondary border border-border/50 flex-1 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 shadow-sm ${theme === 'light' ? 'text-black' : 'text-secondary-foreground'}`}
                         />
                       </FormControl>
                       <Button
@@ -154,7 +160,7 @@ export function SettingsDialog({
                         Browse...
                       </Button>
                     </div>
-                    <FormDescription className="mt-3 text-muted-foreground text-sm">
+                    <FormDescription className={`mt-3 text-sm ${theme === 'light' ? 'text-black/70' : 'text-muted-foreground'}`}>
                       Choose where to save your notes
                     </FormDescription>
                   </FormItem>
@@ -164,7 +170,7 @@ export function SettingsDialog({
 
             {/* Auto Save Section */}
             <div className="space-y-6 bg-card/95 backdrop-blur-sm p-6 rounded-lg border border-border/50 shadow-md">
-              <h3 className="text-2xl font-semibold text-foreground border-b border-border/50 pb-4">Auto Save</h3>
+              <h3 className={`text-2xl font-semibold border-b border-border/50 pb-4 ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>Auto Save</h3>
 
               <FormField
                 control={form.control}
@@ -172,8 +178,8 @@ export function SettingsDialog({
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-5 bg-card/95 backdrop-blur-sm">
                     <div className="space-y-2">
-                      <FormLabel className="text-base font-medium text-foreground">Auto Save</FormLabel>
-                      <FormDescription className="text-sm text-muted-foreground">
+                      <FormLabel className={`text-base font-medium ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>Auto Save</FormLabel>
+                      <FormDescription className={`text-sm ${theme === 'light' ? 'text-black/70' : 'text-muted-foreground'}`}>
                         Automatically save notes while typing
                       </FormDescription>
                     </div>
@@ -194,18 +200,18 @@ export function SettingsDialog({
                   name="autoSaveInterval"
                   render={({ field }) => (
                     <FormItem className="bg-card/95 backdrop-blur-sm p-5 rounded-lg border border-border/30 mt-4">
-                      <FormLabel className="text-base font-medium text-foreground">Auto Save Interval (seconds)</FormLabel>
+                      <FormLabel className={`text-base font-medium ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>Auto Save Interval (seconds)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
                           min={1}
                           max={60}
-                          className="bg-secondary border border-border/50 text-secondary-foreground mt-3 w-full md:w-1/3 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 shadow-sm"
+                          className={`bg-secondary border border-border/50 mt-3 w-full md:w-1/3 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 shadow-sm ${theme === 'light' ? 'text-black' : 'text-secondary-foreground'}`}
                           {...field}
                           onChange={(e) => field.onChange(Number(e.target.value))}
                         />
                       </FormControl>
-                      <FormDescription className="mt-3 text-muted-foreground text-sm">
+                      <FormDescription className={`mt-3 text-sm ${theme === 'light' ? 'text-black/70' : 'text-muted-foreground'}`}>
                         How often to automatically save notes (1-60 seconds)
                       </FormDescription>
                     </FormItem>
@@ -223,13 +229,14 @@ export function SettingsDialog({
             </div>
 
             {/* System Integration Section */}
-            <SystemSection form={form} />
+            <SystemSection form={form} theme={theme} />
 
             {/* Hotkeys Section */}
-            <div className="space-y-6 bg-card p-6 rounded-lg border border-border shadow-md">
+            <div className="space-y-6 bg-card/95 backdrop-blur-sm p-6 rounded-lg border border-border/50 shadow-md">
               <HotkeysSection
                 hotkeys={hotkeys}
                 onChange={handleHotkeyChange}
+                theme={theme}
               />
             </div>
 
@@ -238,7 +245,7 @@ export function SettingsDialog({
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="px-6 py-2.5 border-border/50 bg-secondary hover:bg-secondary/90 text-secondary-foreground font-medium shadow-sm transition-all duration-200 active:scale-95"
+                className={`px-6 py-2.5 border-border/50 bg-secondary hover:bg-secondary/90 font-medium shadow-sm transition-all duration-200 active:scale-95 ${theme === 'light' ? 'text-black' : 'text-secondary-foreground'}`}
               >
                 Cancel
               </Button>

@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { HotkeyAction, formatHotkeyForDisplay } from '../../shared/services/hotkeyService';
+import { ThemeName } from '../../shared/services/themeService';
 
 interface HotkeyEditorProps {
   action: HotkeyAction;
   label: string;
   currentValue: string;
   onChange: (action: HotkeyAction, value: string) => void;
+  theme?: ThemeName;
 }
 
-export function HotkeyEditor({ action, label, currentValue, onChange }: HotkeyEditorProps) {
+export function HotkeyEditor({ action, label, currentValue, onChange, theme = 'dim' }: HotkeyEditorProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [displayValue, setDisplayValue] = useState(formatHotkeyForDisplay(currentValue));
   const inputRef = useRef<HTMLInputElement>(null);
@@ -74,7 +76,7 @@ export function HotkeyEditor({ action, label, currentValue, onChange }: HotkeyEd
 
   return (
     <div className="flex items-center justify-between py-3 border-b border-border/30 last:border-0">
-      <div className="text-sm font-medium text-foreground">{label}</div>
+      <div className={`text-sm font-medium ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>{label}</div>
       <div className="flex items-center gap-2">
         <div
           className={`
@@ -82,7 +84,7 @@ export function HotkeyEditor({ action, label, currentValue, onChange }: HotkeyEd
             text-sm font-mono cursor-pointer min-w-[150px] text-center shadow-sm
             ${isRecording
               ? 'border-primary text-primary ring-1 ring-primary/30'
-              : 'border-border/50 text-secondary-foreground hover:border-border hover:bg-secondary'}
+              : `border-border/50 hover:border-border hover:bg-secondary ${theme === 'light' ? 'text-black' : 'text-secondary-foreground'}`}
             transition-colors duration-200
           `}
           onClick={handleClick}
@@ -97,7 +99,7 @@ export function HotkeyEditor({ action, label, currentValue, onChange }: HotkeyEd
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
           />
-          <span>{displayValue || 'Not set'}</span>
+          <span className={theme === 'light' ? 'text-black' : ''}>{displayValue || 'Not set'}</span>
         </div>
         {currentValue && (
           <button

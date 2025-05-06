@@ -1,6 +1,7 @@
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
+import { useEffect, useState } from "react"
 
 import { cn } from "@/lib/utils"
 
@@ -15,16 +16,49 @@ const DialogClose = DialogPrimitive.Close
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Overlay
-    ref={ref}
-    className={cn(
-      "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-      className
-    )}
-    {...props}
-  />
-))
+>(({ className, ...props }, ref) => {
+  // State to track if we're using the light theme
+  const [isLightTheme, setIsLightTheme] = useState(
+    document.documentElement.classList.contains('light') ||
+    document.documentElement.getAttribute('data-theme') === 'light'
+  );
+
+  // Listen for theme changes
+  useEffect(() => {
+    const checkTheme = () => {
+      const isLight = document.documentElement.classList.contains('light') ||
+                      document.documentElement.getAttribute('data-theme') === 'light';
+      setIsLightTheme(isLight);
+    };
+
+    // Create a MutationObserver to watch for class or attribute changes
+    const observer = new MutationObserver(checkTheme);
+
+    // Start observing the document element for class and attribute changes
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme']
+    });
+
+    // Initial check
+    checkTheme();
+
+    // Clean up
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <DialogPrimitive.Overlay
+      ref={ref}
+      className={cn(
+        "fixed inset-0 z-50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        isLightTheme ? "bg-black/10" : "bg-black/80", // Even lighter for light theme
+        className
+      )}
+      {...props}
+    />
+  );
+})
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
 const DialogContent = React.forwardRef<

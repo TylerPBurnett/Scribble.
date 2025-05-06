@@ -5,14 +5,16 @@ import {
   HOTKEY_LABELS,
   DEFAULT_HOTKEYS
 } from '../../shared/services/hotkeyService';
+import { ThemeName } from '../../shared/services/themeService';
 import { HotkeyEditor } from './HotkeyEditor';
 
 interface HotkeysSectionProps {
   hotkeys: Record<HotkeyAction, string>;
   onChange: (hotkeys: Record<HotkeyAction, string>) => void;
+  theme?: ThemeName;
 }
 
-export function HotkeysSection({ hotkeys, onChange }: HotkeysSectionProps) {
+export function HotkeysSection({ hotkeys, onChange, theme = 'dim' }: HotkeysSectionProps) {
   const [activeCategory, setActiveCategory] = useState<string>(Object.keys(HOTKEY_CATEGORIES)[0]);
 
   // Handle hotkey change
@@ -33,9 +35,9 @@ export function HotkeysSection({ hotkeys, onChange }: HotkeysSectionProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-2xl font-semibold text-foreground border-b border-border pb-4">Keyboard Shortcuts</h3>
+        <h3 className={`text-2xl font-semibold border-b border-border pb-4 ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>Keyboard Shortcuts</h3>
         <button
-          className="flex items-center gap-1 px-3 py-1 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+          className={`flex items-center gap-1 px-3 py-1 rounded-md bg-secondary hover:bg-secondary/80 transition-colors ${theme === 'light' ? 'text-black' : 'text-secondary-foreground'}`}
           onClick={handleResetToDefaults}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="opacity-80">
@@ -81,6 +83,7 @@ export function HotkeysSection({ hotkeys, onChange }: HotkeysSectionProps) {
                 label={HOTKEY_LABELS[action]}
                 currentValue={hotkeys[action]}
                 onChange={handleHotkeyChange}
+                theme={theme}
               />
             ))}
           </div>
