@@ -1,9 +1,12 @@
+import { DEFAULT_HOTKEYS, HotkeyAction } from './hotkeyService';
+
 // Default settings
 const DEFAULT_SETTINGS = {
   saveLocation: '', // Will be set to app data directory by default in main process
   autoSave: true,
   autoSaveInterval: 5, // seconds
   darkMode: true,
+  hotkeys: DEFAULT_HOTKEYS,
 };
 
 // Settings type
@@ -12,6 +15,7 @@ export interface AppSettings {
   autoSave: boolean;
   autoSaveInterval: number;
   darkMode: boolean;
+  hotkeys?: Partial<Record<HotkeyAction, string>>;
 }
 
 // Get settings from localStorage

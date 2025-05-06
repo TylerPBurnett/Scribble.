@@ -48,6 +48,9 @@ interface Window {
     maximize: () => Promise<void>
     close: () => Promise<void>
     moveWindow: (moveX: number, moveY: number) => Promise<void>
+    togglePin: (shouldPin: boolean) => Promise<boolean>
+    isPinned: () => Promise<boolean>
+    setPinState: (noteId: string, isPinned: boolean) => Promise<boolean>
   }
 
 }

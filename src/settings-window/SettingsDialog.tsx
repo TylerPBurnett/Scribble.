@@ -3,6 +3,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { AppSettings } from '../shared/services/settingsService';
+import { DEFAULT_HOTKEYS, HotkeyAction } from '../shared/services/hotkeyService';
+import { HotkeysSection } from './components/HotkeysSection';
 
 import {
   Dialog,
@@ -32,6 +34,7 @@ const formSchema = z.object({
   autoSave: z.boolean(),
   autoSaveInterval: z.number().min(1).max(60),
   darkMode: z.boolean(),
+  // Hotkeys are handled separately from the form
 });
 
 interface SettingsDialogProps {
@@ -48,6 +51,9 @@ export function SettingsDialog({
   onSave,
 }: SettingsDialogProps) {
   const [isSelectingLocation, setIsSelectingLocation] = useState(false);
+  const [hotkeys, setHotkeys] = useState<Record<HotkeyAction, string>>(
+    initialSettings.hotkeys as Record<HotkeyAction, string> || DEFAULT_HOTKEYS
+  );
 
   // Initialize the form with react-hook-form
   const form = useForm<z.infer<typeof formSchema>>({
@@ -62,9 +68,20 @@ export function SettingsDialog({
 
   // Handle form submission
   function onSubmit(values: z.infer<typeof formSchema>) {
-    onSave(values as AppSettings);
+    // Combine form values with hotkeys
+    const combinedSettings: AppSettings = {
+      ...values,
+      hotkeys,
+    } as AppSettings;
+
+    onSave(combinedSettings);
     onOpenChange(false);
   }
+
+  // Handle hotkey changes
+  const handleHotkeyChange = (updatedHotkeys: Record<HotkeyAction, string>) => {
+    setHotkeys(updatedHotkeys);
+  };
 
   // Handle save location selection
   const handleSaveLocationSelect = async () => {
@@ -205,6 +222,14 @@ export function SettingsDialog({
                     </FormControl>
                   </FormItem>
                 )}
+              />
+            </div>
+
+            {/* Hotkeys Section */}
+            <div className="space-y-6 bg-background-titlebar/90 p-6 rounded-lg border-0">
+              <HotkeysSection
+                hotkeys={hotkeys}
+                onChange={handleHotkeyChange}
               />
             </div>
 

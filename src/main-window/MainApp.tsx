@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import NoteList from './components/NoteList'
 import { SettingsDialog } from '../settings-window/SettingsDialog'
 import TitleBar from '../shared/components/TitleBar'
 import { Note } from '../shared/types/Note'
 import { getNotes, createNote, deleteNote } from '../shared/services/noteService'
 import { initSettings, saveSettings, AppSettings } from '../shared/services/settingsService'
+import { AppHotkeys } from './components/AppHotkeys'
 
 function MainApp() {
   const [notes, setNotes] = useState<Note[]>([])
@@ -17,6 +18,9 @@ function MainApp() {
     autoSaveInterval: 5,
     darkMode: true,
   })
+
+  // Ref for search input to focus it with hotkey
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Load notes and settings on startup
   useEffect(() => {
@@ -122,6 +126,24 @@ function MainApp() {
     console.log('MainApp - Settings saved, current state:', newSettings)
   }
 
+  // Handle toggling dark mode
+  const handleToggleDarkMode = () => {
+    const newSettings = {
+      ...appSettings,
+      darkMode: !appSettings.darkMode
+    };
+    setAppSettings(newSettings);
+    saveSettings(newSettings);
+    console.log('Dark mode toggled:', newSettings.darkMode);
+  }
+
+  // Handle focusing search input
+  const handleFocusSearch = () => {
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }
+
   // Handle note deletion
   const handleNoteDelete = async (noteId: string) => {
     console.log('Deleting note:', noteId)
@@ -172,6 +194,7 @@ function MainApp() {
               </svg>
             </div>
             <input
+              ref={searchInputRef}
               type="text"
               className="search-input w-full py-2 pl-10 pr-4 bg-background-notes/30 border-0 rounded-md text-sm text-text placeholder-text-tertiary focus:outline-none focus:ring-1 focus:ring-primary/30 transition-colors"
               placeholder="Search notes..."
@@ -220,6 +243,15 @@ function MainApp() {
         onOpenChange={setShowSettings}
         initialSettings={appSettings}
         onSave={handleSaveSettings}
+      />
+
+      {/* Global Hotkeys */}
+      <AppHotkeys
+        settings={appSettings}
+        onNewNote={handleNewNote}
+        onOpenSettings={handleOpenSettings}
+        onSearch={handleFocusSearch}
+        onToggleDarkMode={handleToggleDarkMode}
       />
     </div>
   )

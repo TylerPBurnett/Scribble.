@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Note } from '../../shared/types/Note';
 import Tiptap from './Tiptap';
 import { updateNote } from '../../shared/services/noteService';
-import { getSettings, subscribeToSettingsChanges } from '../../shared/services/settingsService';
+import { getSettings, subscribeToSettingsChanges, AppSettings } from '../../shared/services/settingsService';
+import { NoteHotkeys } from './NoteHotkeys';
 import './NoteEditor.css';
 
 interface NoteEditorProps {
@@ -24,9 +25,15 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
   // Store the temporary title value while editing
   const [tempTitle, setTempTitle] = useState(note.title);
 
-  // Get settings for auto-save
+  // Get settings for auto-save and hotkeys
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
   const [autoSaveInterval, setAutoSaveInterval] = useState(5000);
+  const [appSettings, setAppSettings] = useState<AppSettings>({
+    saveLocation: '',
+    autoSave: true,
+    autoSaveInterval: 5,
+    darkMode: true,
+  });
 
   // Use refs to store the latest values for use in debounced functions
   const titleRef = useRef(title);
@@ -61,12 +68,14 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
   useEffect(() => {
     // Initial settings load
     const settings = getSettings();
+    setAppSettings(settings);
     setAutoSaveEnabled(settings.autoSave);
     setAutoSaveInterval(settings.autoSaveInterval * 1000); // Convert to milliseconds
 
     // Subscribe to settings changes
     const unsubscribe = subscribeToSettingsChanges((newSettings) => {
       console.log('Settings changed in NoteEditor:', newSettings);
+      setAppSettings(newSettings);
       setAutoSaveEnabled(newSettings.autoSave);
       setAutoSaveInterval(newSettings.autoSaveInterval * 1000);
     });
@@ -607,6 +616,22 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
 
       {/* Keep the shadow effect at the top */}
       <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-b from-black/10 to-transparent z-10"></div>
+
+      {/* Hotkeys */}
+      <NoteHotkeys
+        settings={appSettings}
+        note={noteDataRef.current}
+        onSave={handleManualSave}
+        onTogglePin={togglePinState}
+        onDelete={() => {
+          // Implement delete functionality if needed
+          console.log('Delete hotkey pressed');
+        }}
+        onChangeColor={() => {
+          // Toggle color picker
+          setShowColorPicker(!showColorPicker);
+        }}
+      />
     </div>
   );
 };
