@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { Folder } from 'lucide-react';
 import { AppSettings } from '../shared/services/settingsService';
 import { DEFAULT_HOTKEYS, HotkeyAction } from '../shared/services/hotkeyService';
 import { ThemeName, useTheme } from '../shared/services/themeService';
@@ -11,12 +12,27 @@ import { ThemesSection } from './components/ThemesSection';
 
 import {
   Dialog,
-  DialogContent,
+  DialogContent as BaseDialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { forwardRef } from "react";
+import { cn } from "@/lib/utils";
+
+// Custom DialogContent that removes the default border
+const DialogContent = forwardRef<
+  React.ElementRef<typeof BaseDialogContent>,
+  React.ComponentPropsWithoutRef<typeof BaseDialogContent>
+>(({ className, ...props }, ref) => (
+  <BaseDialogContent
+    ref={ref}
+    className={cn("!border-0", className)}
+    {...props}
+  />
+));
+
 import {
   Form,
   FormControl,
@@ -116,13 +132,15 @@ export function SettingsDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} modal={true}>
       <DialogContent
-        className={`sm:max-w-[800px] max-h-[calc(100vh-80px)] overflow-y-auto border border-border/30 backdrop-blur-md font-twitter shadow-2xl
+        className={`sm:max-w-[800px] max-h-[calc(100vh-80px)] overflow-y-auto backdrop-blur-md font-twitter
           ${theme === 'light'
-            ? 'bg-background/95 text-foreground'
-            : 'bg-background/80'}`}
+            ? 'bg-background/95 text-foreground outline outline-1 outline-primary/20'
+            : 'bg-background/80 outline outline-1 outline-primary/30'}
+          rounded-lg shadow-[0_0_20px_rgba(0,0,0,0.3),0_0_6px_rgba(245,158,11,0.15)]`}
       >
+
         <DialogHeader className="mb-8">
           <DialogTitle className={`text-3xl font-semibold ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>Settings</DialogTitle>
           <DialogDescription className={`mt-2 text-base ${theme === 'light' ? 'text-black/80' : 'text-muted-foreground'}`}>
@@ -154,10 +172,18 @@ export function SettingsDialog({
                         type="button"
                         variant="outline"
                         onClick={handleSaveLocationSelect}
-                        disabled={isSelectingLocation}
-                        className="shrink-0 border-border/50 bg-secondary hover:bg-secondary/80 text-secondary-foreground font-medium px-4 shadow-sm transition-colors duration-200 active:scale-95"
+                        disabled={false}
+                        className={`group shrink-0 px-4 py-2 border-border/50 bg-secondary hover:bg-secondary/90 font-medium shadow-sm transition-all duration-200 active:scale-95 ${theme === 'light' ? 'text-black' : 'text-secondary-foreground'} flex items-center gap-2 hover:border-primary/30 hover:shadow-md`}
                       >
-                        Browse...
+                        {isSelectingLocation ? (
+                          <svg className="animate-spin h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        ) : (
+                          <Folder size={16} className="opacity-80 group-hover:text-primary transition-colors duration-200" />
+                        )}
+                        {isSelectingLocation ? 'Selecting...' : 'Browse...'}
                       </Button>
                     </div>
                     <FormDescription className={`mt-3 text-sm ${theme === 'light' ? 'text-black/70' : 'text-muted-foreground'}`}>
