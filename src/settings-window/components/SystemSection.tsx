@@ -23,7 +23,7 @@ type SystemSectionProps = {
 
 export function SystemSection({ form, theme = 'dim' }: SystemSectionProps) {
   return (
-    <div className="space-y-6 bg-card/95 backdrop-blur-sm p-6 rounded-lg border border-border/50 shadow-md">
+    <div className="space-y-6 backdrop-blur-sm p-6">
       <h3 className={`text-2xl font-semibold border-b border-border/50 pb-4 ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>System Integration</h3>
 
       {/* Auto Launch */}
@@ -31,7 +31,7 @@ export function SystemSection({ form, theme = 'dim' }: SystemSectionProps) {
         control={form.control}
         name="autoLaunch"
         render={({ field }) => (
-          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-5 bg-card/95 backdrop-blur-sm">
+          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-5 backdrop-blur-sm bg-black/20">
             <div className="space-y-2">
               <FormLabel className={`text-base font-medium ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>Start with Windows</FormLabel>
               <FormDescription className={`text-sm ${theme === 'light' ? 'text-black/70' : 'text-muted-foreground'}`}>
@@ -39,11 +39,16 @@ export function SystemSection({ form, theme = 'dim' }: SystemSectionProps) {
               </FormDescription>
             </div>
             <FormControl>
-              <Switch
-                checked={field.value}
-                onCheckedChange={field.onChange}
-                className="data-[state=checked]:bg-primary"
-              />
+              <div className="flex items-center">
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  className=""
+                />
+                <span className={`ml-2 text-sm font-medium ${field.value ? 'text-primary' : 'text-muted-foreground'}`}>
+                  {field.value ? 'On' : 'Off'}
+                </span>
+              </div>
             </FormControl>
           </FormItem>
         )}
@@ -54,7 +59,7 @@ export function SystemSection({ form, theme = 'dim' }: SystemSectionProps) {
         control={form.control}
         name="minimizeToTray"
         render={({ field }) => (
-          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-5 bg-card/95 backdrop-blur-sm mt-4">
+          <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-5 backdrop-blur-sm bg-black/20 mt-4">
             <div className="space-y-2">
               <FormLabel className={`text-base font-medium ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>Minimize to System Tray</FormLabel>
               <FormDescription className={`text-sm ${theme === 'light' ? 'text-black/70' : 'text-muted-foreground'}`}>
@@ -62,11 +67,16 @@ export function SystemSection({ form, theme = 'dim' }: SystemSectionProps) {
               </FormDescription>
             </div>
             <FormControl>
-              <Switch
-                checked={field.value}
-                onCheckedChange={field.onChange}
-                className="data-[state=checked]:bg-primary"
-              />
+              <div className="flex items-center">
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  className=""
+                />
+                <span className={`ml-2 text-sm font-medium ${field.value ? 'text-primary' : 'text-muted-foreground'}`}>
+                  {field.value ? 'On' : 'Off'}
+                </span>
+              </div>
             </FormControl>
           </FormItem>
         )}
@@ -85,7 +95,7 @@ export function SystemSection({ form, theme = 'dim' }: SystemSectionProps) {
           control={form.control}
           name="globalHotkeys.newNote"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-5 bg-card/95 backdrop-blur-sm">
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-5 backdrop-blur-sm bg-black/20">
               <div className="space-y-2">
                 <FormLabel className={`text-base font-medium ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>New Note</FormLabel>
                 <FormDescription className={`text-sm ${theme === 'light' ? 'text-black/70' : 'text-muted-foreground'}`}>
@@ -108,7 +118,7 @@ export function SystemSection({ form, theme = 'dim' }: SystemSectionProps) {
           control={form.control}
           name="globalHotkeys.showApp"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-5 bg-card/95 backdrop-blur-sm">
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-5 backdrop-blur-sm bg-black/20">
               <div className="space-y-2">
                 <FormLabel className={`text-base font-medium ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>Show App</FormLabel>
                 <FormDescription className={`text-sm ${theme === 'light' ? 'text-black/70' : 'text-muted-foreground'}`}>

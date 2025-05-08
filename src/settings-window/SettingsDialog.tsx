@@ -133,14 +133,14 @@ export function SettingsDialog({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 py-4">
             {/* Storage Section */}
-            <div className="space-y-6 bg-card/95 backdrop-blur-sm p-6 rounded-lg border border-border/50 shadow-md">
+            <div className="space-y-6 backdrop-blur-sm p-6">
               <h3 className={`text-2xl font-semibold border-b border-border/50 pb-4 ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>Storage</h3>
 
               <FormField
                 control={form.control}
                 name="saveLocation"
                 render={({ field }) => (
-                  <FormItem className="bg-card/95 backdrop-blur-sm p-5 rounded-lg border border-border/30">
+                  <FormItem className="backdrop-blur-sm p-5 rounded-lg border border-border/30 bg-black/20">
                     <FormLabel className={`text-base font-medium ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>Save Location</FormLabel>
                     <div className="flex gap-2 mt-3">
                       <FormControl>
@@ -169,14 +169,14 @@ export function SettingsDialog({
             </div>
 
             {/* Auto Save Section */}
-            <div className="space-y-6 bg-card/95 backdrop-blur-sm p-6 rounded-lg border border-border/50 shadow-md">
+            <div className="space-y-6 backdrop-blur-sm p-6">
               <h3 className={`text-2xl font-semibold border-b border-border/50 pb-4 ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>Auto Save</h3>
 
               <FormField
                 control={form.control}
                 name="autoSave"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-5 bg-card/95 backdrop-blur-sm">
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-5 backdrop-blur-sm bg-black/20">
                     <div className="space-y-2">
                       <FormLabel className={`text-base font-medium ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>Auto Save</FormLabel>
                       <FormDescription className={`text-sm ${theme === 'light' ? 'text-black/70' : 'text-muted-foreground'}`}>
@@ -184,11 +184,16 @@ export function SettingsDialog({
                       </FormDescription>
                     </div>
                     <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="data-[state=checked]:bg-primary"
-                      />
+                      <div className="flex items-center">
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className=""
+                        />
+                        <span className={`ml-2 text-sm font-medium ${field.value ? 'text-primary' : 'text-muted-foreground'}`}>
+                          {field.value ? 'On' : 'Off'}
+                        </span>
+                      </div>
                     </FormControl>
                   </FormItem>
                 )}
@@ -199,7 +204,7 @@ export function SettingsDialog({
                   control={form.control}
                   name="autoSaveInterval"
                   render={({ field }) => (
-                    <FormItem className="bg-card/95 backdrop-blur-sm p-5 rounded-lg border border-border/30 mt-4">
+                    <FormItem className="backdrop-blur-sm p-5 rounded-lg border border-border/30 mt-4 bg-black/20">
                       <FormLabel className={`text-base font-medium ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>Auto Save Interval (seconds)</FormLabel>
                       <FormControl>
                         <Input
@@ -221,7 +226,7 @@ export function SettingsDialog({
             </div>
 
             {/* Appearance Section */}
-            <div className="space-y-6 bg-card/95 backdrop-blur-sm p-6 rounded-lg border border-border/50 shadow-md">
+            <div className="space-y-6 backdrop-blur-sm p-6">
               <ThemesSection
                 currentTheme={form.watch('theme') as ThemeName}
                 onChange={(theme) => form.setValue('theme', theme)}
@@ -232,7 +237,7 @@ export function SettingsDialog({
             <SystemSection form={form} theme={theme} />
 
             {/* Hotkeys Section */}
-            <div className="space-y-6 bg-card/95 backdrop-blur-sm p-6 rounded-lg border border-border/50 shadow-md">
+            <div className="space-y-6 backdrop-blur-sm p-6">
               <HotkeysSection
                 hotkeys={hotkeys}
                 onChange={handleHotkeyChange}
@@ -240,7 +245,7 @@ export function SettingsDialog({
               />
             </div>
 
-            <DialogFooter className="pt-8 border-t border-border/50 mt-6 bg-card/95 backdrop-blur-sm p-4 rounded-b-lg -mx-6 -mb-6">
+            <DialogFooter className="pt-8 border-t border-border/50 mt-6 backdrop-blur-sm p-4 rounded-b-lg -mx-6 -mb-6">
               <Button
                 type="button"
                 variant="outline"
