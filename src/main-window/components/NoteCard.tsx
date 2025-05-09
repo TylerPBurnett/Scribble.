@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Note } from '../../shared/types/Note';
 import { deleteNote, updateNote } from '../../shared/services/noteService';
 
@@ -16,6 +16,9 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [isContextMenu, setIsContextMenu] = useState(false);
+  // Refs for DOM elements
+  const noteCardRef = useRef<HTMLDivElement>(null);
+  const colorPickerRef = useRef<HTMLDivElement>(null);
 
   // Define color options
   const colorOptions = [
@@ -55,6 +58,9 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
     return undefined;
   }, [showMenu]);
 
+  // We don't need a separate effect for clicks outside the color picker
+  // since our overlay handles this with its own click handler
+
   // Assign a color based on the note ID (for consistent colors)
   const getNoteColor = () => {
     const colors = [
@@ -93,12 +99,11 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
     // Close any existing menu first
     setShowMenu(false);
     setIsContextMenu(false);
+    setShowColorPicker(false);
 
     // Calculate position, ensuring menu stays within viewport
     const x = Math.min(e.clientX, window.innerWidth - 160);
     const y = Math.min(e.clientY, window.innerHeight - 200);
-
-    console.log('Opening context menu at:', x, y);
 
     // Use setTimeout to ensure state updates happen after current event cycle
     setTimeout(() => {
@@ -391,6 +396,7 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
       )}
 
       <div
+        ref={noteCardRef}
         className={`note-card ${colorInfo.className} ${isActive ? 'selected' : ''} rounded-xl overflow-hidden flex flex-col ${colorInfo.border} border-l-3 shadow-sm transition-all duration-200 cursor-pointer h-note-card
           hover:translate-y-[-2px] hover:shadow-md group`}
         onClick={() => onClick(note)}
@@ -554,7 +560,10 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
                   setIsContextMenu(false);
                   // Small delay to ensure menu is closed before action
                   setTimeout(() => {
-                    setShowColorPicker(true);
+                    // Ensure we're back in the note card context
+                    if (noteCardRef.current) {
+                      setShowColorPicker(true);
+                    }
                   }, 10);
                 }}
               >
@@ -633,57 +642,86 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
         </div>
       )}
 
-      {/* Color picker dialog */}
-      {showColorPicker && (
+      {/* Modern color picker overlay - positioned within the note card */}
+      {showColorPicker && noteCardRef.current && (
         <div
-          className="absolute inset-0 bg-background-titlebar/95 flex items-center justify-center z-10 rounded-lg"
-          onClick={(e) => e.stopPropagation()}
+          ref={colorPickerRef}
+          className="absolute inset-0 z-20 flex items-center justify-center rounded-xl overflow-hidden font-twitter color-picker-enter"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowColorPicker(false);
+          }}
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(3px)'
+          }}
         >
-          <div className="p-3 bg-popover rounded-lg shadow-lg font-twitter" style={{ maxWidth: '180px' }}>
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="text-xs font-medium text-popover-foreground m-0">Choose Color</h3>
+          <div
+            className="relative bg-gradient-to-b from-popover to-popover/90 rounded-xl shadow-xl overflow-hidden w-[80%] max-w-[180px] border border-white/10 color-picker-panel"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.05) inset'
+            }}
+          >
+            {/* Modern header with title */}
+            <div className="flex justify-between items-center px-3 py-2">
+              <h3 className="text-xs font-medium text-text m-0 flex items-center gap-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <circle cx="12" cy="12" r="4"></circle>
+                </svg>
+                <span>Note Color</span>
+              </h3>
               <button
-                className="text-text-tertiary hover:text-text bg-transparent border-none cursor-pointer"
+                className="text-text-tertiary hover:text-text bg-transparent border-none cursor-pointer p-1 rounded-full hover:bg-white/5 transition-colors"
                 onClick={() => setShowColorPicker(false)}
+                aria-label="Close color picker"
               >
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 6L6 18"></path>
                   <path d="M6 6L18 18"></path>
                 </svg>
               </button>
             </div>
-            <div className="grid grid-cols-3 gap-1">
-              {colorOptions.map((color) => (
-                <button
-                  key={color.value}
-                  className={`w-6 h-6 rounded-full border ${
-                    note.color === color.value ? 'border-blue-500 border-2' : 'border-gray-300/30'
-                  } transition-all hover:scale-110`}
-                  style={{
-                    backgroundColor: color.value,
-                    boxShadow: note.color === color.value ? '0 0 0 2px rgba(59, 130, 246, 0.3)' : 'none'
-                  }}
-                  title={color.name}
-                  onClick={() => {
-                    // Update note color
-                    const updatedNote = {
-                      ...note,
-                      color: color.value,
-                      // Ensure content is preserved exactly as it was
-                      content: note.content
-                    };
-                    // Update the note in the database
-                    updateNote(updatedNote).then(() => {
-                      // Notify other windows that this note has been updated
-                      window.noteWindow.noteUpdated(note.id);
-                      // Close the color picker
-                      setShowColorPicker(false);
-                      // Reload the main window to reflect the changes
-                      window.location.reload();
-                    });
-                  }}
-                />
-              ))}
+
+            {/* Color options grid with modern styling */}
+            <div className="px-3 pb-3">
+              <div className="grid grid-cols-4 gap-2">
+                {colorOptions.map((color) => (
+                  <button
+                    key={color.value}
+                    className={`w-9 h-9 rounded-full transition-all duration-200
+                      ${note.color === color.value
+                        ? 'ring-1 ring-primary ring-offset-1 ring-offset-background-notes scale-105 shadow-lg'
+                        : 'hover:scale-110 hover:shadow-md border border-white/10'
+                      } focus:outline-none focus:ring-1 focus:ring-primary focus:ring-offset-1 focus:ring-offset-background-notes`}
+                    style={{
+                      backgroundColor: color.value,
+                      transform: note.color === color.value ? 'translateY(-1px)' : 'none'
+                    }}
+                    title={color.name}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Update note color
+                      const updatedNote = {
+                        ...note,
+                        color: color.value,
+                        // Ensure content is preserved exactly as it was
+                        content: note.content
+                      };
+                      // Update the note in the database
+                      updateNote(updatedNote).then(() => {
+                        // Notify other windows that this note has been updated
+                        window.noteWindow.noteUpdated(note.id);
+                        // Close the color picker
+                        setShowColorPicker(false);
+                        // Reload the main window to reflect the changes
+                        window.location.reload();
+                      });
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>

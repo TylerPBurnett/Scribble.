@@ -111,3 +111,35 @@ input, textarea {
     color: hsl(var(--foreground));
   }
 }
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Color picker animations */
+.color-picker-enter {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.color-picker-panel {
+  animation: slideUp 0.25s ease-out;
+}
