@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Check, RefreshCw } from 'lucide-react';
-import { Theme, ThemeName, themes, useTheme } from '../../shared/services/themeService';
+import { Theme, ThemeName, themes } from '../../shared/styles/theme';
+import { useTheme } from '../../shared/providers/ThemeProvider';
 
 interface ThemesSectionProps {
   currentTheme: ThemeName;
@@ -49,12 +50,12 @@ export function ThemesSection({ currentTheme, onChange }: ThemesSectionProps) {
     }, 300);
   };
 
-  // Apply theme class directly to body as a fallback
+  // Apply theme classes to body
   useEffect(() => {
     // Remove all theme classes from body
-    document.body.classList.remove('dim', 'dark', 'light');
-    // Add the current theme class to body
-    document.body.classList.add(currentTheme);
+    document.body.classList.remove('dim', 'dark', 'light', 'theme-dim', 'theme-dark', 'theme-light');
+    // Add the current theme classes to body
+    document.body.classList.add(currentTheme, `theme-${currentTheme}`);
     // Also set data attribute
     document.body.setAttribute('data-theme', currentTheme);
 

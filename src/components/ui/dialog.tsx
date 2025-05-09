@@ -17,18 +17,22 @@ const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
 >(({ className, ...props }, ref) => {
-  // State to track if we're using the light theme
-  const [isLightTheme, setIsLightTheme] = useState(
-    document.documentElement.classList.contains('light') ||
-    document.documentElement.getAttribute('data-theme') === 'light'
+  // State to track the current theme
+  const [currentTheme, setCurrentTheme] = useState<string>(
+    document.documentElement.classList.contains('light') ? 'light' :
+    document.documentElement.classList.contains('dark') ? 'dark' : 'dim'
   );
 
   // Listen for theme changes
   useEffect(() => {
     const checkTheme = () => {
-      const isLight = document.documentElement.classList.contains('light') ||
-                      document.documentElement.getAttribute('data-theme') === 'light';
-      setIsLightTheme(isLight);
+      if (document.documentElement.classList.contains('light')) {
+        setCurrentTheme('light');
+      } else if (document.documentElement.classList.contains('dark')) {
+        setCurrentTheme('dark');
+      } else {
+        setCurrentTheme('dim');
+      }
     };
 
     // Create a MutationObserver to watch for class or attribute changes
@@ -40,11 +44,23 @@ const DialogOverlay = React.forwardRef<
       attributeFilter: ['class', 'data-theme']
     });
 
+    // Also listen for the custom themechange event
+    const handleThemeChange = (event: CustomEvent) => {
+      if (event.detail && event.detail.theme) {
+        setCurrentTheme(event.detail.theme);
+      }
+    };
+
+    window.addEventListener('themechange', handleThemeChange as EventListener);
+
     // Initial check
     checkTheme();
 
     // Clean up
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('themechange', handleThemeChange as EventListener);
+    };
   }, []);
 
   return (
@@ -52,7 +68,7 @@ const DialogOverlay = React.forwardRef<
       ref={ref}
       className={cn(
         "fixed inset-0 z-50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-        isLightTheme ? "bg-black/10" : "bg-black/80", // Even lighter for light theme
+        currentTheme === 'light' ? "bg-black/10" : "bg-black/80", // Lighter overlay for light theme
         className
       )}
       {...props}
