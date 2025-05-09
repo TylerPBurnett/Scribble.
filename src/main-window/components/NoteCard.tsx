@@ -190,8 +190,8 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
         return {
           backgroundColor: note.color,
           color: '#ffffff',
-          headerBg: '#444444',
-          footerBg: '#444444'
+          headerBg: '#333333',
+          footerBg: '#333333'
         };
       }
       // For white background, use dark text
@@ -203,27 +203,11 @@ const NoteCard = ({ note, onClick, isActive = false, onDelete, isPinned = false 
           footerBg: '#f8f8f8'
         };
       }
-      // For pastel colors, use black text for better readability
-      else if (
-        note.color === '#fff9c4' || // Yellow
-        note.color === '#d0f0c0' || // Pastel Green
-        note.color === '#b5d8eb' || // Pastel Blue
-        note.color === '#d8c2ef' || // Pastel Purple
-        note.color === '#f4c2c2' || // Pastel Pink
-        note.color === '#d3d3d3'    // Pastel Gray
-      ) {
-        return {
-          backgroundColor: note.color,
-          color: '#333333',
-          headerBg: note.color,
-          footerBg: note.color
-        };
-      }
-      // For other colors, use default text color
+      // For all other colors (including pastel colors), use the same color for header and footer
       else {
         return {
           backgroundColor: note.color,
-          color: '',
+          color: note.color === '#d3d3d3' || note.color.startsWith('#') ? '#333333' : '', // Use black text for all custom colors
           headerBg: note.color,
           footerBg: note.color
         };

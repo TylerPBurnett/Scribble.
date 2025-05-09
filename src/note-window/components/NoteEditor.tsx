@@ -359,8 +359,11 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
   const getDarkerShade = (color: string): string => {
     // For specific colors, return predefined darker shades
     if (color === '#ffffff') return '#f8f8f8';
-    if (color === '#333333') return '#444444';
+    if (color === '#333333') return '#333333'; // Match the body color for black
     if (color === '#fff9c4') return '#fff5b1';
+
+    // For pastel gray, return the same color (no darkening)
+    if (color === '#d3d3d3') return color;
 
     // For other colors, calculate a slightly darker shade
     try {
@@ -389,8 +392,8 @@ const NoteEditor = ({ note, onSave }: NoteEditorProps) => {
     if (noteColor === '#333333') {
       return '#ffffff';
     }
-    // For all other colors, use default (dark) text
-    return '';
+    // For all other colors (including pastel gray), use black text
+    return '#333333';
   };
 
   return (

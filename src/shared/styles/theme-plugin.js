@@ -14,7 +14,7 @@ module.exports = plugin(function({ addBase, addVariant }) {
   const dimTheme = {
     '--background': '231 15% 20%',
     '--foreground': '60 9.1% 97.8%',
-    '--card': '232 14% 17%',
+    '--card': '226 11% 29%',
     '--card-foreground': '60 9.1% 97.8%',
     '--popover': '232 14% 17%',
     '--popover-foreground': '60 9.1% 97.8%',
