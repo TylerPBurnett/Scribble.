@@ -100,7 +100,10 @@ function createMainWindow() {
     minWidth: 250,
     minHeight: 300,
     backgroundColor: '#1a1a1a',
-    icon: path.join(process.env.APP_ROOT, 'src/assets/icon.png'),
+    // Use platform-specific icon format with the new icon-512.icns for macOS
+    icon: isMac
+      ? path.join(process.env.APP_ROOT, 'src/assets/icon-512.icns')
+      : path.join(process.env.APP_ROOT, 'src/assets/icon.png'),
     title: 'Scribble',
     frame: false,
     // On macOS, use 'hiddenInset' to show the native traffic lights
@@ -199,9 +202,6 @@ function createNoteWindow(noteId: string) {
     }
   }
 
-  // Configure window differently based on platform
-  const isMac = process.platform === 'darwin'
-
   // Create new window
   console.log('Creating new BrowserWindow for note')
 
@@ -217,7 +217,10 @@ function createNoteWindow(noteId: string) {
     minWidth: 250,
     minHeight: 300,
     backgroundColor: '#1a1a1a',
-    icon: path.join(process.env.APP_ROOT, 'src/assets/icon.png'),
+    // Use platform-specific icon format with the new icon-512.icns for macOS
+    icon: process.platform === 'darwin'
+      ? path.join(process.env.APP_ROOT, 'src/assets/icon-512.icns')
+      : path.join(process.env.APP_ROOT, 'src/assets/icon.png'),
     title: 'Scribble - Note',
     frame: false,
     // Use 'hidden' for both macOS and Windows to completely hide the title bar
@@ -364,7 +367,10 @@ function createSettingsWindow() {
     minWidth: 250,
     minHeight: 300,
     backgroundColor: '#1a1a1a',
-    icon: path.join(process.env.APP_ROOT, 'src/assets/icon.png'),
+    // Use platform-specific icon format with the new icon-512.icns for macOS
+    icon: isMac
+      ? path.join(process.env.APP_ROOT, 'src/assets/icon-512.icns')
+      : path.join(process.env.APP_ROOT, 'src/assets/icon.png'),
     title: 'Scribble - Settings',
     parent: mainWindow || undefined,
     modal: false, // Changed to false to allow it to be a full window
@@ -428,8 +434,8 @@ function createSettingsWindow() {
 
 // Create tray icon
 function createTray() {
-  // Create tray icon
-  const iconPath = path.join(process.env.APP_ROOT, 'src/assets/icon.png')
+  // Create tray icon - use higher resolution icon for better quality
+  const iconPath = path.join(process.env.APP_ROOT, 'src/assets/icon-64.png')
   const trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 })
 
   tray = new Tray(trayIcon)
@@ -911,6 +917,33 @@ ipcMain.on('theme-changed', (event, theme) => {
 // Set the app user model id for Windows
 if (process.platform === 'win32') {
   app.setAppUserModelId('com.tylerburnett.scribble')
+}
+
+// Set the dock icon for macOS as early as possible
+if (process.platform === 'darwin' && app.dock) {
+  try {
+    // Use the new high-resolution icon-512.icns file for the dock
+    const iconPath = path.join(process.env.APP_ROOT, 'src/assets/icon-512.icns')
+    console.log('Setting dock icon with path:', iconPath)
+
+    // Create a native image from the .icns file
+    const dockIcon = nativeImage.createFromPath(iconPath)
+
+    // Check if the image is empty (failed to load)
+    if (dockIcon.isEmpty()) {
+      console.error('Failed to load dock icon from:', iconPath)
+      // Fallback to the PNG icon if ICNS fails
+      const pngIconPath = path.join(process.env.APP_ROOT, 'src/assets/icon-512.png')
+      console.log('Trying fallback icon:', pngIconPath)
+      const fallbackIcon = nativeImage.createFromPath(pngIconPath)
+      app.dock.setIcon(fallbackIcon)
+    } else {
+      console.log('Setting dock icon with dimensions:', dockIcon.getSize())
+      app.dock.setIcon(dockIcon)
+    }
+  } catch (error) {
+    console.error('Error setting dock icon:', error)
+  }
 }
 
 // When app is ready

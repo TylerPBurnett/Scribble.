@@ -4,7 +4,7 @@
   "appId": "com.tylerburnett.scribble",
   "asar": true,
   "productName": "Scribble",
-  "icon": "src/assets/icon.png",
+  "icon": "src/assets/icon-512.icns",
   "directories": {
     "output": "release/${version}"
   },
@@ -16,6 +16,7 @@
     "target": [
       "dmg"
     ],
+    "icon": "src/assets/icon-512.icns",
     "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
   },
   "win": {

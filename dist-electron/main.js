@@ -9,7 +9,7 @@ var __privateGet = (obj, member, getter) => (__accessCheck(obj, member, "read fr
 var __privateAdd = (obj, member, value) => member.has(obj) ? __typeError("Cannot add the same private member more than once") : member instanceof WeakSet ? member.add(obj) : member.set(obj, value);
 var __privateSet = (obj, member, value, setter) => (__accessCheck(obj, member, "write to private field"), setter ? setter.call(obj, value) : member.set(obj, value), value);
 var _validator, _encryptionKey, _options, _defaultValues;
-import electron, { app as app$1, ipcMain as ipcMain$1, BrowserWindow, globalShortcut, screen, nativeImage, Tray, Menu, dialog } from "electron";
+import electron, { app as app$1, ipcMain as ipcMain$1, BrowserWindow, globalShortcut, nativeImage, screen, Tray, Menu, dialog } from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
@@ -16382,7 +16382,8 @@ function createMainWindow() {
     minWidth: 250,
     minHeight: 300,
     backgroundColor: "#1a1a1a",
-    icon: path.join(process.env.APP_ROOT, "src/assets/icon.png"),
+    // Use platform-specific icon format with the new icon-512.icns for macOS
+    icon: isMac ? path.join(process.env.APP_ROOT, "src/assets/icon-512.icns") : path.join(process.env.APP_ROOT, "src/assets/icon.png"),
     title: "Scribble",
     frame: false,
     // On macOS, use 'hiddenInset' to show the native traffic lights
@@ -16455,7 +16456,6 @@ function createNoteWindow(noteId) {
       return existingWindow;
     }
   }
-  process.platform === "darwin";
   console.log("Creating new BrowserWindow for note");
   const noteWindowDefaults = windowStateStore.get("noteWindowDefaults", {
     width: 600,
@@ -16467,7 +16467,8 @@ function createNoteWindow(noteId) {
     minWidth: 250,
     minHeight: 300,
     backgroundColor: "#1a1a1a",
-    icon: path.join(process.env.APP_ROOT, "src/assets/icon.png"),
+    // Use platform-specific icon format with the new icon-512.icns for macOS
+    icon: process.platform === "darwin" ? path.join(process.env.APP_ROOT, "src/assets/icon-512.icns") : path.join(process.env.APP_ROOT, "src/assets/icon.png"),
     title: "Scribble - Note",
     frame: false,
     // Use 'hidden' for both macOS and Windows to completely hide the title bar
@@ -16570,7 +16571,8 @@ function createSettingsWindow() {
     minWidth: 250,
     minHeight: 300,
     backgroundColor: "#1a1a1a",
-    icon: path.join(process.env.APP_ROOT, "src/assets/icon.png"),
+    // Use platform-specific icon format with the new icon-512.icns for macOS
+    icon: isMac ? path.join(process.env.APP_ROOT, "src/assets/icon-512.icns") : path.join(process.env.APP_ROOT, "src/assets/icon.png"),
     title: "Scribble - Settings",
     parent: mainWindow || void 0,
     modal: false,
@@ -16617,7 +16619,7 @@ function createSettingsWindow() {
   return settingsWindow;
 }
 function createTray() {
-  const iconPath = path.join(process.env.APP_ROOT, "src/assets/icon.png");
+  const iconPath = path.join(process.env.APP_ROOT, "src/assets/icon-64.png");
   const trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
   tray = new Tray(trayIcon);
   const contextMenu = Menu.buildFromTemplate([
@@ -16973,6 +16975,25 @@ ipcMain$1.on("theme-changed", (event, theme) => {
 });
 if (process.platform === "win32") {
   app$1.setAppUserModelId("com.tylerburnett.scribble");
+}
+if (process.platform === "darwin" && app$1.dock) {
+  try {
+    const iconPath = path.join(process.env.APP_ROOT, "src/assets/icon-512.icns");
+    console.log("Setting dock icon with path:", iconPath);
+    const dockIcon = nativeImage.createFromPath(iconPath);
+    if (dockIcon.isEmpty()) {
+      console.error("Failed to load dock icon from:", iconPath);
+      const pngIconPath = path.join(process.env.APP_ROOT, "src/assets/icon-512.png");
+      console.log("Trying fallback icon:", pngIconPath);
+      const fallbackIcon = nativeImage.createFromPath(pngIconPath);
+      app$1.dock.setIcon(fallbackIcon);
+    } else {
+      console.log("Setting dock icon with dimensions:", dockIcon.getSize());
+      app$1.dock.setIcon(dockIcon);
+    }
+  } catch (error2) {
+    console.error("Error setting dock icon:", error2);
+  }
 }
 app$1.whenReady().then(() => {
   createMainWindow();
