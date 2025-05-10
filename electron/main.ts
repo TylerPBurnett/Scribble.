@@ -220,11 +220,13 @@ function createNoteWindow(noteId: string) {
     icon: path.join(process.env.APP_ROOT, 'src/assets/icon.png'),
     title: 'Scribble - Note',
     frame: false,
-    // On macOS, use 'hiddenInset' to show the native traffic lights
-    // On Windows, use 'hidden' to completely hide the title bar
-    titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
-    // Additional macOS-specific settings
-    trafficLightPosition: { x: 20, y: 20 },
+    // Use 'hidden' for both macOS and Windows to completely hide the title bar
+    // This disables the native traffic lights on macOS for note windows only
+    titleBarStyle: 'hidden',
+    // Completely hide the traffic lights on macOS
+    titleBarOverlay: false,
+    // Don't show traffic lights at all
+    trafficLightPosition: { x: -20, y: -20 },
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,

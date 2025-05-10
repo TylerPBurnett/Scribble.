@@ -5,6 +5,24 @@
     <link rel="icon" type="image/png" href="/src/assets/icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Scribble - Note</title>
+    <!-- Add CSS to hide macOS traffic lights -->
+    <link rel="stylesheet" href="/src/note-window/note-window.css" />
+    <style>
+      /* Inline CSS to hide traffic lights immediately */
+      :root {
+        --traffic-light-display: none !important;
+      }
+      .titlebar-traffic-lights,
+      .titlebar-controls,
+      .traffic-lights-container,
+      [class*="traffic-light"],
+      [class*="window-control"] {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+      }
+    </style>
     <script>
       // This script runs before React loads
       // It sets a flag that identifies this as a note window
