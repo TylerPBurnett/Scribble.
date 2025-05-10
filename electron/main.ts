@@ -100,10 +100,8 @@ function createMainWindow() {
     minWidth: 250,
     minHeight: 300,
     backgroundColor: '#1a1a1a',
-    // Use platform-specific icon format with the new icon-512.icns for macOS
-    icon: isMac
-      ? path.join(process.env.APP_ROOT, 'src/assets/icon-512.icns')
-      : path.join(process.env.APP_ROOT, 'src/assets/icon.png'),
+    // Use the new rounded-corner icon
+    icon: path.join(process.env.APP_ROOT, 'src/assets/icon2-512.png'),
     title: 'Scribble',
     frame: false,
     // On macOS, use 'hiddenInset' to show the native traffic lights
@@ -217,10 +215,8 @@ function createNoteWindow(noteId: string) {
     minWidth: 250,
     minHeight: 300,
     backgroundColor: '#1a1a1a',
-    // Use platform-specific icon format with the new icon-512.icns for macOS
-    icon: process.platform === 'darwin'
-      ? path.join(process.env.APP_ROOT, 'src/assets/icon-512.icns')
-      : path.join(process.env.APP_ROOT, 'src/assets/icon.png'),
+    // Use the new rounded-corner icon
+    icon: path.join(process.env.APP_ROOT, 'src/assets/icon2-512.png'),
     title: 'Scribble - Note',
     frame: false,
     // Use 'hidden' for both macOS and Windows to completely hide the title bar
@@ -367,10 +363,8 @@ function createSettingsWindow() {
     minWidth: 250,
     minHeight: 300,
     backgroundColor: '#1a1a1a',
-    // Use platform-specific icon format with the new icon-512.icns for macOS
-    icon: isMac
-      ? path.join(process.env.APP_ROOT, 'src/assets/icon-512.icns')
-      : path.join(process.env.APP_ROOT, 'src/assets/icon.png'),
+    // Use the new rounded-corner icon
+    icon: path.join(process.env.APP_ROOT, 'src/assets/icon2-512.png'),
     title: 'Scribble - Settings',
     parent: mainWindow || undefined,
     modal: false, // Changed to false to allow it to be a full window
@@ -434,7 +428,7 @@ function createSettingsWindow() {
 
 // Create tray icon
 function createTray() {
-  // Create tray icon - use higher resolution icon for better quality
+  // Create tray icon 
   const iconPath = path.join(process.env.APP_ROOT, 'src/assets/icon-64.png')
   const trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 })
 
@@ -922,24 +916,37 @@ if (process.platform === 'win32') {
 // Set the dock icon for macOS as early as possible
 if (process.platform === 'darwin' && app.dock) {
   try {
-    // Use the new high-resolution icon-512.icns file for the dock
-    const iconPath = path.join(process.env.APP_ROOT, 'src/assets/icon-512.icns')
-    console.log('Setting dock icon with path:', iconPath)
+    // Use the new rounded-corner icon for the dock
+    const pngIconPath = path.join(process.env.APP_ROOT, 'src/assets/icon2-512.png')
+    console.log('Setting dock icon with new rounded PNG path:', pngIconPath)
 
-    // Create a native image from the .icns file
-    const dockIcon = nativeImage.createFromPath(iconPath)
+    // Check if the file exists
+    if (fs.existsSync(pngIconPath)) {
+      // Create a native image from the PNG file
+      const dockIcon = nativeImage.createFromPath(pngIconPath)
 
-    // Check if the image is empty (failed to load)
-    if (dockIcon.isEmpty()) {
-      console.error('Failed to load dock icon from:', iconPath)
-      // Fallback to the PNG icon if ICNS fails
-      const pngIconPath = path.join(process.env.APP_ROOT, 'src/assets/icon-512.png')
-      console.log('Trying fallback icon:', pngIconPath)
-      const fallbackIcon = nativeImage.createFromPath(pngIconPath)
-      app.dock.setIcon(fallbackIcon)
+      if (!dockIcon.isEmpty()) {
+        console.log('Setting dock icon with dimensions:', dockIcon.getSize())
+        app.dock.setIcon(dockIcon)
+      } else {
+        console.error('Failed to load PNG icon, it appears to be empty')
+
+        // Try with the original icon as a last resort
+        const originalIconPath = path.join(process.env.APP_ROOT, 'src/assets/icon2-512.png')
+        if (fs.existsSync(originalIconPath)) {
+          const originalIcon = nativeImage.createFromPath(originalIconPath)
+          app.dock.setIcon(originalIcon)
+        }
+      }
     } else {
-      console.log('Setting dock icon with dimensions:', dockIcon.getSize())
-      app.dock.setIcon(dockIcon)
+      console.error('PNG icon file does not exist:', pngIconPath)
+
+      // Try with the original icon as a last resort
+      const originalIconPath = path.join(process.env.APP_ROOT, 'src/assets/icon2-512.png')
+      if (fs.existsSync(originalIconPath)) {
+        const originalIcon = nativeImage.createFromPath(originalIconPath)
+        app.dock.setIcon(originalIcon)
+      }
     }
   } catch (error) {
     console.error('Error setting dock icon:', error)
@@ -948,6 +955,20 @@ if (process.platform === 'darwin' && app.dock) {
 
 // When app is ready
 app.whenReady().then(() => {
+  // Set the dock icon again when the app is ready (as a backup)
+  if (process.platform === 'darwin' && app.dock) {
+    try {
+      const pngIconPath = path.join(process.env.APP_ROOT, 'src/assets/icon2-512.png')
+      if (fs.existsSync(pngIconPath)) {
+        const dockIcon = nativeImage.createFromPath(pngIconPath)
+        app.dock.setIcon(dockIcon)
+        console.log('Dock icon set again when app is ready')
+      }
+    } catch (error) {
+      console.error('Error setting dock icon in whenReady:', error)
+    }
+  }
+
   // Create main window
   createMainWindow()
 
