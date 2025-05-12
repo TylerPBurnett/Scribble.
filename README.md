@@ -6,7 +6,7 @@
 **Scribble** is a free, privacy-focused markdown sticky notes app that puts you in complete control of your data. Create, organize, and access your notes with a clean, modern interface while keeping all your information stored locally on your computer.
 
 <div align="center">
-  <img src="screenshots/main-app.png" alt="Scribble App Screenshot" width="80%" />
+  <img src="screenshots/main-app.png" alt="Scribble App Screenshot" width="500px" style="max-height: 600px; object-fit: contain;" />
 </div>
 
 ## ✨ Why Scribble?
