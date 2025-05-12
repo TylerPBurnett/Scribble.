@@ -3,5 +3,30 @@
   height: 100vh;
   width: 100%;
   overflow: hidden;
-  background-color: #1a1a1a;
+  background-color: hsl(var(--background-notes));
+}
+
+/* Hide macOS traffic lights in note window */
+:root {
+  --traffic-light-display: none !important;
+}
+
+/* Target the traffic light container */
+.note-window :global(.titlebar-traffic-lights),
+.note-window :global(.titlebar-controls),
+.note-window :global(.traffic-lights-container) {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Loading and error states */
+.note-window.loading,
+.note-window.error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: hsl(var(--foreground));
+  font-size: 1.2rem;
 }

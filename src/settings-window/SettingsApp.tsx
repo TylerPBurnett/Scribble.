@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
-import SettingsWindow from './SettingsWindow'
+import { SettingsDialog } from './SettingsDialog'
 import { initSettings, saveSettings, AppSettings } from '../shared/services/settingsService'
+import { ThemeProvider } from '../shared/services/themeService'
+import TitleBar from '../shared/components/TitleBar'
 
 function SettingsApp() {
   const [appSettings, setAppSettings] = useState<AppSettings>({
@@ -10,13 +12,14 @@ function SettingsApp() {
     darkMode: true,
   })
   const [isLoading, setIsLoading] = useState(true)
+  const [isOpen, setIsOpen] = useState(true)
 
   // Load settings on startup
   useEffect(() => {
     const init = async () => {
       try {
         console.log('=== SettingsApp Initialization Start ===');
-        
+
         // Initialize settings
         const settings = await initSettings()
         console.log('SettingsApp - Settings initialized:', settings)
@@ -39,20 +42,42 @@ function SettingsApp() {
     console.log('SettingsApp - Settings saved, current state:', newSettings)
   }
 
-  // Show loading state
-  if (isLoading) {
-    return <div className="settings-window-container loading">Loading settings...</div>
+  // Handle dialog close
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      window.close();
+    }
   }
 
-  // Render the settings window
-  return (
-    <div className="settings-window-container">
-      <SettingsWindow
-        onClose={() => window.close()}
-        initialSettings={appSettings}
-        onSave={handleSaveSettings}
-      />
+  // Show loading state
+  if (isLoading) {
+    return <div className="h-screen w-screen flex items-center justify-center bg-background-notes text-foreground">
+      <p className="text-lg">Loading settings...</p>
     </div>
+  }
+
+  // Render the settings dialog
+  return (
+    <ThemeProvider initialSettings={appSettings}>
+      <div className="flex flex-col h-screen w-screen bg-background-notes">
+        <TitleBar
+          title=""
+          onMinimize={() => window.windowControls.minimize()}
+          onMaximize={() => window.windowControls.maximize()}
+          onClose={() => window.windowControls.close()}
+          className="bg-background-titlebar"
+        />
+        <div className="flex-1">
+          <SettingsDialog
+            open={isOpen}
+            onOpenChange={handleOpenChange}
+            initialSettings={appSettings}
+            onSave={handleSaveSettings}
+          />
+        </div>
+      </div>
+    </ThemeProvider>
   )
 }
 

@@ -1,0 +1,9 @@
+export interface Note {
+  id: string
+  title: string
+  content: string
+  color: "slate" | "sky" | "emerald" | "amber" | "rose" | "violet"
+  created: string
+  modified: string
+  pinned: boolean
+}

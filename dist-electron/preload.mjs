@@ -22,7 +22,10 @@ electron.contextBridge.exposeInMainWorld("windowControls", {
   minimize: () => electron.ipcRenderer.invoke("window-minimize"),
   maximize: () => electron.ipcRenderer.invoke("window-maximize"),
   close: () => electron.ipcRenderer.invoke("window-close"),
-  moveWindow: (moveX, moveY) => electron.ipcRenderer.invoke("window-move", moveX, moveY)
+  moveWindow: (moveX, moveY) => electron.ipcRenderer.invoke("window-move", moveX, moveY),
+  togglePin: (shouldPin) => electron.ipcRenderer.invoke("window-toggle-pin", shouldPin),
+  isPinned: () => electron.ipcRenderer.invoke("window-is-pinned"),
+  setPinState: (noteId, isPinned) => electron.ipcRenderer.invoke("window-set-pin-state", noteId, isPinned)
 });
 electron.contextBridge.exposeInMainWorld("noteWindow", {
   openNote: (noteId) => electron.ipcRenderer.invoke("open-note", noteId),
@@ -35,7 +38,11 @@ electron.contextBridge.exposeInMainWorld("settings", {
   openSettings: () => electron.ipcRenderer.invoke("open-settings"),
   isSettingsWindow: () => electron.ipcRenderer.invoke("is-settings-window"),
   selectDirectory: () => electron.ipcRenderer.invoke("select-directory"),
-  getDefaultSaveLocation: () => electron.ipcRenderer.invoke("get-default-save-location")
+  getDefaultSaveLocation: () => electron.ipcRenderer.invoke("get-default-save-location"),
+  setAutoLaunch: (enabled) => electron.ipcRenderer.invoke("set-auto-launch", enabled),
+  getAutoLaunch: () => electron.ipcRenderer.invoke("get-auto-launch"),
+  settingsUpdated: () => electron.ipcRenderer.send("settings-updated"),
+  themeChanged: (theme) => electron.ipcRenderer.send("theme-changed", theme)
 });
 electron.contextBridge.exposeInMainWorld("fileOps", {
   saveNoteToFile: (noteId, title, content, saveLocation, oldTitle) => electron.ipcRenderer.invoke("save-note-to-file", noteId, title, content, saveLocation, oldTitle),

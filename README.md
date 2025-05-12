@@ -1,115 +1,119 @@
-# Scribble App
+# 📝 Scribble
 
-A modern, cross-platform note-taking application built with Electron, React, and TypeScript. Scribble provides a clean, intuitive interface for creating, editing, and organizing your notes with rich text formatting capabilities.
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Status](https://img.shields.io/badge/status-active-green.svg)
 
-<!-- Add a screenshot of your application here -->
-<!-- ![Scribble App Screenshot](screenshot.png) -->
+**Scribble** is a free, privacy-focused markdown sticky notes app that puts you in complete control of your data. Create, organize, and access your notes with a clean, modern interface while keeping all your information stored locally on your computer.
 
-## Features
+<div align="center">
+  <img src="screenshots/main-app.png" alt="Scribble App Screenshot" width="400px" style="max-height: 400px; object-fit: contain;" />
+</div>
 
-### Core Functionality
-- **Multi-window Architecture**: Create and edit notes in separate windows for better multitasking
-- **Rich Text Editing**: Full-featured text editor with formatting options including:
-  - Text styling (bold, italic, underline, strikethrough)
-  - Headings and text alignment
-  - Lists (bulleted, numbered, and task lists)
-  - Code blocks with syntax highlighting
-  - Links and images
-  - Text highlighting and typography enhancements
-- **Auto-save**: Automatically saves your notes as you type
-- **Local Storage**: All notes are stored locally on your device
-- **Search**: Quickly find notes by searching through titles and content
+## ✨ Why Scribble?
 
-### User Interface
-- **Dark Mode**: Easy on the eyes with a modern dark interface
-- **Responsive Design**: Adapts to different window sizes with responsive breakpoints
-- **Customizable Notes**: Notes with different color options for better organization
-- **Confirmation Dialogs**: Prevents accidental deletion of notes
-- **Modern UI Elements**: Clean design with subtle animations and visual feedback
+Scribble combines the simplicity of sticky notes with the power of markdown, all while respecting your privacy:
 
-### Settings & Customization
-- **Custom Save Location**: Choose where to store your notes
-- **Auto-save Configuration**: Enable/disable auto-save and adjust the interval
-- **Appearance Settings**: Toggle between light and dark modes
+- **🔒 Your Data, Your Control** - All notes are saved locally on your computer with no cloud sync or data collection
+- **📋 Markdown-Based** - Write in markdown for powerful formatting with minimal effort
+- **🌓 Multiple Themes** - Choose between Light, Dark, and Dim modes to suit your preference
+- **⚡ Fast & Lightweight** - Opens instantly and uses minimal system resources
+- **🧩 Works with Obsidian** - Save notes in your Obsidian vault for seamless integration
+- **💯 Completely Free** - No subscriptions, no hidden costs, no premium features
 
-## Tech Stack
+## 🚀 Key Features
 
-### Core Technologies
-- **Electron**: Cross-platform desktop application framework
-- **React**: UI library for building the user interface
-- **TypeScript**: Type-safe JavaScript for better code quality and developer experience
-- **Vite**: Modern, fast build tool and development server
+- **Multi-window Support** - Create and edit notes in separate windows for better multitasking
+- **Rich Markdown Editing** - Format text with headings, lists, code blocks, links, and more
+- **Auto-save** - Never lose your work with automatic saving as you type
+- **Customizable Notes** - Choose different colors for better organization
+- **Custom Save Location** - Select where to store your notes on your computer
+- **Global Hotkeys** - Create new notes or access the app quickly with keyboard shortcuts
+- **System Tray Integration** - Keep Scribble readily available while staying out of your way
 
-### Key Libraries
-- **TipTap**: Rich text editor built on ProseMirror
-  - Multiple extensions for advanced editing capabilities
-  - Floating menus and bubble menus for contextual editing
-- **Electron Builder**: Packaging and distribution tool for Electron applications
+## 💡 Use Cases
 
-### Architecture
-- **Multi-process Design**: Separate main and renderer processes following Electron's architecture
-- **Component-based UI**: Modular React components for maintainability
-- **Service-based Logic**: Separation of concerns with dedicated services for notes and settings
-- **IPC Communication**: Inter-process communication between main and renderer processes
+Scribble is perfect for:
 
-## Development
+- **Quick Capture** - Jot down ideas, thoughts, and information without interrupting your workflow
+- **Meeting Notes** - Take notes during meetings with markdown formatting for clarity
+- **Task Management** - Create quick to-do lists with markdown checkboxes
+- **Code Snippets** - Save and format code snippets with syntax highlighting
+- **Research Collection** - Gather information and organize it with markdown structure
+- **Obsidian Companion** - Use alongside Obsidian for quick notes that become part of your knowledge base
 
-### Prerequisites
-- Node.js (v18 or higher)
-- npm or yarn
+## 🔄 Obsidian Integration
 
-### Getting Started
+Scribble works beautifully with [Obsidian](https://obsidian.md) by:
 
-1. Clone the repository:
-```bash
-git clone https://github.com/TylerPBurnett/Scribble.git
-cd Scribble
-```
+- Using the same markdown format that Obsidian understands
+- Allowing you to save notes directly to your Obsidian vault
+- Providing a lightweight, quick-access alternative for capturing thoughts that can later be organized in Obsidian
+- Creating standard markdown (.md) files that are fully compatible with Obsidian's features
 
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Start the development server:
-```bash
-npm run dev
-```
-
-### Project Structure
-```
-scribble-app/
-├── electron/           # Electron main process code
-├── src/
-│   ├── components/     # React components
-│   ├── services/       # Business logic services
-│   ├── types/          # TypeScript type definitions
-│   ├── App.tsx         # Main application component
-│   └── main.tsx        # Application entry point
-├── public/             # Static assets
-└── dist-electron/      # Compiled Electron code
-```
-
-## Building
-
-To build the application for distribution:
-
-```bash
-npm run build
-```
-
-This will create platform-specific installers in the `release` directory.
-
-## Supported Platforms
+## 🖥️ Supported Platforms
 
 - Windows
 - macOS
 - Linux
 
-## Contributing
+## 📥 Installation
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+*Download links coming soon*
 
-## License
+For now, you can build from source:
 
-[MIT](LICENSE)
+1. Clone the repository
+2. Install dependencies with `npm install` or `bun install`
+3. Start the app with `npm run dev` or `bun run dev`
+
+## 🛠️ For Developers
+
+### Tech Stack
+
+Scribble is built with modern technologies:
+
+- **Electron** - Cross-platform desktop framework
+- **React** - UI library with TypeScript
+- **TipTap** - Rich text editor with markdown support
+- **Tailwind CSS** - Utility-first CSS framework
+- **Vite** - Next generation frontend tooling
+
+### Getting Started
+
+Prerequisites:
+- Node.js (v18 or higher)
+- npm, yarn, or bun
+
+```bash
+# Clone the repository
+git clone https://github.com/TylerPBurnett/Scribble.git
+cd Scribble
+
+# Install dependencies
+npm install
+# or
+bun install
+
+# Start the development server
+npm run dev
+# or
+bun run dev
+```
+
+### Building
+
+```bash
+npm run build
+# or
+bun run build
+```
+
+This will create platform-specific installers in the `release` directory.
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to submit issues or pull requests.
+
+## 📄 License
+
+[MIT](LICENSE) - Free to use, modify, and distribute.

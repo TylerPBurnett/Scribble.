@@ -1,0 +1,203 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { PlusCircle, Settings, Search, Pin, Clock } from "lucide-react"
+import type { Note } from "./types"
+import NoteCard from "./components/NoteCard"
+import Sidebar from "./components/Sidebar"
+import EmptyState from "./components/EmptyState"
+import "./styles/App.css"
+
+export default function App() {
+  const [notes, setNotes] = useState<Note[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [selectedNote, setSelectedNote] = useState<string | null>(null)
+
+  // Mock data - replace with your actual data fetching logic
+  useEffect(() => {
+    // This would be replaced with your actual data loading logic
+    setNotes([
+      {
+        id: "1",
+        title: "Bill Tracker",
+        content: "Track monthly expenses and bills",
+        color: "amber",
+        created: "2025-02-20T00:00:00Z",
+        modified: "2025-03-27T01:49:06Z",
+        pinned: true,
+      },
+      {
+        id: "2",
+        title: "test",
+        content: "This is a test note with some content",
+        color: "sky",
+        created: "2025-04-22T00:00:00Z",
+        modified: "2025-04-22T00:00:00Z",
+        pinned: false,
+      },
+      {
+        id: "7",
+        title: "this is a test",
+        content: "Testing the note creation functionality",
+        color: "emerald",
+        created: "2025-04-21T00:00:00Z",
+        modified: "2025-04-21T00:00:00Z",
+        pinned: false,
+      },
+      {
+        id: "8",
+        title: "iPad",
+        content: "this is a test",
+        color: "amber",
+        created: "2025-04-20T18:11:29Z",
+        modified: "2025-04-20T18:11:37Z",
+        pinned: false,
+      },
+      {
+        id: "9",
+        title: "tests",
+        content: "cssclasses: test",
+        color: "slate",
+        created: "2025-04-22T00:00:00Z",
+        modified: "2025-04-22T00:00:00Z",
+        pinned: false,
+      },
+      {
+        id: "10",
+        title: "untitled_note_",
+        content: "",
+        color: "slate",
+        created: "2025-04-22T00:00:00Z",
+        modified: "2025-04-22T00:00:00Z",
+        pinned: false,
+      },
+      {
+        id: "11",
+        title: "untitled_note_test_5",
+        content: "",
+        color: "amber",
+        created: "2025-04-21T00:00:00Z",
+        modified: "2025-04-21T00:00:00Z",
+        pinned: false,
+      },
+    ])
+  }, [])
+
+  const filteredNotes = notes.filter(
+    (note) =>
+      note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      note.content.toLowerCase().includes(searchQuery.toLowerCase()),
+  )
+
+  const pinnedNotes = filteredNotes.filter((note) => note.pinned)
+  const unpinnedNotes = filteredNotes.filter((note) => !note.pinned)
+
+  const handleCreateNote = () => {
+    const newNote: Note = {
+      id: Date.now().toString(),
+      title: "New Note",
+      content: "",
+      color: "slate",
+      created: new Date().toISOString(),
+      modified: new Date().toISOString(),
+      pinned: false,
+    }
+
+    setNotes([newNote, ...notes])
+    setSelectedNote(newNote.id)
+  }
+
+  return (
+    <div className="app-container">
+      <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+
+      <main className="main-content">
+        <header className="app-header">
+          <div className="header-left">
+            <button className="menu-button" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Toggle sidebar">
+              <div className="hamburger-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </button>
+            <h1 className="app-title">Scribble</h1>
+          </div>
+
+          <div className="search-container">
+            <Search className="search-icon" size={18} />
+            <input
+              type="text"
+              placeholder="Search notes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
+            />
+          </div>
+
+          <div className="header-actions">
+            <button className="new-note-button" onClick={handleCreateNote} aria-label="Create new note">
+              <PlusCircle size={18} />
+              <span>New Note</span>
+            </button>
+
+            <button className="settings-button" aria-label="Settings">
+              <Settings size={20} />
+            </button>
+          </div>
+        </header>
+
+        <div className="notes-container">
+          {filteredNotes.length === 0 ? (
+            <EmptyState onCreateNote={handleCreateNote} searchQuery={searchQuery} />
+          ) : (
+            <>
+              {pinnedNotes.length > 0 && (
+                <div className="notes-section">
+                  <h2 className="section-title">
+                    <Pin size={16} />
+                    <span>Pinned</span>
+                  </h2>
+                  <div className="notes-grid">
+                    {pinnedNotes.map((note) => (
+                      <NoteCard
+                        key={note.id}
+                        note={note}
+                        isSelected={selectedNote === note.id}
+                        onClick={() => setSelectedNote(note.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="notes-section">
+                {pinnedNotes.length > 0 && (
+                  <h2 className="section-title">
+                    <Clock size={16} />
+                    <span>Other Notes</span>
+                  </h2>
+                )}
+                <div className="notes-grid">
+                  {unpinnedNotes.map((note) => (
+                    <NoteCard
+                      key={note.id}
+                      note={note}
+                      isSelected={selectedNote === note.id}
+                      onClick={() => setSelectedNote(note.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        <footer className="app-footer">
+          <div className="save-location">Save location: G:\Software\Obsidian\Vaults\100-noteslab\Stickys</div>
+        </footer>
+      </main>
+    </div>
+  )
+}

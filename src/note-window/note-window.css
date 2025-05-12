@@ -1,0 +1,40 @@
+/* CSS to hide macOS traffic lights in note window */
+
+/* Hide traffic lights in the note window */
+:root {
+  --traffic-light-display: none !important;
+}
+
+/* Target all possible traffic light containers */
+.titlebar-traffic-lights,
+.titlebar-controls,
+.traffic-lights-container,
+.window-controls-container {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Hide any elements with traffic light classes */
+[class*="traffic-light"],
+[class*="window-control"],
+[class*="titlebar-button"] {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Ensure the top-left corner is clear of any controls */
+body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100px;
+  height: 40px;
+  background-color: transparent;
+  z-index: 9999;
+  pointer-events: none;
+}

@@ -1,7 +1,33 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, screen, Tray, Menu, globalShortcut, nativeImage } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs'
+import Store from 'electron-store'
+// @ts-expect-error no type definitions available
+import AutoLaunch from 'auto-launch'
+
+// Type for settings
+interface SettingsType {
+  hotkeys?: {
+    newNote?: string;
+    [key: string]: string | undefined;
+  };
+  [key: string]: unknown;
+}
+
+// Create a store for window state
+const windowStateStore = new Store({
+  name: 'window-state',
+  defaults: {
+    mainWindow: {
+      width: 1200,
+      height: 800,
+      x: undefined,
+      y: undefined,
+      isMaximized: false
+    }
+  }
+});
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -28,24 +54,72 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 let mainWindow: BrowserWindow | null
 let settingsWindow: BrowserWindow | null = null
 const noteWindows = new Map<string, BrowserWindow>()
+let tray: Tray | null = null
+let isQuitting = false
+
+// Create auto launcher
+const scribbleAutoLauncher = new AutoLaunch({
+  name: 'Scribble',
+  path: app.getPath('exe'),
+})
 
 function createMainWindow() {
+  // Configure window differently based on platform
+  const isMac = process.platform === 'darwin'
+
+  // Get stored window state
+  const mainWindowState = windowStateStore.get('mainWindow') as {
+    width: number;
+    height: number;
+    x?: number;
+    y?: number;
+    isMaximized: boolean;
+  };
+
+  // Check if the saved position is still on a connected screen
+  let validPosition = false;
+  if (mainWindowState.x !== undefined && mainWindowState.y !== undefined) {
+    const displays = screen.getAllDisplays();
+    validPosition = displays.some(display => {
+      const bounds = display.bounds;
+      return (
+        mainWindowState.x! >= bounds.x &&
+        mainWindowState.y! >= bounds.y &&
+        mainWindowState.x! < bounds.x + bounds.width &&
+        mainWindowState.y! < bounds.y + bounds.height
+      );
+    });
+  }
+
+  // Create the browser window with saved state or defaults
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: mainWindowState.width,
+    height: mainWindowState.height,
+    x: validPosition ? mainWindowState.x : undefined,
+    y: validPosition ? mainWindowState.y : undefined,
     minWidth: 250,
     minHeight: 300,
     backgroundColor: '#1a1a1a',
-    icon: path.join(process.env.APP_ROOT, 'src/assets/icon.png'),
+    // Use the new rounded-corner icon
+    icon: path.join(process.env.APP_ROOT, 'src/assets/icon2-512.png'),
     title: 'Scribble',
     frame: false,
-    titleBarStyle: 'hidden',
+    // On macOS, use 'hiddenInset' to show the native traffic lights
+    // On Windows, use 'hidden' to completely hide the title bar
+    titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
+    // Additional macOS-specific settings
+    trafficLightPosition: { x: 20, y: 20 },
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,
       nodeIntegration: false,
     },
   })
+
+  // Maximize window if it was maximized before
+  if (mainWindowState.isMaximized) {
+    mainWindow.maximize();
+  }
 
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow?.webContents.send('main-process-message', (new Date).toLocaleString())
@@ -57,8 +131,59 @@ function createMainWindow() {
     mainWindow.loadFile(path.join(RENDERER_DIST, 'index.html'))
   }
 
+  // Save window state on resize, move, maximize, and unmaximize
+  const saveWindowState = () => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+
+    const isMaximized = mainWindow.isMaximized();
+
+    // Only update position if the window is not maximized
+    if (!isMaximized) {
+      const [width, height] = mainWindow.getSize();
+      const [x, y] = mainWindow.getPosition();
+
+      windowStateStore.set('mainWindow', {
+        width,
+        height,
+        x,
+        y,
+        isMaximized
+      });
+    } else {
+      // Just update the maximized state
+      windowStateStore.set('mainWindow.isMaximized', isMaximized);
+    }
+  };
+
+  // Add event listeners to save window state
+  mainWindow.on('resize', saveWindowState);
+  mainWindow.on('move', saveWindowState);
+  mainWindow.on('maximize', saveWindowState);
+  mainWindow.on('unmaximize', saveWindowState);
+
+  // Save window state before the window is destroyed
+  mainWindow.on('close', saveWindowState);
+
+  // Handle close event - minimize to tray instead of closing
+  mainWindow.on('close', (event) => {
+    // If we're not actually quitting the app, just hide the window
+    if (!isQuitting) {
+      event.preventDefault()
+      mainWindow?.hide()
+      return false
+    }
+    return true
+  })
+
+  // Clean up when window is closed
   mainWindow.on('closed', () => {
-    mainWindow = null
+    mainWindow = null;
+  })
+
+  // Handle minimize event - minimize to tray
+  mainWindow.on('minimize', (event: Electron.Event) => {
+    event.preventDefault()
+    mainWindow?.hide()
   })
 }
 
@@ -77,16 +202,30 @@ function createNoteWindow(noteId: string) {
 
   // Create new window
   console.log('Creating new BrowserWindow for note')
+
+  // Get stored note window state or use defaults
+  const noteWindowDefaults = windowStateStore.get('noteWindowDefaults', {
+    width: 600,
+    height: 500
+  }) as { width: number; height: number };
+
   const noteWindow = new BrowserWindow({
-    width: 900,
-    height: 700,
+    width: noteWindowDefaults.width,
+    height: noteWindowDefaults.height,
     minWidth: 250,
     minHeight: 300,
     backgroundColor: '#1a1a1a',
-    icon: path.join(process.env.APP_ROOT, 'src/assets/icon.png'),
+    // Use the new rounded-corner icon
+    icon: path.join(process.env.APP_ROOT, 'src/assets/icon2-512.png'),
     title: 'Scribble - Note',
     frame: false,
+    // Use 'hidden' for both macOS and Windows to completely hide the title bar
+    // This disables the native traffic lights on macOS for note windows only
     titleBarStyle: 'hidden',
+    // Completely hide the traffic lights on macOS
+    titleBarOverlay: false,
+    // Don't show traffic lights at all
+    trafficLightPosition: { x: -20, y: -20 },
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,
@@ -167,6 +306,15 @@ function createNoteWindow(noteId: string) {
     }
   });
 
+  // Save note window size when closed to use as default for future windows
+  noteWindow.on('close', () => {
+    // Only save size if the window is not maximized and not destroyed
+    if (!noteWindow.isDestroyed() && !noteWindow.isMaximized()) {
+      const [width, height] = noteWindow.getSize();
+      windowStateStore.set('noteWindowDefaults', { width, height });
+    }
+  });
+
   // Clean up when window is closed
   noteWindow.on('closed', () => {
     console.log(`Note window closed: ${noteId}`);
@@ -183,19 +331,49 @@ function createSettingsWindow() {
     return settingsWindow
   }
 
-  // Create settings window
-  settingsWindow = new BrowserWindow({
-    width: 550,
+  // Configure window differently based on platform
+  const isMac = process.platform === 'darwin'
+
+  // Get stored settings window state or use main window size as default
+  const settingsWindowState = windowStateStore.get('settingsWindow', {
+    width: 800,
     height: 600,
+    x: undefined,
+    y: undefined
+  }) as { width: number; height: number; x?: number; y?: number };
+
+  // If main window exists, center the settings window relative to it
+  let x: number | undefined = settingsWindowState.x;
+  let y: number | undefined = settingsWindowState.y;
+
+  if (mainWindow && (x === undefined || y === undefined)) {
+    const mainBounds = mainWindow.getBounds();
+    const settingsSize = { width: settingsWindowState.width, height: settingsWindowState.height };
+
+    // Center the settings window on the main window
+    x = Math.round(mainBounds.x + (mainBounds.width - settingsSize.width) / 2);
+    y = Math.round(mainBounds.y + (mainBounds.height - settingsSize.height) / 2);
+  }
+
+  settingsWindow = new BrowserWindow({
+    width: settingsWindowState.width,
+    height: settingsWindowState.height,
+    x,
+    y,
     minWidth: 250,
     minHeight: 300,
     backgroundColor: '#1a1a1a',
-    icon: path.join(process.env.APP_ROOT, 'src/assets/icon.png'),
+    // Use the new rounded-corner icon
+    icon: path.join(process.env.APP_ROOT, 'src/assets/icon2-512.png'),
     title: 'Scribble - Settings',
     parent: mainWindow || undefined,
-    modal: true,
+    modal: false, // Changed to false to allow it to be a full window
     frame: false,
-    titleBarStyle: 'hidden',
+    // On macOS, use 'hiddenInset' to show the native traffic lights
+    // On Windows, use 'hidden' to completely hide the title bar
+    titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
+    // Additional macOS-specific settings
+    trafficLightPosition: { x: 20, y: 20 },
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,
@@ -224,12 +402,130 @@ function createSettingsWindow() {
     settingsWindow.loadFile(url)
   }
 
+  // Save window state before closing
+  settingsWindow.on('close', () => {
+    if (!settingsWindow || settingsWindow.isDestroyed()) return;
+
+    // Save the current window state
+    const [width, height] = settingsWindow.getSize();
+    const [x, y] = settingsWindow.getPosition();
+
+    windowStateStore.set('settingsWindow', {
+      width,
+      height,
+      x,
+      y
+    });
+  });
+
   // Clean up when window is closed
   settingsWindow.on('closed', () => {
     settingsWindow = null
   })
 
   return settingsWindow
+}
+
+// Create tray icon
+function createTray() {
+  // Create tray icon 
+  const iconPath = path.join(process.env.APP_ROOT, 'src/assets/icon-64.png')
+  const trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 })
+
+  tray = new Tray(trayIcon)
+
+  // Create context menu
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Open Scribble',
+      click: () => {
+        if (mainWindow) {
+          mainWindow.show()
+          mainWindow.focus()
+        } else {
+          createMainWindow()
+        }
+      }
+    },
+    {
+      label: 'New Note',
+      click: () => {
+        // Generate a unique ID for the new note
+        const noteId = `new-${Date.now().toString(36)}`
+        createNoteWindow(noteId)
+
+        // Show main window if it's hidden
+        if (mainWindow && !mainWindow.isVisible()) {
+          mainWindow.show()
+        }
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Settings',
+      click: () => {
+        createSettingsWindow()
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Quit',
+      click: () => {
+        isQuitting = true
+        app.quit()
+      }
+    }
+  ])
+
+  // Set tray properties
+  tray.setToolTip('Scribble')
+  tray.setContextMenu(contextMenu)
+
+  // Show window on tray icon click
+  tray.on('click', () => {
+    if (mainWindow) {
+      if (mainWindow.isVisible()) {
+        mainWindow.focus()
+      } else {
+        mainWindow.show()
+      }
+    } else {
+      createMainWindow()
+    }
+  })
+}
+
+// Register global hotkeys
+function registerGlobalHotkeys() {
+  // Get settings to check for custom hotkeys
+  const settingsStore = new Store({ name: 'settings' })
+  const settings = settingsStore.get('settings') as SettingsType || {}
+  const hotkeys = settings.hotkeys || {}
+
+  // Register global hotkey for creating a new note
+  const newNoteHotkey = hotkeys.newNote || 'CommandOrControl+Alt+N'
+  globalShortcut.register(newNoteHotkey, () => {
+    // Generate a unique ID for the new note
+    const noteId = `new-${Date.now().toString(36)}`
+    createNoteWindow(noteId)
+
+    // Show main window if it's hidden
+    if (mainWindow && !mainWindow.isVisible()) {
+      mainWindow.show()
+    }
+  })
+
+  // Register global hotkey for showing the app
+  globalShortcut.register('CommandOrControl+Alt+S', () => {
+    if (mainWindow) {
+      mainWindow.show()
+      mainWindow.focus()
+    } else {
+      createMainWindow()
+    }
+  })
+
+  console.log('Global hotkeys registered')
 }
 
 // Get default save location
@@ -289,6 +585,47 @@ ipcMain.handle('window-move', (event, moveX, moveY) => {
     const [x, y] = win.getPosition()
     win.setPosition(x + moveX, y + moveY)
   }
+})
+
+ipcMain.handle('window-toggle-pin', (event, shouldPin) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (win) {
+    win.setAlwaysOnTop(shouldPin)
+
+    // Find the noteId for this window
+    let noteId = null
+    for (const [id, noteWin] of noteWindows.entries()) {
+      if (noteWin === win) {
+        noteId = id
+        break
+      }
+    }
+
+    // Log the pin state change
+    console.log(`Window pin state changed for note ${noteId}: ${shouldPin}`)
+
+    return win.isAlwaysOnTop()
+  }
+  return false
+})
+
+ipcMain.handle('window-is-pinned', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (win) {
+    return win.isAlwaysOnTop()
+  }
+  return false
+})
+
+ipcMain.handle('window-set-pin-state', (_, noteId, isPinned) => {
+  // Find the window for this note
+  const win = noteWindows.get(noteId)
+  if (win) {
+    win.setAlwaysOnTop(isPinned)
+    console.log(`Set window pin state for note ${noteId}: ${isPinned}`)
+    return true
+  }
+  return false
 })
 
 ipcMain.handle('create-note', () => {
@@ -421,9 +758,10 @@ ipcMain.handle('save-note-to-file', async (_, noteId, title, content, saveLocati
     console.log('File written successfully')
 
     return { success: true, filePath }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error saving note to file:', error)
-    return { success: false, error: error.message || 'Unknown error' }
+    return { success: false, error: errorMessage }
   }
 })
 
@@ -445,9 +783,10 @@ ipcMain.handle('delete-note-file', async (_, noteId, title, saveLocation) => {
     }
 
     return { success: true }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error deleting note file:', error)
-    return { success: false, error: error.message || 'Unknown error' }
+    return { success: false, error: errorMessage }
   }
 })
 
@@ -478,7 +817,7 @@ ipcMain.handle('list-note-files', async (_, directoryPath) => {
         modifiedAt: stats.mtime
       }
     }))
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error listing note files:', error)
     return []
   }
@@ -493,7 +832,7 @@ ipcMain.handle('read-note-file', async (_, filePath) => {
 
     const content = fs.readFileSync(filePath, 'utf8')
     return content
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error reading note file:', error)
     throw error
   }
@@ -517,9 +856,133 @@ app.on('activate', () => {
   }
 })
 
+// Auto-launch IPC handlers
+ipcMain.handle('set-auto-launch', async (_, enabled) => {
+  try {
+    if (enabled) {
+      await scribbleAutoLauncher.enable()
+    } else {
+      await scribbleAutoLauncher.disable()
+    }
+    return enabled
+  } catch (error) {
+    console.error('Error setting auto-launch:', error)
+    return false
+  }
+})
+
+ipcMain.handle('get-auto-launch', async () => {
+  try {
+    return await scribbleAutoLauncher.isEnabled()
+  } catch (error) {
+    console.error('Error getting auto-launch status:', error)
+    return false
+  }
+})
+
+// Update global hotkeys when settings change
+ipcMain.on('settings-updated', () => {
+  // Unregister all shortcuts
+  globalShortcut.unregisterAll()
+
+  // Register them again with new settings
+  registerGlobalHotkeys()
+})
+
+// Handle theme changes
+ipcMain.on('theme-changed', (event, theme) => {
+  console.log('Theme changed in main process:', theme);
+
+  // Get the sender window
+  const senderWindow = BrowserWindow.fromWebContents(event.sender);
+
+  // Relay the theme change to all windows
+  BrowserWindow.getAllWindows().forEach(win => {
+    // Don't send back to the sender window to avoid loops
+    if (win !== senderWindow) {
+      console.log(`Sending theme-changed event to window ${win.id}`);
+      win.webContents.send('theme-changed', theme);
+    } else {
+      console.log(`Skipping sender window ${win.id}`);
+    }
+  });
+})
+
 // Set the app user model id for Windows
 if (process.platform === 'win32') {
   app.setAppUserModelId('com.tylerburnett.scribble')
 }
 
-app.whenReady().then(createMainWindow)
+// Set the dock icon for macOS as early as possible
+if (process.platform === 'darwin' && app.dock) {
+  try {
+    // Use the new rounded-corner icon for the dock
+    const pngIconPath = path.join(process.env.APP_ROOT, 'src/assets/icon2-512.png')
+    console.log('Setting dock icon with new rounded PNG path:', pngIconPath)
+
+    // Check if the file exists
+    if (fs.existsSync(pngIconPath)) {
+      // Create a native image from the PNG file
+      const dockIcon = nativeImage.createFromPath(pngIconPath)
+
+      if (!dockIcon.isEmpty()) {
+        console.log('Setting dock icon with dimensions:', dockIcon.getSize())
+        app.dock.setIcon(dockIcon)
+      } else {
+        console.error('Failed to load PNG icon, it appears to be empty')
+
+        // Try with the original icon as a last resort
+        const originalIconPath = path.join(process.env.APP_ROOT, 'src/assets/icon2-512.png')
+        if (fs.existsSync(originalIconPath)) {
+          const originalIcon = nativeImage.createFromPath(originalIconPath)
+          app.dock.setIcon(originalIcon)
+        }
+      }
+    } else {
+      console.error('PNG icon file does not exist:', pngIconPath)
+
+      // Try with the original icon as a last resort
+      const originalIconPath = path.join(process.env.APP_ROOT, 'src/assets/icon2-512.png')
+      if (fs.existsSync(originalIconPath)) {
+        const originalIcon = nativeImage.createFromPath(originalIconPath)
+        app.dock.setIcon(originalIcon)
+      }
+    }
+  } catch (error) {
+    console.error('Error setting dock icon:', error)
+  }
+}
+
+// When app is ready
+app.whenReady().then(() => {
+  // Set the dock icon again when the app is ready (as a backup)
+  if (process.platform === 'darwin' && app.dock) {
+    try {
+      const pngIconPath = path.join(process.env.APP_ROOT, 'src/assets/icon2-512.png')
+      if (fs.existsSync(pngIconPath)) {
+        const dockIcon = nativeImage.createFromPath(pngIconPath)
+        app.dock.setIcon(dockIcon)
+        console.log('Dock icon set again when app is ready')
+      }
+    } catch (error) {
+      console.error('Error setting dock icon in whenReady:', error)
+    }
+  }
+
+  // Create main window
+  createMainWindow()
+
+  // Create tray icon
+  createTray()
+
+  // Register global hotkeys
+  registerGlobalHotkeys()
+})
+
+// Handle the before-quit event
+app.on('before-quit', () => {
+  isQuitting = true
+
+  // Unregister all shortcuts
+  globalShortcut.unregisterAll()
+})

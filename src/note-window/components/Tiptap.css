@@ -4,41 +4,43 @@
   border: none;
   border-radius: 0;
   overflow: hidden;
-  background-color: #fff9c4;
+  /* Background color is now set by the parent component */
   color: #333;
   width: 100%;
   height: 100%;
-  font-family: 'Comic Sans MS', cursive, sans-serif;
+  font-family: 'Chirp', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
 }
 
 .tiptap-toolbar {
   display: flex;
   flex-wrap: nowrap; /* Prevent wrapping to multiple lines */
-  padding: 6px; /* Reduced padding */
-  background-color: #fff5b1;
-  border-top: 1px solid rgba(0, 0, 0, 0.1); /* Changed from border-bottom to border-top */
-  gap: 3px; /* Reduced gap */
+  padding: 4px; /* Further reduced padding */
+  background-color: rgba(0, 0, 0, 0.05); /* Slightly darker than the note background */
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  gap: 2px; /* Further reduced gap */
   width: 100%; /* Full width of the container */
   overflow-x: auto; /* Allow horizontal scrolling for single line */
   white-space: nowrap; /* Keep all items in a single line */
   scrollbar-width: thin; /* Thin scrollbar for Firefox */
   scrollbar-color: rgba(0, 0, 0, 0.2) transparent; /* Scrollbar color for Firefox */
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  max-height: 36px; /* Set a max height for the toolbar */
 }
 
 .tiptap-toolbar button {
   background-color: rgba(255, 255, 255, 0.5);
   border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
+  border-radius: 3px;
   color: #333;
   cursor: pointer;
-  height: 28px; /* Slightly smaller height */
-  min-width: 28px; /* Slightly smaller width */
+  height: 22px; /* Reduced height by ~30% */
+  min-width: 22px; /* Reduced width by ~30% */
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   transition: background-color 0.2s, border-color 0.2s;
-  font-size: 0.9em; /* Slightly smaller font */
+  font-size: 0.75em; /* Smaller font */
   flex-shrink: 0; /* Prevent buttons from shrinking */
 }
 
@@ -56,8 +58,8 @@
 .tiptap-toolbar .divider {
   width: 1px;
   background-color: rgba(0, 0, 0, 0.1);
-  margin: 0 3px;
-  height: 20px; /* Adjusted height to match new button size */
+  margin: 0 2px;
+  height: 16px; /* Reduced height to match new button size */
   align-self: center;
   flex-shrink: 0; /* Prevent divider from shrinking */
 }
@@ -67,9 +69,12 @@
   padding: 16px 16px 8px 16px; /* Reduced bottom padding */
   overflow-y: auto;
   line-height: 1.5;
-  background-color: #fff9c4;
+  /* Background color is now set by the parent component */
   color: #333;
-  font-family: 'Comic Sans MS', cursive, sans-serif;
+  font-family: 'Chirp', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  caret-color: #333 !important; /* Force cursor visibility */
+  cursor: text !important; /* Force text cursor */
+  z-index: 1; /* Ensure content is above any decorative elements */
 }
 
 .tiptap-content p {
@@ -96,6 +101,45 @@
   margin: 0.5em 0;
 }
 
+/* Improved list styling */
+.tiptap-content ul li,
+.tiptap-content ol li {
+  position: relative;
+  margin: 0.2em 0;
+}
+
+/* Ensure proper bullet display */
+.tiptap-content ul {
+  list-style-type: disc;
+}
+
+/* Ensure proper number display */
+.tiptap-content ol {
+  list-style-type: decimal;
+}
+
+/* Nested list styling */
+.tiptap-content ul ul,
+.tiptap-content ol ol,
+.tiptap-content ul ol,
+.tiptap-content ol ul {
+  margin: 0.2em 0 0.2em 1em;
+}
+
+/* Nested bullet types */
+.tiptap-content ul ul {
+  list-style-type: circle;
+}
+
+.tiptap-content ul ul ul {
+  list-style-type: square;
+}
+
+/* Fix for list item spacing */
+.tiptap-content li p {
+  margin: 0;
+}
+
 .tiptap-content blockquote {
   border-left: 3px solid rgba(0, 0, 0, 0.2);
   padding-left: 1em;
@@ -108,7 +152,7 @@
   background-color: rgba(255, 255, 255, 0.5);
   padding: 0.2em 0.4em;
   border-radius: 3px;
-  font-family: monospace;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   color: #333;
 }
 
@@ -147,18 +191,43 @@
 
 .tiptap-content .task-list {
   list-style-type: none;
-  padding-left: 0.5em;
+  padding-left: 1.5em; /* Match other lists */
+  margin: 0.5em 0;
 }
 
 .tiptap-content .task-list-item {
   display: flex;
   align-items: flex-start;
   margin: 0.2em 0;
+  position: relative;
 }
 
 .tiptap-content .task-list-item-checkbox {
   margin-right: 0.5em;
   margin-top: 0.3em;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1em;
+  height: 1em;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  border-radius: 2px;
+  background-color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  position: relative;
+}
+
+.tiptap-content .task-list-item-checkbox:checked {
+  background-color: rgba(0, 120, 212, 0.2);
+  border-color: rgba(0, 120, 212, 0.5);
+}
+
+.tiptap-content .task-list-item-checkbox:checked::after {
+  content: '✓';
+  position: absolute;
+  top: -0.2em;
+  left: 0.1em;
+  font-size: 0.9em;
+  color: rgba(0, 0, 0, 0.7);
 }
 
 /* WebKit scrollbar styling */
@@ -202,39 +271,224 @@
   text-align: right;
 }
 
+/* Additional ProseMirror list styling */
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 1.5em;
+  counter-reset: list-counter;
+}
+
+.ProseMirror li {
+  position: relative;
+}
+
+/* Ensure proper spacing between list items */
+.ProseMirror li + li {
+  margin-top: 0.2em;
+}
+
+/* Ensure proper spacing for nested lists */
+.ProseMirror li > ul,
+.ProseMirror li > ol {
+  margin-top: 0.2em;
+  margin-bottom: 0.2em;
+}
+
+/* Toolbar toggle state */
+.tiptap-toolbar.hidden {
+  opacity: 0;
+  transform: translateY(100%);
+  pointer-events: none;
+}
+
+/* ProseMirror cursor styling */
+.ProseMirror {
+  caret-color: #333 !important;
+  outline: none;
+  cursor: text !important;
+  position: relative;
+  z-index: 1;
+}
+
+.ProseMirror-focused {
+  outline: none;
+}
+
+/* Ensure cursor is visible when editor has focus */
+.ProseMirror.ProseMirror-focused {
+  caret-color: #333 !important;
+}
+
+/* Force cursor visibility in all ProseMirror elements */
+.ProseMirror p,
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror li,
+.ProseMirror blockquote {
+  caret-color: #333 !important;
+  cursor: text !important;
+}
+
+/* Specific styling for our editor instance */
+.tiptap-editor-instance {
+  caret-color: #333 !important;
+  cursor: text !important;
+}
+
+/* Ensure cursor is visible in all editor states */
+.ProseMirror-textblock-cursor {
+  border-left: 2px solid #000 !important;
+  border-right: none;
+  height: 1.2em;
+  margin-left: -0.5px;
+  position: absolute;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Ensure cursor is visible in paragraphs */
+.ProseMirror p {
+  caret-color: #000 !important;
+  cursor: text !important;
+}
+
+/* Force cursor visibility in the editor */
+.ProseMirror-cursor {
+  border-left: 2px solid #000 !important;
+  border-right: none;
+  height: 1.2em;
+  margin-left: -0.5px;
+  position: absolute;
+  pointer-events: none;
+  z-index: 100;
+  display: block !important;
+}
+
+/* Dark theme styles */
+.dark-theme .ProseMirror-cursor,
+.dark-theme .ProseMirror-textblock-cursor {
+  border-left: 2px solid #fff !important;
+}
+
+.dark-theme.tiptap-content,
+.dark-theme .ProseMirror,
+.dark-theme .ProseMirror p,
+.dark-theme .ProseMirror h1,
+.dark-theme .ProseMirror h2,
+.dark-theme .ProseMirror h3,
+.dark-theme .ProseMirror li,
+.dark-theme .ProseMirror blockquote {
+  color: #fff !important;
+  caret-color: #fff !important;
+}
+
+.dark-theme .ProseMirror a {
+  color: #66b2ff !important;
+}
+
+.dark-theme .ProseMirror code {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.dark-theme .ProseMirror pre {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.dark-theme .ProseMirror blockquote {
+  border-left-color: rgba(255, 255, 255, 0.4);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ccc;
+}
+
+.dark-theme .toolbar-toggle {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark-theme .tiptap-toolbar {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark-theme .tiptap-toolbar button {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.dark-theme .tiptap-toolbar button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.dark-theme .tiptap-toolbar button.is-active {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+.dark-theme .ProseMirror p.is-editor-empty:first-child::before {
+  color: #aaa;
+}
+
+/* Toolbar toggle button */
+.toolbar-toggle {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  background-color: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.toolbar-toggle:hover {
+  opacity: 1;
+}
+
+.toolbar-toggle svg {
+  width: 14px;
+  height: 14px;
+}
+
 /* Responsive toolbar adjustments */
 @media (max-width: 500px) {
   .tiptap-toolbar button {
-    height: 26px;
-    min-width: 26px;
-    font-size: 0.85em;
+    height: 20px;
+    min-width: 20px;
+    font-size: 0.7em;
   }
 
   .tiptap-toolbar .divider {
-    height: 18px;
-    margin: 0 2px;
-  }
-
-  .tiptap-toolbar {
-    gap: 2px;
-    padding: 4px;
-  }
-}
-
-@media (max-width: 350px) {
-  .tiptap-toolbar button {
-    height: 24px;
-    min-width: 24px;
-    font-size: 0.8em;
-  }
-
-  .tiptap-toolbar .divider {
-    height: 16px;
+    height: 14px;
     margin: 0 1px;
   }
 
   .tiptap-toolbar {
     gap: 1px;
     padding: 3px;
+  }
+}
+
+@media (max-width: 350px) {
+  .tiptap-toolbar button {
+    height: 18px;
+    min-width: 18px;
+    font-size: 0.65em;
+  }
+
+  .tiptap-toolbar .divider {
+    height: 12px;
+    margin: 0 1px;
+  }
+
+  .tiptap-toolbar {
+    gap: 1px;
+    padding: 2px;
   }
 }

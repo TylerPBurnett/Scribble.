@@ -1,0 +1,36 @@
+"use client"
+
+import { FileText, PlusCircle, Search } from "lucide-react"
+
+interface EmptyStateProps {
+  onCreateNote: () => void
+  searchQuery: string
+}
+
+export default function EmptyState({ onCreateNote, searchQuery }: EmptyStateProps) {
+  return (
+    <div className="empty-state">
+      {searchQuery ? (
+        <>
+          <Search size={48} className="empty-icon" />
+          <h2>No results found</h2>
+          <p>No notes match your search for "{searchQuery}"</p>
+          <button className="primary-button" onClick={onCreateNote}>
+            <PlusCircle size={16} />
+            <span>Create a new note</span>
+          </button>
+        </>
+      ) : (
+        <>
+          <FileText size={48} className="empty-icon" />
+          <h2>No notes yet</h2>
+          <p>Create your first note to get started</p>
+          <button className="primary-button" onClick={onCreateNote}>
+            <PlusCircle size={16} />
+            <span>Create a new note</span>
+          </button>
+        </>
+      )}
+    </div>
+  )
+}

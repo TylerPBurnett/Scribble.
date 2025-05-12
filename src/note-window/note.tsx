@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import NoteApp from './NoteApp'
 import '../shared/styles/index.css'
+import './note-window.css' // Import the CSS to hide traffic lights
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

@@ -7,6 +7,35 @@ const generateId = (): string => {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
 };
 
+// Helper function to parse metadata from HTML comments
+const parseMetadata = (content: string): { metadata: Record<string, any>, content: string } => {
+  // Look for metadata in HTML comment at the end of the file
+  // Format: <!-- scribble-metadata: {"color":"#fff9c4","pinned":true} -->
+  const metadataRegex = /<!-- scribble-metadata: (.*?) -->\s*$/;
+  const match = content.match(metadataRegex);
+
+  if (!match) {
+    return { metadata: {}, content };
+  }
+
+  try {
+    // Parse the JSON metadata
+    const metadataJson = match[1];
+    const metadata = JSON.parse(metadataJson);
+
+    // Remove the metadata comment from content
+    const contentWithoutMetadata = content.replace(metadataRegex, '');
+
+    return {
+      metadata,
+      content: contentWithoutMetadata
+    };
+  } catch (error) {
+    console.error('Error parsing metadata JSON:', error);
+    return { metadata: {}, content };
+  }
+};
+
 // Get notes from file system
 export const getNotes = async (): Promise<Note[]> => {
   const settings = getSettings();
@@ -19,7 +48,10 @@ export const getNotes = async (): Promise<Note[]> => {
     for (const file of files) {
       try {
         // Read the file content
-        const content = await window.fileOps.readNoteFile(file.path);
+        const fileContent = await window.fileOps.readNoteFile(file.path);
+
+        // Parse metadata from HTML comments
+        const { metadata, content } = parseMetadata(fileContent);
 
         // Extract title from the first line if it's a heading
         let title = file.name.replace(/\.md$/, '');
@@ -44,14 +76,19 @@ export const getNotes = async (): Promise<Note[]> => {
           title,
           content: htmlContent,
           createdAt: new Date(file.createdAt),
-          updatedAt: new Date(file.modifiedAt)
+          updatedAt: new Date(file.modifiedAt),
+          // Add metadata properties
+          color: metadata.color,
+          pinned: metadata.pinned
         };
 
         console.log('Created note from file:', {
           fileId: file.id,
           fileName: file.name,
           noteId: note.id,
-          noteTitle: note.title
+          noteTitle: note.title,
+          color: note.color,
+          pinned: note.pinned
         });
 
         notes.push(note);
@@ -69,44 +106,21 @@ export const getNotes = async (): Promise<Note[]> => {
 
 // Create a new note
 export const createNote = async (): Promise<Note> => {
+  // Create a new note with a temporary ID
   const newNote: Note = {
     id: generateId(),
     title: 'Untitled Note', // Set a default title
     content: '<p></p>',
     createdAt: new Date(),
     updatedAt: new Date(),
+    // Add a flag to indicate this is a new note that hasn't been saved yet
+    _isNew: true
   };
 
-  // Save to file if a save location is set
-  const settings = getSettings();
-  console.log('Create Note - Settings:', settings);
-  if (settings.saveLocation) {
-    console.log('Create Note - Save location found:', settings.saveLocation);
-    try {
-      // For a new empty note, just create a minimal markdown file
-      console.log('Creating new note file with:', {
-        id: newNote.id,
-        title: newNote.title,
-        saveLocation: settings.saveLocation
-      });
-
-      try {
-        const result = await window.fileOps.saveNoteToFile(
-          newNote.id,
-          newNote.title,
-          '# Untitled Note\n\n',
-          settings.saveLocation
-        );
-        console.log('Create note file result:', result);
-      } catch (saveError) {
-        console.error('Error creating note file:', saveError);
-      }
-    } catch (error) {
-      console.error('Error saving new note to file:', error);
-    }
-  } else {
-    console.log('Create Note - No save location found in settings');
-  }
+  // We don't immediately save the file to disk
+  // This prevents creating multiple files as the user edits the title
+  // The first save will happen when the user makes changes or when they blur the title field
+  console.log('Created new note with temporary ID:', newNote.id);
 
   return newNote;
 };
@@ -114,15 +128,67 @@ export const createNote = async (): Promise<Note> => {
 // Update a note
 export const updateNote = async (updatedNote: Note): Promise<Note> => {
   // Get the updated note with the new timestamp
-  const finalNote = { ...updatedNote, updatedAt: new Date() };
+  const finalNote = {
+    ...updatedNote,
+    updatedAt: new Date(),
+    // Remove the _isNew flag if it exists - the note is now being saved
+    _isNew: undefined
+  };
 
   // Save to file if a save location is set
   const settings = getSettings();
   console.log('Settings from getSettings():', settings);
   if (settings.saveLocation) {
     console.log('Save location found:', settings.saveLocation);
+
+    // Check if this is a new note being saved for the first time
+    const isFirstSave = updatedNote._isNew === true;
+
+    // If this is a new note being saved for the first time, handle it specially
+    if (isFirstSave) {
+      console.log('First save of a new note with custom title:', updatedNote.title);
+      // We'll skip the file lookup since there shouldn't be a file yet
+
+      // Convert HTML content to Markdown
+      const markdownContent = htmlToMarkdown(finalNote.content);
+
+      // Add title as H1 at the beginning if it exists
+      const titlePrefix = finalNote.title ? `# ${finalNote.title}\n\n` : '';
+
+      // Create metadata as JSON in HTML comment at the end of the file
+      const metadata: Record<string, any> = {};
+      if (finalNote.color) {
+        metadata.color = finalNote.color;
+      }
+      if (finalNote.pinned !== undefined) {
+        metadata.pinned = finalNote.pinned;
+      }
+
+      // Only add metadata comment if there's actual metadata to store
+      const metadataComment = Object.keys(metadata).length > 0
+        ? `\n\n<!-- scribble-metadata: ${JSON.stringify(metadata)} -->`
+        : '';
+
+      const fullContent = titlePrefix + markdownContent + metadataComment;
+
+      // Save directly with the custom title
+      try {
+        const result = await window.fileOps.saveNoteToFile(
+          finalNote.id,
+          finalNote.title,
+          fullContent,
+          settings.saveLocation
+        );
+        console.log('First save result:', result);
+        return finalNote;
+      } catch (saveError) {
+        console.error('Error in first saveNoteToFile:', saveError);
+        return finalNote;
+      }
+    }
+
     try {
-      // We need to find the current file name on disk for this note
+      // For existing notes, we need to find the current file name on disk
       // This is more reliable than using getNotes() which might not have the latest info
       let oldTitle = '';
       let titleChanged = false;
@@ -191,7 +257,22 @@ export const updateNote = async (updatedNote: Note): Promise<Note> => {
 
       // Add title as H1 at the beginning if it exists
       const titlePrefix = finalNote.title ? `# ${finalNote.title}\n\n` : '';
-      const fullContent = titlePrefix + markdownContent;
+
+      // Create metadata as JSON in HTML comment at the end of the file
+      const metadata: Record<string, any> = {};
+      if (finalNote.color) {
+        metadata.color = finalNote.color;
+      }
+      if (finalNote.pinned !== undefined) {
+        metadata.pinned = finalNote.pinned;
+      }
+
+      // Only add metadata comment if there's actual metadata to store
+      const metadataComment = Object.keys(metadata).length > 0
+        ? `\n\n<!-- scribble-metadata: ${JSON.stringify(metadata)} -->`
+        : '';
+
+      const fullContent = titlePrefix + markdownContent + metadataComment;
 
       // Save to file
       console.log('Calling saveNoteToFile with:', {

@@ -26,6 +26,9 @@ contextBridge.exposeInMainWorld('windowControls', {
   maximize: () => ipcRenderer.invoke('window-maximize'),
   close: () => ipcRenderer.invoke('window-close'),
   moveWindow: (moveX: number, moveY: number) => ipcRenderer.invoke('window-move', moveX, moveY),
+  togglePin: (shouldPin: boolean) => ipcRenderer.invoke('window-toggle-pin', shouldPin),
+  isPinned: () => ipcRenderer.invoke('window-is-pinned'),
+  setPinState: (noteId: string, isPinned: boolean) => ipcRenderer.invoke('window-set-pin-state', noteId, isPinned),
 })
 
 // Expose specific APIs for note management
@@ -43,6 +46,10 @@ contextBridge.exposeInMainWorld('settings', {
   isSettingsWindow: () => ipcRenderer.invoke('is-settings-window'),
   selectDirectory: () => ipcRenderer.invoke('select-directory'),
   getDefaultSaveLocation: () => ipcRenderer.invoke('get-default-save-location'),
+  setAutoLaunch: (enabled: boolean) => ipcRenderer.invoke('set-auto-launch', enabled),
+  getAutoLaunch: () => ipcRenderer.invoke('get-auto-launch'),
+  settingsUpdated: () => ipcRenderer.send('settings-updated'),
+  themeChanged: (theme: string) => ipcRenderer.send('theme-changed', theme),
 })
 
 // Expose file operation APIs
