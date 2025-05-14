@@ -44,7 +44,12 @@ electron.contextBridge.exposeInMainWorld("settings", {
   settingsUpdated: () => electron.ipcRenderer.send("settings-updated"),
   themeChanged: (theme) => electron.ipcRenderer.send("theme-changed", theme),
   syncSettings: (settings) => electron.ipcRenderer.invoke("sync-settings", settings),
-  getMainProcessSettings: () => electron.ipcRenderer.invoke("get-main-process-settings")
+  getMainProcessSettings: () => electron.ipcRenderer.invoke("get-main-process-settings"),
+  onSettingsUpdateAcknowledged: (callback) => {
+    const wrappedCallback = (_, acknowledged) => callback(acknowledged);
+    electron.ipcRenderer.on("settings-update-acknowledged", wrappedCallback);
+    return () => electron.ipcRenderer.removeListener("settings-update-acknowledged", wrappedCallback);
+  }
 });
 electron.contextBridge.exposeInMainWorld("fileOps", {
   saveNoteToFile: (noteId, title, content, saveLocation, oldTitle) => electron.ipcRenderer.invoke("save-note-to-file", noteId, title, content, saveLocation, oldTitle),

@@ -53,6 +53,7 @@ interface Window {
     themeChanged: (theme: string) => void;
     syncSettings: (settings: Record<string, unknown>) => Promise<boolean>;
     getMainProcessSettings: () => Promise<Record<string, unknown>>;
+    onSettingsUpdateAcknowledged: (callback: (acknowledged: boolean) => void) => () => void;
   };
 
   // File operations

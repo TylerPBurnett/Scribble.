@@ -52,6 +52,11 @@ contextBridge.exposeInMainWorld('settings', {
   themeChanged: (theme: string) => ipcRenderer.send('theme-changed', theme),
   syncSettings: (settings: Record<string, unknown>) => ipcRenderer.invoke('sync-settings', settings),
   getMainProcessSettings: () => ipcRenderer.invoke('get-main-process-settings'),
+  onSettingsUpdateAcknowledged: (callback: (acknowledged: boolean) => void) => {
+    const wrappedCallback = (_: any, acknowledged: boolean) => callback(acknowledged);
+    ipcRenderer.on('settings-update-acknowledged', wrappedCallback);
+    return () => ipcRenderer.removeListener('settings-update-acknowledged', wrappedCallback);
+  },
 })
 
 // Expose file operation APIs

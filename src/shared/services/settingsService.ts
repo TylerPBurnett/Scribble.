@@ -11,8 +11,7 @@ const DEFAULT_SETTINGS = {
   minimizeToTray: true,
   globalHotkeys: {
     newNote: 'CommandOrControl+Alt+N',
-    toggleApp: 'CommandOrControl+Alt+S',  // New property name
-    showApp: 'CommandOrControl+Alt+S'     // Keep old property name for backward compatibility
+    toggleApp: 'CommandOrControl+Alt+S'  // canonical
   }
 };
 
@@ -28,8 +27,8 @@ export interface AppSettings {
   minimizeToTray?: boolean;
   globalHotkeys?: {
     newNote: string;
-    toggleApp?: string;  // New property name
-    showApp?: string;    // Keep old property name for backward compatibility
+    toggleApp?: string;  // canonical property name
+    showApp?: string;    // legacy alias, derived programmatically when needed
   };
 }
 
@@ -80,16 +79,21 @@ export const saveSettings = (settings: AppSettings): void => {
 
   // Ensure globalHotkeys is properly set
   if (!settings.globalHotkeys) {
-    settings.globalHotkeys = DEFAULT_SETTINGS.globalHotkeys;
+    settings = {                        // create a shallow copy first
+      ...settings,
+      globalHotkeys: { ...DEFAULT_SETTINGS.globalHotkeys }
+    };
     console.log('Added default global hotkeys to settings');
   } else {
-    // Ensure both toggleApp and showApp properties are set for backward compatibility
-    if (settings.globalHotkeys.toggleApp && !settings.globalHotkeys.showApp) {
-      settings.globalHotkeys.showApp = settings.globalHotkeys.toggleApp;
-      console.log('Added showApp property for backward compatibility');
-    } else if (settings.globalHotkeys.showApp && !settings.globalHotkeys.toggleApp) {
+    // Migrate from showApp to toggleApp if needed (prioritize toggleApp as canonical)
+    if (settings.globalHotkeys.showApp && !settings.globalHotkeys.toggleApp) {
       settings.globalHotkeys.toggleApp = settings.globalHotkeys.showApp;
-      console.log('Added toggleApp property for backward compatibility');
+      console.log('Migrated from showApp to toggleApp (canonical property)');
+    }
+
+    // Always ensure showApp is set based on toggleApp for backward compatibility
+    if (settings.globalHotkeys.toggleApp) {
+      settings.globalHotkeys.showApp = settings.globalHotkeys.toggleApp;
     }
   }
 
@@ -117,50 +121,93 @@ export const saveSettings = (settings: AppSettings): void => {
   // Log the exact object we're sending to the main process
   console.log('Full settings object being sent to main process:', JSON.stringify(settingsCopy, null, 2));
 
+  // First sync the settings to the main process
   window.settings.syncSettings(settingsCopy as unknown as Record<string, unknown>)
-    .then(success => {
+    .then(async success => {
       console.log('Settings synced with main process:', success);
+
+      // Set up acknowledgment listener before sending the update
+      const acknowledgmentPromise = new Promise<boolean>((resolve) => {
+        // Use type assertion to access the new method
+        type SettingsWithAcknowledgement = typeof window.settings & {
+          onSettingsUpdateAcknowledged?: (callback: (acknowledged: boolean) => void) => () => void;
+        };
+        const onSettingsUpdateAcknowledged = (window.settings as SettingsWithAcknowledgement).onSettingsUpdateAcknowledged;
+
+        if (typeof onSettingsUpdateAcknowledged === 'function') {
+          const cleanup = onSettingsUpdateAcknowledged((acknowledged: boolean) => {
+            console.log('Received settings update acknowledgment:', acknowledged);
+            cleanup(); // Remove the listener once we get a response
+            resolve(acknowledged);
+          });
+
+          // Set a timeout in case we don't get an acknowledgment
+          setTimeout(() => {
+            cleanup(); // Clean up the listener
+            console.warn('No acknowledgment received from main process after 2 seconds');
+            resolve(false);
+          }, 2000);
+        } else {
+          // If the function doesn't exist (older app version), resolve immediately
+          console.warn('onSettingsUpdateAcknowledged not available, skipping acknowledgment wait');
+          resolve(true);
+        }
+      });
 
       // After successful sync, notify the main process to update hotkeys
       window.settings.settingsUpdated();
       console.log('Notified main process that settings were updated');
 
-      // Double-check that the settings were saved correctly
-      setTimeout(async () => {
-        try {
-          const mainProcessSettings = await window.settings.getMainProcessSettings();
-          console.log('Verification - settings in main process after sync:',
-            JSON.stringify(mainProcessSettings, null, 2));
+      // Wait for acknowledgment or timeout
+      const acknowledged = await acknowledgmentPromise;
 
-          if (mainProcessSettings.globalHotkeys) {
-            console.log('Verification - global hotkeys in main process:',
-              JSON.stringify(mainProcessSettings.globalHotkeys, null, 2));
+      if (!acknowledged) {
+        console.warn('Settings update was not acknowledged by main process, verifying manually');
+      }
 
-            // Compare with what we sent
-            const mainHotkeys = mainProcessSettings.globalHotkeys as {
-              newNote: string;
-              toggleApp?: string;
-              showApp?: string;
-            };
+      // Verify settings were saved correctly by explicitly requesting confirmation
+      try {
+        // Get the updated settings from the main process
+        const mainProcessSettings = await window.settings.getMainProcessSettings();
+        console.log('Verification - settings in main process after sync:',
+          JSON.stringify(mainProcessSettings, null, 2));
 
-            const hotkeysMatch =
-              mainHotkeys.newNote === settings.globalHotkeys?.newNote &&
-              (
-                // Check either toggleApp or showApp property, depending on which one is used
-                (mainHotkeys.toggleApp !== undefined &&
-                 mainHotkeys.toggleApp === settings.globalHotkeys?.toggleApp) ||
-                (mainHotkeys.showApp !== undefined &&
-                 mainHotkeys.showApp === settings.globalHotkeys?.showApp)
-              );
+        if (mainProcessSettings.globalHotkeys) {
+          console.log('Verification - global hotkeys in main process:',
+            JSON.stringify(mainProcessSettings.globalHotkeys, null, 2));
 
-            console.log(`Verification - hotkeys match what we sent: ${hotkeysMatch}`);
-          } else {
-            console.error('Verification - No global hotkeys found in main process settings!');
+          // Compare with what we sent
+          const mainHotkeys = mainProcessSettings.globalHotkeys as {
+            newNote: string;
+            toggleApp?: string;
+            showApp?: string;
+          };
+
+          const hotkeysMatch =
+            mainHotkeys.newNote === settings.globalHotkeys?.newNote &&
+            (
+              // Check both toggleApp and showApp properties properly
+              (settings.globalHotkeys?.toggleApp !== undefined ?
+                mainHotkeys.toggleApp === settings.globalHotkeys.toggleApp : true) &&
+              (settings.globalHotkeys?.showApp !== undefined ?
+                mainHotkeys.showApp === settings.globalHotkeys.showApp : true)
+            );
+
+          console.log(`Verification - hotkeys match what we sent: ${hotkeysMatch}`);
+
+          // If hotkeys don't match, try to resync them
+          if (!hotkeysMatch) {
+            console.warn('Hotkeys in main process do not match what was sent. Attempting to resync...');
+            await window.settings.syncSettings(settingsCopy as unknown as Record<string, unknown>);
+            window.settings.settingsUpdated();
+            console.log('Settings resynced due to verification mismatch');
           }
-        } catch (error) {
-          console.error('Error verifying settings in main process:', error);
+        } else {
+          console.error('Verification - No global hotkeys found in main process settings!');
         }
-      }, 500); // Wait a bit to ensure settings are saved
+      } catch (error) {
+        console.error('Error verifying settings in main process:', error);
+      }
     })
     .catch(error => {
       console.error('Error syncing settings with main process:', error);
@@ -187,15 +234,17 @@ export const initSettings = async (): Promise<AppSettings> => {
   }
 
   let needsUpdate = false;
-  let updatedSettings = { ...storedSettings };
+  const updatedSettings = { ...storedSettings };
 
   // If we have global hotkeys in the main process but not in localStorage, use those
   if (mainProcessSettings.globalHotkeys && (!storedSettings.globalHotkeys || Object.keys(storedSettings.globalHotkeys).length === 0)) {
     console.log('Using global hotkeys from main process');
-    updatedSettings.globalHotkeys = mainProcessSettings.globalHotkeys as {
-      newNote: string;
-      toggleApp?: string;
-      showApp?: string;
+    updatedSettings.globalHotkeys = {
+      ...(mainProcessSettings.globalHotkeys as {
+        newNote: string;
+        toggleApp?: string;
+        showApp?: string;
+      })
     };
 
     // Migrate from showApp to toggleApp if needed
@@ -252,13 +301,22 @@ export const initSettings = async (): Promise<AppSettings> => {
   // Ensure globalHotkeys is set
   if (!updatedSettings.globalHotkeys) {
     console.log('Setting default global hotkeys');
-    updatedSettings.globalHotkeys = DEFAULT_SETTINGS.globalHotkeys;
+    updatedSettings.globalHotkeys = { ...DEFAULT_SETTINGS.globalHotkeys };
     needsUpdate = true;
   } else {
-    // Migrate from showApp to toggleApp if needed
+    // Migrate from showApp to toggleApp if needed (prioritize toggleApp as canonical)
     if (updatedSettings.globalHotkeys.showApp && !updatedSettings.globalHotkeys.toggleApp) {
-      console.log('Migrating from showApp to toggleApp');
+      console.log('Migrating from showApp to toggleApp (canonical property)');
       updatedSettings.globalHotkeys.toggleApp = updatedSettings.globalHotkeys.showApp;
+      needsUpdate = true;
+    }
+
+    // Always ensure showApp is set based on toggleApp for backward compatibility
+    if (updatedSettings.globalHotkeys.toggleApp &&
+        (!updatedSettings.globalHotkeys.showApp ||
+         updatedSettings.globalHotkeys.showApp !== updatedSettings.globalHotkeys.toggleApp)) {
+      console.log('Setting showApp based on toggleApp for backward compatibility');
+      updatedSettings.globalHotkeys.showApp = updatedSettings.globalHotkeys.toggleApp;
       needsUpdate = true;
     }
   }

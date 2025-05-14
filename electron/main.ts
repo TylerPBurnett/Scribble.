@@ -13,9 +13,10 @@ interface SettingsType {
     [key: string]: string | undefined;
   };
   globalHotkeys?: {
-    newNote: string;
-    showApp: string;
-    [key: string]: string;
+    newNote?: string;
+    toggleApp?: string;  // <-- new preferred name
+    showApp?: string;    // <-- legacy name kept for BC
+    [key: string]: string | undefined;
   };
   [key: string]: unknown;
 }
@@ -500,16 +501,15 @@ function createTray() {
   })
 }
 
-// Default global hotkeys
-const DEFAULT_GLOBAL_HOTKEYS = {
-  newNote: 'CommandOrControl+Alt+N',
-  toggleApp: 'CommandOrControl+Alt+S',  // New property name
-  showApp: 'CommandOrControl+Alt+S'     // Keep old property name for backward compatibility
+// Default global hotkeys - use non-optional types here since these are guaranteed to exist
+const DEFAULT_GLOBAL_HOTKEYS: Readonly<Record<string, string>> = {
+  newNote  : 'CommandOrControl+Alt+N',
+  toggleApp: 'CommandOrControl+Alt+S',
 };
 
 // Register global hotkeys
 function registerGlobalHotkeys() {
-  // First, unregister ALL global shortcuts to ensure no old ones remain
+  // One call is sufficient - it clears every shortcut registered by this app
   console.log('Unregistering all global shortcuts');
   globalShortcut.unregisterAll();
 
@@ -527,36 +527,14 @@ function registerGlobalHotkeys() {
 
   // Compare with defaults to see if they're different
   const usingDefaults =
-    globalHotkeys.newNote === DEFAULT_GLOBAL_HOTKEYS.newNote &&
-    (globalHotkeys.toggleApp === DEFAULT_GLOBAL_HOTKEYS.toggleApp ||
-     globalHotkeys.showApp === DEFAULT_GLOBAL_HOTKEYS.toggleApp); // Support both old and new property names
+    globalHotkeys?.newNote === DEFAULT_GLOBAL_HOTKEYS.newNote &&
+    ((globalHotkeys?.toggleApp === DEFAULT_GLOBAL_HOTKEYS.toggleApp) ||
+     (globalHotkeys?.showApp === DEFAULT_GLOBAL_HOTKEYS.toggleApp)); // Support both old and new property names
 
   console.log(`Using default hotkeys: ${usingDefaults}`);
 
-  // Also unregister the default hotkeys explicitly to be extra safe
-  try {
-    globalShortcut.unregister(DEFAULT_GLOBAL_HOTKEYS.newNote);
-    globalShortcut.unregister(DEFAULT_GLOBAL_HOTKEYS.toggleApp);
-    globalShortcut.unregister(DEFAULT_GLOBAL_HOTKEYS.showApp);
-  } catch (e) {
-    // Ignore errors when unregistering
-  }
-
-  // Try to unregister any other potential hotkeys that might be registered
-  try {
-    // Unregister common variations
-    globalShortcut.unregister('CommandOrControl+Alt+N');
-    globalShortcut.unregister('CommandOrControl+Alt+S');
-    globalShortcut.unregister('Command+Alt+N');
-    globalShortcut.unregister('Command+Alt+S');
-    globalShortcut.unregister('Control+Alt+N');
-    globalShortcut.unregister('Control+Alt+S');
-  } catch (e) {
-    // Ignore errors when unregistering
-  }
-
   // Register global hotkey for creating a new note
-  const newNoteHotkey = globalHotkeys.newNote;
+  const newNoteHotkey = globalHotkeys?.newNote;
   if (newNoteHotkey) {
     try {
       console.log(`Attempting to register global hotkey for new note: ${newNoteHotkey}`);
@@ -590,7 +568,7 @@ function registerGlobalHotkeys() {
 
   // Register global hotkey for toggling the app visibility
   // Support both old (showApp) and new (toggleApp) property names for backward compatibility
-  const toggleAppHotkey = globalHotkeys.toggleApp || globalHotkeys.showApp;
+  const toggleAppHotkey = globalHotkeys?.toggleApp || globalHotkeys?.showApp;
   if (toggleAppHotkey) {
     try {
       console.log(`Attempting to register global hotkey for toggling app: ${toggleAppHotkey}`);
@@ -642,11 +620,11 @@ function registerGlobalHotkeys() {
   }
 
   // Also check default hotkeys
-  if (globalShortcut.isRegistered(DEFAULT_GLOBAL_HOTKEYS.newNote)) {
+  if (DEFAULT_GLOBAL_HOTKEYS.newNote && globalShortcut.isRegistered(DEFAULT_GLOBAL_HOTKEYS.newNote)) {
     allRegisteredShortcuts.push(DEFAULT_GLOBAL_HOTKEYS.newNote);
   }
 
-  if (globalShortcut.isRegistered(DEFAULT_GLOBAL_HOTKEYS.toggleApp)) {
+  if (DEFAULT_GLOBAL_HOTKEYS.toggleApp && globalShortcut.isRegistered(DEFAULT_GLOBAL_HOTKEYS.toggleApp)) {
     allRegisteredShortcuts.push(DEFAULT_GLOBAL_HOTKEYS.toggleApp);
   }
 
@@ -660,12 +638,26 @@ function formatAccelerator(hotkey: string | undefined): string {
   if (!hotkey) return '';
 
   try {
-    // Split the hotkey into parts
-    const parts = hotkey.split('+');
+    // Define recognized modifiers
+    const modifiers = ['CommandOrControl', 'Command', 'Control', 'Alt', 'Option', 'Shift', 'Meta'];
+
+    // Split the hotkey into parts and filter out empty strings
+    const parts = hotkey.split('+').filter(Boolean);
+
+    // Normalize case & filter duplicates
+    const normalizedParts = parts
+      .map(p => {
+        // Normalize common lower-case user input
+        const canonical = modifiers.find(m => m.toLowerCase() === p.toLowerCase());
+        return canonical || p;
+      })
+      // Filter out duplicates (case-insensitive)
+      .filter((part, index, self) =>
+        self.findIndex(p => p.toLowerCase() === part.toLowerCase()) === index
+      );
 
     // Sort modifiers to come first
-    const modifiers = ['CommandOrControl', 'Command', 'Control', 'Alt', 'Option', 'Shift', 'Meta'];
-    parts.sort((a, b) => {
+    normalizedParts.sort((a, b) => {
       const aIndex = modifiers.indexOf(a);
       const bIndex = modifiers.indexOf(b);
 
@@ -676,7 +668,7 @@ function formatAccelerator(hotkey: string | undefined): string {
     });
 
     // Join the parts back together
-    return parts.join('+');
+    return normalizedParts.join('+');
   } catch (error) {
     console.error('Error formatting accelerator:', error, 'hotkey:', hotkey);
     return '';
@@ -1042,7 +1034,7 @@ ipcMain.handle('sync-settings', (_, settings) => {
 
     // Ensure globalHotkeys is properly set
     if (!settings.globalHotkeys) {
-      settings.globalHotkeys = DEFAULT_GLOBAL_HOTKEYS;
+      settings.globalHotkeys = { ...DEFAULT_GLOBAL_HOTKEYS };
       console.log('Added default global hotkeys to settings');
     }
 
@@ -1077,6 +1069,53 @@ ipcMain.handle('sync-settings', (_, settings) => {
         toggleApp: toggleAppHotkey,
         toggleAppRegistered
       });
+
+      // If hotkeys failed to register, try again
+      if ((globalHotkeys.newNote && !newNoteRegistered) ||
+          (toggleAppHotkey && !toggleAppRegistered)) {
+        console.warn('Some hotkeys failed to register. Trying again...');
+
+        // Try unregistering again to be sure
+        globalShortcut.unregisterAll();
+
+        // And register again
+        registerGlobalHotkeys();
+
+        // Final verification
+        const finalNewNoteRegistered = globalHotkeys.newNote ?
+          globalShortcut.isRegistered(formatAccelerator(globalHotkeys.newNote)) : false;
+        const finalToggleAppRegistered = toggleAppHotkey ?
+          globalShortcut.isRegistered(formatAccelerator(toggleAppHotkey)) : false;
+
+        console.log('Final hotkey registration verification:', {
+          newNote: globalHotkeys.newNote,
+          newNoteRegistered: finalNewNoteRegistered,
+          toggleApp: toggleAppHotkey,
+          toggleAppRegistered: finalToggleAppRegistered
+        });
+      }
+    }
+
+    // Double-check that the settings were actually saved to the store
+    const savedSettings = settingsStore.get('settings');
+    console.log('Verification - settings in store after sync:', savedSettings);
+
+    // Ensure the saved settings match what was passed in
+    if (savedSettings && settings.globalHotkeys &&
+        (savedSettings as SettingsType).globalHotkeys) {
+      const savedHotkeys = (savedSettings as SettingsType).globalHotkeys;
+
+      // Check if the required properties match, handling optional properties
+      const settingsMatch =
+        (savedHotkeys?.newNote === settings.globalHotkeys?.newNote) &&
+        (savedHotkeys?.toggleApp === settings.globalHotkeys?.toggleApp);
+
+      console.log(`Verification - settings match what was sent: ${settingsMatch}`);
+
+      if (!settingsMatch) {
+        console.warn('Settings in store do not match what was sent. Saving again...');
+        settingsStore.set('settings', settings);
+      }
     }
 
     return true;
@@ -1100,27 +1139,15 @@ ipcMain.handle('get-main-process-settings', () => {
 });
 
 // Update global hotkeys when settings change
-ipcMain.on('settings-updated', () => {
+ipcMain.on('settings-updated', (event) => {
   console.log('Received settings-updated event');
 
-  // Unregister all shortcuts first
+  // Get the sender window to send acknowledgment
+  const senderWindow = BrowserWindow.fromWebContents(event.sender);
+
+  // One call is sufficient - it clears every shortcut registered by this app
   console.log('Unregistering all shortcuts due to settings update');
   globalShortcut.unregisterAll();
-
-  // Explicitly unregister default hotkeys and common variations
-  try {
-    globalShortcut.unregister(DEFAULT_GLOBAL_HOTKEYS.newNote);
-    globalShortcut.unregister(DEFAULT_GLOBAL_HOTKEYS.toggleApp);
-    globalShortcut.unregister(DEFAULT_GLOBAL_HOTKEYS.showApp);
-    globalShortcut.unregister('CommandOrControl+Alt+N');
-    globalShortcut.unregister('CommandOrControl+Alt+S');
-    globalShortcut.unregister('Command+Alt+N');
-    globalShortcut.unregister('Command+Alt+S');
-    globalShortcut.unregister('Control+Alt+N');
-    globalShortcut.unregister('Control+Alt+S');
-  } catch (e) {
-    // Ignore errors when unregistering
-  }
 
   // Get the latest settings
   const settingsStore = new Store({ name: 'settings' });
@@ -1132,12 +1159,17 @@ ipcMain.on('settings-updated', () => {
   // Ensure globalHotkeys is properly set
   if (!settings.globalHotkeys) {
     console.log('No global hotkeys found in settings, using defaults');
-    settings.globalHotkeys = DEFAULT_GLOBAL_HOTKEYS;
+    settings.globalHotkeys = { ...DEFAULT_GLOBAL_HOTKEYS };
     settingsStore.set('settings', settings);
   }
 
   // Register them again with new settings
   registerGlobalHotkeys();
+
+  // Send acknowledgment back to the sender window
+  if (senderWindow && !senderWindow.isDestroyed()) {
+    senderWindow.webContents.send('settings-update-acknowledged', true);
+  }
 
   // Verify registration
   if (settings.globalHotkeys) {
@@ -1151,8 +1183,10 @@ ipcMain.on('settings-updated', () => {
       console.log(`New note hotkey ${newNoteHotkey} (formatted: ${formattedHotkey}) registered: ${isRegistered}`);
 
       // Check if default is still registered
-      const defaultRegistered = globalShortcut.isRegistered(DEFAULT_GLOBAL_HOTKEYS.newNote);
-      console.log(`Default new note hotkey still registered: ${defaultRegistered}`);
+      if (DEFAULT_GLOBAL_HOTKEYS.newNote) {
+        const defaultRegistered = globalShortcut.isRegistered(DEFAULT_GLOBAL_HOTKEYS.newNote);
+        console.log(`Default new note hotkey still registered: ${defaultRegistered}`);
+      }
     }
 
     if (toggleAppHotkey) {
@@ -1161,8 +1195,10 @@ ipcMain.on('settings-updated', () => {
       console.log(`Toggle app hotkey ${toggleAppHotkey} (formatted: ${formattedHotkey}) registered: ${isRegistered}`);
 
       // Check if default is still registered
-      const defaultRegistered = globalShortcut.isRegistered(DEFAULT_GLOBAL_HOTKEYS.toggleApp);
-      console.log(`Default toggle app hotkey still registered: ${defaultRegistered}`);
+      if (DEFAULT_GLOBAL_HOTKEYS.toggleApp) {
+        const defaultRegistered = globalShortcut.isRegistered(DEFAULT_GLOBAL_HOTKEYS.toggleApp);
+        console.log(`Default toggle app hotkey still registered: ${defaultRegistered}`);
+      }
     }
   }
 

@@ -94,7 +94,7 @@ export function GlobalHotkeyEditor({
   };
 
   // Handle key up events to finalize hotkey
-  const handleKeyUp = (e: ReactKeyboardEvent<HTMLInputElement>) => {
+  const handleKeyUp = () => {
     if (!isRecording) return;
 
     // If we have at least one non-modifier key, finalize the hotkey
@@ -145,11 +145,11 @@ export function GlobalHotkeyEditor({
       // Log the new hotkey value for debugging
       console.log('New hotkey value set:', newValue);
 
-      // Force immediate update of hotkeys in main process
+      // Ensure settings are updated after the state has been fully updated
       setTimeout(() => {
         console.log('Forcing immediate update of hotkeys in main process');
         window.settings.settingsUpdated();
-      }, 100);
+      }, 0);
 
       // End recording
       setIsRecording(false);
