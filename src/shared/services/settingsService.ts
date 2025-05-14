@@ -11,7 +11,8 @@ const DEFAULT_SETTINGS = {
   minimizeToTray: true,
   globalHotkeys: {
     newNote: 'CommandOrControl+Alt+N',
-    toggleApp: 'CommandOrControl+Alt+S'  // Renamed from showApp to toggleApp to reflect its toggle functionality
+    toggleApp: 'CommandOrControl+Alt+S',  // New property name
+    showApp: 'CommandOrControl+Alt+S'     // Keep old property name for backward compatibility
   }
 };
 
@@ -81,6 +82,15 @@ export const saveSettings = (settings: AppSettings): void => {
   if (!settings.globalHotkeys) {
     settings.globalHotkeys = DEFAULT_SETTINGS.globalHotkeys;
     console.log('Added default global hotkeys to settings');
+  } else {
+    // Ensure both toggleApp and showApp properties are set for backward compatibility
+    if (settings.globalHotkeys.toggleApp && !settings.globalHotkeys.showApp) {
+      settings.globalHotkeys.showApp = settings.globalHotkeys.toggleApp;
+      console.log('Added showApp property for backward compatibility');
+    } else if (settings.globalHotkeys.showApp && !settings.globalHotkeys.toggleApp) {
+      settings.globalHotkeys.toggleApp = settings.globalHotkeys.showApp;
+      console.log('Added toggleApp property for backward compatibility');
+    }
   }
 
   // Save to localStorage

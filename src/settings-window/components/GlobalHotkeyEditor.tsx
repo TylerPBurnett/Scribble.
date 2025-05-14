@@ -142,6 +142,9 @@ export function GlobalHotkeyEditor({
       // Call onChange to update the parent component
       onChange(newValue);
 
+      // Log the new hotkey value for debugging
+      console.log('New hotkey value set:', newValue);
+
       // Force immediate update of hotkeys in main process
       setTimeout(() => {
         console.log('Forcing immediate update of hotkeys in main process');

@@ -503,7 +503,8 @@ function createTray() {
 // Default global hotkeys
 const DEFAULT_GLOBAL_HOTKEYS = {
   newNote: 'CommandOrControl+Alt+N',
-  toggleApp: 'CommandOrControl+Alt+S'  // Renamed from showApp to toggleApp to reflect its toggle functionality
+  toggleApp: 'CommandOrControl+Alt+S',  // New property name
+  showApp: 'CommandOrControl+Alt+S'     // Keep old property name for backward compatibility
 };
 
 // Register global hotkeys
@@ -535,6 +536,7 @@ function registerGlobalHotkeys() {
   // Also unregister the default hotkeys explicitly to be extra safe
   try {
     globalShortcut.unregister(DEFAULT_GLOBAL_HOTKEYS.newNote);
+    globalShortcut.unregister(DEFAULT_GLOBAL_HOTKEYS.toggleApp);
     globalShortcut.unregister(DEFAULT_GLOBAL_HOTKEYS.showApp);
   } catch (e) {
     // Ignore errors when unregistering
@@ -653,26 +655,32 @@ function registerGlobalHotkeys() {
 }
 
 // Helper function to ensure hotkeys are properly formatted for Electron's accelerator
-function formatAccelerator(hotkey: string): string {
+function formatAccelerator(hotkey: string | undefined): string {
+  // Handle undefined, null, or empty string
   if (!hotkey) return '';
 
-  // Split the hotkey into parts
-  const parts = hotkey.split('+');
+  try {
+    // Split the hotkey into parts
+    const parts = hotkey.split('+');
 
-  // Sort modifiers to come first
-  const modifiers = ['CommandOrControl', 'Command', 'Control', 'Alt', 'Option', 'Shift', 'Meta'];
-  parts.sort((a, b) => {
-    const aIndex = modifiers.indexOf(a);
-    const bIndex = modifiers.indexOf(b);
+    // Sort modifiers to come first
+    const modifiers = ['CommandOrControl', 'Command', 'Control', 'Alt', 'Option', 'Shift', 'Meta'];
+    parts.sort((a, b) => {
+      const aIndex = modifiers.indexOf(a);
+      const bIndex = modifiers.indexOf(b);
 
-    if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
-    if (aIndex !== -1) return -1;
-    if (bIndex !== -1) return 1;
-    return 0;
-  });
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      return 0;
+    });
 
-  // Join the parts back together
-  return parts.join('+');
+    // Join the parts back together
+    return parts.join('+');
+  } catch (error) {
+    console.error('Error formatting accelerator:', error, 'hotkey:', hotkey);
+    return '';
+  }
 }
 
 // Get default save location
@@ -1058,14 +1066,16 @@ ipcMain.handle('sync-settings', (_, settings) => {
       const newNoteRegistered = globalHotkeys.newNote ?
         globalShortcut.isRegistered(formatAccelerator(globalHotkeys.newNote)) : false;
 
-      const showAppRegistered = globalHotkeys.showApp ?
-        globalShortcut.isRegistered(formatAccelerator(globalHotkeys.showApp)) : false;
+      // Use toggleApp if available, otherwise fall back to showApp
+      const toggleAppHotkey = globalHotkeys.toggleApp || globalHotkeys.showApp;
+      const toggleAppRegistered = toggleAppHotkey ?
+        globalShortcut.isRegistered(formatAccelerator(toggleAppHotkey)) : false;
 
       console.log('Hotkey registration verification:', {
         newNote: globalHotkeys.newNote,
         newNoteRegistered,
-        showApp: globalHotkeys.showApp,
-        showAppRegistered
+        toggleApp: toggleAppHotkey,
+        toggleAppRegistered
       });
     }
 
@@ -1100,6 +1110,7 @@ ipcMain.on('settings-updated', () => {
   // Explicitly unregister default hotkeys and common variations
   try {
     globalShortcut.unregister(DEFAULT_GLOBAL_HOTKEYS.newNote);
+    globalShortcut.unregister(DEFAULT_GLOBAL_HOTKEYS.toggleApp);
     globalShortcut.unregister(DEFAULT_GLOBAL_HOTKEYS.showApp);
     globalShortcut.unregister('CommandOrControl+Alt+N');
     globalShortcut.unregister('CommandOrControl+Alt+S');
@@ -1131,7 +1142,8 @@ ipcMain.on('settings-updated', () => {
   // Verify registration
   if (settings.globalHotkeys) {
     const newNoteHotkey = settings.globalHotkeys.newNote;
-    const showAppHotkey = settings.globalHotkeys.showApp;
+    // Use toggleApp if available, otherwise fall back to showApp
+    const toggleAppHotkey = settings.globalHotkeys.toggleApp || settings.globalHotkeys.showApp;
 
     if (newNoteHotkey) {
       const formattedHotkey = formatAccelerator(newNoteHotkey);
@@ -1143,14 +1155,14 @@ ipcMain.on('settings-updated', () => {
       console.log(`Default new note hotkey still registered: ${defaultRegistered}`);
     }
 
-    if (showAppHotkey) {
-      const formattedHotkey = formatAccelerator(showAppHotkey);
+    if (toggleAppHotkey) {
+      const formattedHotkey = formatAccelerator(toggleAppHotkey);
       const isRegistered = globalShortcut.isRegistered(formattedHotkey);
-      console.log(`Show app hotkey ${showAppHotkey} (formatted: ${formattedHotkey}) registered: ${isRegistered}`);
+      console.log(`Toggle app hotkey ${toggleAppHotkey} (formatted: ${formattedHotkey}) registered: ${isRegistered}`);
 
       // Check if default is still registered
-      const defaultRegistered = globalShortcut.isRegistered(DEFAULT_GLOBAL_HOTKEYS.showApp);
-      console.log(`Default show app hotkey still registered: ${defaultRegistered}`);
+      const defaultRegistered = globalShortcut.isRegistered(DEFAULT_GLOBAL_HOTKEYS.toggleApp);
+      console.log(`Default toggle app hotkey still registered: ${defaultRegistered}`);
     }
   }
 

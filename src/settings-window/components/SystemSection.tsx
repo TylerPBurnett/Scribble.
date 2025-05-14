@@ -22,9 +22,16 @@ export function SystemSection({ form, theme = 'dim' }: SystemSectionProps) {
     console.log('Global hotkey changed, updating main process immediately');
     console.log('Current form values:', formValues);
 
-    // Only update if we have both hotkeys
-    if (formValues.globalHotkeys?.newNote &&
-        (formValues.globalHotkeys?.toggleApp || formValues.globalHotkeys?.showApp)) {
+    // Only update if we have the necessary hotkeys
+    // Make sure we have at least the newNote hotkey
+    if (formValues.globalHotkeys?.newNote) {
+      // Ensure we have both toggleApp and showApp properties for backward compatibility
+      if (formValues.globalHotkeys.toggleApp && !formValues.globalHotkeys.showApp) {
+        formValues.globalHotkeys.showApp = formValues.globalHotkeys.toggleApp;
+      } else if (formValues.globalHotkeys.showApp && !formValues.globalHotkeys.toggleApp) {
+        formValues.globalHotkeys.toggleApp = formValues.globalHotkeys.showApp;
+      }
+
       window.settings.syncSettings(formValues as Record<string, unknown>)
         .then(success => {
           console.log('Settings synced from SystemSection:', success);

@@ -96,6 +96,7 @@ export function SettingsDialog({
       globalHotkeys: initialSettings.globalHotkeys || {
         newNote: 'CommandOrControl+Alt+N',
         toggleApp: 'CommandOrControl+Alt+S',
+        showApp: 'CommandOrControl+Alt+S',  // Include both for backward compatibility
       },
     },
   });
@@ -107,6 +108,15 @@ export function SettingsDialog({
       ...values,
       hotkeys,
     } as AppSettings;
+
+    // Ensure both toggleApp and showApp properties are set for backward compatibility
+    if (combinedSettings.globalHotkeys) {
+      if (combinedSettings.globalHotkeys.toggleApp && !combinedSettings.globalHotkeys.showApp) {
+        combinedSettings.globalHotkeys.showApp = combinedSettings.globalHotkeys.toggleApp;
+      } else if (combinedSettings.globalHotkeys.showApp && !combinedSettings.globalHotkeys.toggleApp) {
+        combinedSettings.globalHotkeys.toggleApp = combinedSettings.globalHotkeys.showApp;
+      }
+    }
 
     console.log('Saving settings with global hotkeys:', JSON.stringify(combinedSettings.globalHotkeys, null, 2));
 
