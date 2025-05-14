@@ -98,14 +98,51 @@ export const saveSettings = (settings: AppSettings): void => {
   }
 
   // Sync settings with the main process
-  console.log('Syncing settings with main process, global hotkeys:', settings.globalHotkeys);
-  window.settings.syncSettings(settings as unknown as Record<string, unknown>)
+  console.log('Syncing settings with main process, global hotkeys:', JSON.stringify(settings.globalHotkeys, null, 2));
+
+  // Create a deep copy to ensure we're not passing references
+  const settingsCopy = JSON.parse(JSON.stringify(settings));
+
+  // Log the exact object we're sending to the main process
+  console.log('Full settings object being sent to main process:', JSON.stringify(settingsCopy, null, 2));
+
+  window.settings.syncSettings(settingsCopy as unknown as Record<string, unknown>)
     .then(success => {
       console.log('Settings synced with main process:', success);
 
       // After successful sync, notify the main process to update hotkeys
       window.settings.settingsUpdated();
       console.log('Notified main process that settings were updated');
+
+      // Double-check that the settings were saved correctly
+      setTimeout(async () => {
+        try {
+          const mainProcessSettings = await window.settings.getMainProcessSettings();
+          console.log('Verification - settings in main process after sync:',
+            JSON.stringify(mainProcessSettings, null, 2));
+
+          if (mainProcessSettings.globalHotkeys) {
+            console.log('Verification - global hotkeys in main process:',
+              JSON.stringify(mainProcessSettings.globalHotkeys, null, 2));
+
+            // Compare with what we sent
+            const mainHotkeys = mainProcessSettings.globalHotkeys as {
+              newNote: string;
+              showApp: string;
+            };
+
+            const hotkeysMatch =
+              mainHotkeys.newNote === settings.globalHotkeys?.newNote &&
+              mainHotkeys.showApp === settings.globalHotkeys?.showApp;
+
+            console.log(`Verification - hotkeys match what we sent: ${hotkeysMatch}`);
+          } else {
+            console.error('Verification - No global hotkeys found in main process settings!');
+          }
+        } catch (error) {
+          console.error('Error verifying settings in main process:', error);
+        }
+      }, 500); // Wait a bit to ensure settings are saved
     })
     .catch(error => {
       console.error('Error syncing settings with main process:', error);

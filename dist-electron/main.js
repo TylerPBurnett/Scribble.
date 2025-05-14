@@ -16683,18 +16683,32 @@ function registerGlobalHotkeys() {
   globalShortcut.unregisterAll();
   const settingsStore = new ElectronStore({ name: "settings" });
   const settings = settingsStore.get("settings") || {};
+  console.log("Full settings from store:", JSON.stringify(settings, null, 2));
   const globalHotkeys = settings.globalHotkeys || DEFAULT_GLOBAL_HOTKEYS;
   console.log("Registering global hotkeys:", JSON.stringify(globalHotkeys, null, 2));
+  const usingDefaults = globalHotkeys.newNote === DEFAULT_GLOBAL_HOTKEYS.newNote && globalHotkeys.showApp === DEFAULT_GLOBAL_HOTKEYS.showApp;
+  console.log(`Using default hotkeys: ${usingDefaults}`);
   try {
     globalShortcut.unregister(DEFAULT_GLOBAL_HOTKEYS.newNote);
     globalShortcut.unregister(DEFAULT_GLOBAL_HOTKEYS.showApp);
+  } catch (e) {
+  }
+  try {
+    globalShortcut.unregister("CommandOrControl+Alt+N");
+    globalShortcut.unregister("CommandOrControl+Alt+S");
+    globalShortcut.unregister("Command+Alt+N");
+    globalShortcut.unregister("Command+Alt+S");
+    globalShortcut.unregister("Control+Alt+N");
+    globalShortcut.unregister("Control+Alt+S");
   } catch (e) {
   }
   const newNoteHotkey = globalHotkeys.newNote;
   if (newNoteHotkey) {
     try {
       console.log(`Attempting to register global hotkey for new note: ${newNoteHotkey}`);
-      const success = globalShortcut.register(newNoteHotkey, () => {
+      const formattedHotkey = formatAccelerator(newNoteHotkey);
+      console.log(`Formatted hotkey for new note: ${formattedHotkey}`);
+      const success = globalShortcut.register(formattedHotkey, () => {
         const noteId = `new-${Date.now().toString(36)}`;
         createNoteWindow(noteId);
         if (mainWindow && !mainWindow.isVisible()) {
@@ -16702,9 +16716,9 @@ function registerGlobalHotkeys() {
         }
       });
       if (success) {
-        console.log(`Successfully registered global hotkey for new note: ${newNoteHotkey}`);
+        console.log(`Successfully registered global hotkey for new note: ${formattedHotkey}`);
       } else {
-        console.error(`Failed to register global hotkey for new note: ${newNoteHotkey} - registration returned false`);
+        console.error(`Failed to register global hotkey for new note: ${formattedHotkey} - registration returned false`);
       }
     } catch (error2) {
       console.error(`Error registering global hotkey for new note: ${newNoteHotkey}`, error2);
@@ -16716,7 +16730,9 @@ function registerGlobalHotkeys() {
   if (showAppHotkey) {
     try {
       console.log(`Attempting to register global hotkey for showing app: ${showAppHotkey}`);
-      const success = globalShortcut.register(showAppHotkey, () => {
+      const formattedHotkey = formatAccelerator(showAppHotkey);
+      console.log(`Formatted hotkey for show app: ${formattedHotkey}`);
+      const success = globalShortcut.register(formattedHotkey, () => {
         if (mainWindow) {
           mainWindow.show();
           mainWindow.focus();
@@ -16725,9 +16741,9 @@ function registerGlobalHotkeys() {
         }
       });
       if (success) {
-        console.log(`Successfully registered global hotkey for showing app: ${showAppHotkey}`);
+        console.log(`Successfully registered global hotkey for showing app: ${formattedHotkey}`);
       } else {
-        console.error(`Failed to register global hotkey for showing app: ${showAppHotkey} - registration returned false`);
+        console.error(`Failed to register global hotkey for showing app: ${formattedHotkey} - registration returned false`);
       }
     } catch (error2) {
       console.error(`Error registering global hotkey for showing app: ${showAppHotkey}`, error2);
@@ -16735,12 +16751,35 @@ function registerGlobalHotkeys() {
   } else {
     console.log("No show app hotkey defined, skipping registration");
   }
-  const registeredShortcuts = globalShortcut.isRegistered(newNoteHotkey) ? [newNoteHotkey] : [];
-  if (globalShortcut.isRegistered(showAppHotkey)) {
-    registeredShortcuts.push(showAppHotkey);
+  const allRegisteredShortcuts = [];
+  if (newNoteHotkey && globalShortcut.isRegistered(formatAccelerator(newNoteHotkey))) {
+    allRegisteredShortcuts.push(formatAccelerator(newNoteHotkey));
   }
-  console.log("Currently registered global shortcuts:", registeredShortcuts);
+  if (showAppHotkey && globalShortcut.isRegistered(formatAccelerator(showAppHotkey))) {
+    allRegisteredShortcuts.push(formatAccelerator(showAppHotkey));
+  }
+  if (globalShortcut.isRegistered(DEFAULT_GLOBAL_HOTKEYS.newNote)) {
+    allRegisteredShortcuts.push(DEFAULT_GLOBAL_HOTKEYS.newNote);
+  }
+  if (globalShortcut.isRegistered(DEFAULT_GLOBAL_HOTKEYS.showApp)) {
+    allRegisteredShortcuts.push(DEFAULT_GLOBAL_HOTKEYS.showApp);
+  }
+  console.log("Currently registered global shortcuts:", allRegisteredShortcuts);
   console.log("Global hotkeys registration complete");
+}
+function formatAccelerator(hotkey) {
+  if (!hotkey) return "";
+  const parts = hotkey.split("+");
+  const modifiers = ["CommandOrControl", "Command", "Control", "Alt", "Option", "Shift", "Meta"];
+  parts.sort((a, b) => {
+    const aIndex = modifiers.indexOf(a);
+    const bIndex = modifiers.indexOf(b);
+    if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+    if (aIndex !== -1) return -1;
+    if (bIndex !== -1) return 1;
+    return 0;
+  });
+  return parts.join("+");
 }
 function getDefaultSaveLocation() {
   const userDataPath = app$1.getPath("userData");
@@ -17006,11 +17045,26 @@ ipcMain$1.handle("get-auto-launch", async () => {
 ipcMain$1.handle("sync-settings", (_, settings) => {
   try {
     console.log("Syncing settings from renderer to main process:", settings);
+    if (!settings.globalHotkeys) {
+      settings.globalHotkeys = DEFAULT_GLOBAL_HOTKEYS;
+      console.log("Added default global hotkeys to settings");
+    }
     const settingsStore = new ElectronStore({ name: "settings" });
     settingsStore.set("settings", settings);
     console.log("Settings synced successfully");
     globalShortcut.unregisterAll();
     registerGlobalHotkeys();
+    const globalHotkeys = settings.globalHotkeys;
+    if (globalHotkeys) {
+      const newNoteRegistered = globalHotkeys.newNote ? globalShortcut.isRegistered(formatAccelerator(globalHotkeys.newNote)) : false;
+      const showAppRegistered = globalHotkeys.showApp ? globalShortcut.isRegistered(formatAccelerator(globalHotkeys.showApp)) : false;
+      console.log("Hotkey registration verification:", {
+        newNote: globalHotkeys.newNote,
+        newNoteRegistered,
+        showApp: globalHotkeys.showApp,
+        showAppRegistered
+      });
+    }
     return true;
   } catch (error2) {
     console.error("Error syncing settings:", error2);
@@ -17029,8 +17083,51 @@ ipcMain$1.handle("get-main-process-settings", () => {
   }
 });
 ipcMain$1.on("settings-updated", () => {
+  console.log("Received settings-updated event");
+  console.log("Unregistering all shortcuts due to settings update");
   globalShortcut.unregisterAll();
+  try {
+    globalShortcut.unregister(DEFAULT_GLOBAL_HOTKEYS.newNote);
+    globalShortcut.unregister(DEFAULT_GLOBAL_HOTKEYS.showApp);
+    globalShortcut.unregister("CommandOrControl+Alt+N");
+    globalShortcut.unregister("CommandOrControl+Alt+S");
+    globalShortcut.unregister("Command+Alt+N");
+    globalShortcut.unregister("Command+Alt+S");
+    globalShortcut.unregister("Control+Alt+N");
+    globalShortcut.unregister("Control+Alt+S");
+  } catch (e) {
+  }
+  const settingsStore = new ElectronStore({ name: "settings" });
+  const settings = settingsStore.get("settings") || {};
+  console.log(
+    "Retrieved latest settings for hotkey registration:",
+    settings.globalHotkeys ? JSON.stringify(settings.globalHotkeys, null, 2) : "No global hotkeys found"
+  );
+  if (!settings.globalHotkeys) {
+    console.log("No global hotkeys found in settings, using defaults");
+    settings.globalHotkeys = DEFAULT_GLOBAL_HOTKEYS;
+    settingsStore.set("settings", settings);
+  }
   registerGlobalHotkeys();
+  if (settings.globalHotkeys) {
+    const newNoteHotkey = settings.globalHotkeys.newNote;
+    const showAppHotkey = settings.globalHotkeys.showApp;
+    if (newNoteHotkey) {
+      const formattedHotkey = formatAccelerator(newNoteHotkey);
+      const isRegistered = globalShortcut.isRegistered(formattedHotkey);
+      console.log(`New note hotkey ${newNoteHotkey} (formatted: ${formattedHotkey}) registered: ${isRegistered}`);
+      const defaultRegistered = globalShortcut.isRegistered(DEFAULT_GLOBAL_HOTKEYS.newNote);
+      console.log(`Default new note hotkey still registered: ${defaultRegistered}`);
+    }
+    if (showAppHotkey) {
+      const formattedHotkey = formatAccelerator(showAppHotkey);
+      const isRegistered = globalShortcut.isRegistered(formattedHotkey);
+      console.log(`Show app hotkey ${showAppHotkey} (formatted: ${formattedHotkey}) registered: ${isRegistered}`);
+      const defaultRegistered = globalShortcut.isRegistered(DEFAULT_GLOBAL_HOTKEYS.showApp);
+      console.log(`Default show app hotkey still registered: ${defaultRegistered}`);
+    }
+  }
+  console.log("All registered shortcuts after update completed");
 });
 ipcMain$1.on("theme-changed", (event, theme) => {
   console.log("Theme changed in main process:", theme);

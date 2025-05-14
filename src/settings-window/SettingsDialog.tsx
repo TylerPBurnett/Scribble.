@@ -107,6 +107,19 @@ export function SettingsDialog({
       hotkeys,
     } as AppSettings;
 
+    console.log('Saving settings with global hotkeys:', JSON.stringify(combinedSettings.globalHotkeys, null, 2));
+
+    // Force immediate update of global hotkeys
+    window.settings.syncSettings(combinedSettings as unknown as Record<string, unknown>)
+      .then(success => {
+        console.log('Settings synced directly from SettingsDialog:', success);
+        window.settings.settingsUpdated();
+        console.log('Notified main process to update hotkeys');
+      })
+      .catch(error => {
+        console.error('Error syncing settings from SettingsDialog:', error);
+      });
+
     onSave(combinedSettings);
     onOpenChange(false);
   }

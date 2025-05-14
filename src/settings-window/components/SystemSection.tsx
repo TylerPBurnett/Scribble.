@@ -10,6 +10,31 @@ type SystemSectionProps = {
 };
 
 export function SystemSection({ form, theme = 'dim' }: SystemSectionProps) {
+  // Handle global hotkey changes
+  const handleGlobalHotkeyChange = (field: any, value: string) => {
+    // Update the form field
+    field.onChange(value);
+
+    // Get the current form values
+    const formValues = form.getValues();
+
+    // Force immediate update of global hotkeys in main process
+    console.log('Global hotkey changed, updating main process immediately');
+    console.log('Current form values:', formValues);
+
+    // Only update if we have both hotkeys
+    if (formValues.globalHotkeys?.newNote && formValues.globalHotkeys?.showApp) {
+      window.settings.syncSettings(formValues as Record<string, unknown>)
+        .then(success => {
+          console.log('Settings synced from SystemSection:', success);
+          window.settings.settingsUpdated();
+          console.log('Notified main process to update hotkeys');
+        })
+        .catch(error => {
+          console.error('Error syncing settings from SystemSection:', error);
+        });
+    }
+  };
   return (
     <div className="space-y-6 backdrop-blur-sm p-6">
       <h3 className={`text-2xl font-semibold border-b border-border/50 pb-4 ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>System Integration</h3>
@@ -89,7 +114,7 @@ export function SystemSection({ form, theme = 'dim' }: SystemSectionProps) {
                   label="New Note"
                   description="Global hotkey to create a new note"
                   currentValue={field.value}
-                  onChange={field.onChange}
+                  onChange={(value) => handleGlobalHotkeyChange(field, value)}
                   theme={theme}
                 />
               </FormControl>
@@ -108,7 +133,7 @@ export function SystemSection({ form, theme = 'dim' }: SystemSectionProps) {
                   label="Show App"
                   description="Global hotkey to show the main window"
                   currentValue={field.value}
-                  onChange={field.onChange}
+                  onChange={(value) => handleGlobalHotkeyChange(field, value)}
                   theme={theme}
                 />
               </FormControl>

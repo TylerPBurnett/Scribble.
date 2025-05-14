@@ -106,15 +106,18 @@ export function GlobalHotkeyEditor({
       // Finalize the hotkey - convert to Electron accelerator format
       const keysArray = Array.from(pressedKeys);
 
-      // Convert Command to CommandOrControl for cross-platform compatibility
+      // Convert Command/Control to CommandOrControl for cross-platform compatibility
       // and sort keys to ensure modifiers come first
       const modifiers = ['CommandOrControl', 'Alt', 'Shift', 'Meta', 'Command', 'Control'];
 
-      // First map Command to CommandOrControl
+      // First map Command/Control to CommandOrControl
       let mappedKeys = keysArray.map(key => {
-        if (key === 'Command') return 'CommandOrControl';
+        if (key === 'Command' || key === 'Control') return 'CommandOrControl';
         return key;
       });
+
+      // Remove duplicates (in case both Command and Control were pressed)
+      mappedKeys = [...new Set(mappedKeys)];
 
       // Then sort so modifiers come first
       mappedKeys.sort((a, b) => {
@@ -127,9 +130,23 @@ export function GlobalHotkeyEditor({
         return 0;
       });
 
+      // Log the mapping process for debugging
+      console.log('Hotkey mapping process:', {
+        original: keysArray,
+        afterMapping: mappedKeys
+      });
+
       const newValue = mappedKeys.join('+');
       console.log('Final hotkey value:', newValue);
+
+      // Call onChange to update the parent component
       onChange(newValue);
+
+      // Force immediate update of hotkeys in main process
+      setTimeout(() => {
+        console.log('Forcing immediate update of hotkeys in main process');
+        window.settings.settingsUpdated();
+      }, 100);
 
       // End recording
       setIsRecording(false);
