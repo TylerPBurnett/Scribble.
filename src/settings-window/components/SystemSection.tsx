@@ -23,7 +23,8 @@ export function SystemSection({ form, theme = 'dim' }: SystemSectionProps) {
     console.log('Current form values:', formValues);
 
     // Only update if we have both hotkeys
-    if (formValues.globalHotkeys?.newNote && formValues.globalHotkeys?.showApp) {
+    if (formValues.globalHotkeys?.newNote &&
+        (formValues.globalHotkeys?.toggleApp || formValues.globalHotkeys?.showApp)) {
       window.settings.syncSettings(formValues as Record<string, unknown>)
         .then(success => {
           console.log('Settings synced from SystemSection:', success);
@@ -122,16 +123,16 @@ export function SystemSection({ form, theme = 'dim' }: SystemSectionProps) {
           )}
         />
 
-        {/* Show App Global Hotkey */}
+        {/* Toggle App Global Hotkey */}
         <FormField
           control={form.control}
-          name="globalHotkeys.showApp"
+          name="globalHotkeys.toggleApp"
           render={({ field }) => (
             <FormItem>
               <FormControl>
                 <GlobalHotkeyEditor
-                  label="Show App"
-                  description="Global hotkey to show the main window"
+                  label="Toggle App"
+                  description="Global hotkey to show or hide the main window"
                   currentValue={field.value}
                   onChange={(value) => handleGlobalHotkeyChange(field, value)}
                   theme={theme}

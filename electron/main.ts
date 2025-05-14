@@ -503,7 +503,7 @@ function createTray() {
 // Default global hotkeys
 const DEFAULT_GLOBAL_HOTKEYS = {
   newNote: 'CommandOrControl+Alt+N',
-  showApp: 'CommandOrControl+Alt+S'
+  toggleApp: 'CommandOrControl+Alt+S'  // Renamed from showApp to toggleApp to reflect its toggle functionality
 };
 
 // Register global hotkeys
@@ -527,7 +527,8 @@ function registerGlobalHotkeys() {
   // Compare with defaults to see if they're different
   const usingDefaults =
     globalHotkeys.newNote === DEFAULT_GLOBAL_HOTKEYS.newNote &&
-    globalHotkeys.showApp === DEFAULT_GLOBAL_HOTKEYS.showApp;
+    (globalHotkeys.toggleApp === DEFAULT_GLOBAL_HOTKEYS.toggleApp ||
+     globalHotkeys.showApp === DEFAULT_GLOBAL_HOTKEYS.toggleApp); // Support both old and new property names
 
   console.log(`Using default hotkeys: ${usingDefaults}`);
 
@@ -585,35 +586,45 @@ function registerGlobalHotkeys() {
     console.log('No new note hotkey defined, skipping registration');
   }
 
-  // Register global hotkey for showing the app
-  const showAppHotkey = globalHotkeys.showApp;
-  if (showAppHotkey) {
+  // Register global hotkey for toggling the app visibility
+  // Support both old (showApp) and new (toggleApp) property names for backward compatibility
+  const toggleAppHotkey = globalHotkeys.toggleApp || globalHotkeys.showApp;
+  if (toggleAppHotkey) {
     try {
-      console.log(`Attempting to register global hotkey for showing app: ${showAppHotkey}`);
+      console.log(`Attempting to register global hotkey for toggling app: ${toggleAppHotkey}`);
 
       // Ensure the hotkey is properly formatted
-      const formattedHotkey = formatAccelerator(showAppHotkey);
-      console.log(`Formatted hotkey for show app: ${formattedHotkey}`);
+      const formattedHotkey = formatAccelerator(toggleAppHotkey);
+      console.log(`Formatted hotkey for toggle app: ${formattedHotkey}`);
 
       const success = globalShortcut.register(formattedHotkey, () => {
         if (mainWindow) {
-          mainWindow.show();
-          mainWindow.focus();
+          // Toggle visibility: hide if visible, show if hidden
+          if (mainWindow.isVisible()) {
+            console.log('Main window is visible, hiding it');
+            mainWindow.hide();
+          } else {
+            console.log('Main window is hidden, showing it');
+            mainWindow.show();
+            mainWindow.focus();
+          }
         } else {
+          // If window doesn't exist, create it
+          console.log('Main window does not exist, creating it');
           createMainWindow();
         }
       });
 
       if (success) {
-        console.log(`Successfully registered global hotkey for showing app: ${formattedHotkey}`);
+        console.log(`Successfully registered global hotkey for toggling app: ${formattedHotkey}`);
       } else {
-        console.error(`Failed to register global hotkey for showing app: ${formattedHotkey} - registration returned false`);
+        console.error(`Failed to register global hotkey for toggling app: ${formattedHotkey} - registration returned false`);
       }
     } catch (error) {
-      console.error(`Error registering global hotkey for showing app: ${showAppHotkey}`, error);
+      console.error(`Error registering global hotkey for toggling app: ${toggleAppHotkey}`, error);
     }
   } else {
-    console.log('No show app hotkey defined, skipping registration');
+    console.log('No toggle app hotkey defined, skipping registration');
   }
 
   // Check all registered shortcuts
@@ -624,8 +635,8 @@ function registerGlobalHotkeys() {
     allRegisteredShortcuts.push(formatAccelerator(newNoteHotkey));
   }
 
-  if (showAppHotkey && globalShortcut.isRegistered(formatAccelerator(showAppHotkey))) {
-    allRegisteredShortcuts.push(formatAccelerator(showAppHotkey));
+  if (toggleAppHotkey && globalShortcut.isRegistered(formatAccelerator(toggleAppHotkey))) {
+    allRegisteredShortcuts.push(formatAccelerator(toggleAppHotkey));
   }
 
   // Also check default hotkeys
@@ -633,8 +644,8 @@ function registerGlobalHotkeys() {
     allRegisteredShortcuts.push(DEFAULT_GLOBAL_HOTKEYS.newNote);
   }
 
-  if (globalShortcut.isRegistered(DEFAULT_GLOBAL_HOTKEYS.showApp)) {
-    allRegisteredShortcuts.push(DEFAULT_GLOBAL_HOTKEYS.showApp);
+  if (globalShortcut.isRegistered(DEFAULT_GLOBAL_HOTKEYS.toggleApp)) {
+    allRegisteredShortcuts.push(DEFAULT_GLOBAL_HOTKEYS.toggleApp);
   }
 
   console.log('Currently registered global shortcuts:', allRegisteredShortcuts);

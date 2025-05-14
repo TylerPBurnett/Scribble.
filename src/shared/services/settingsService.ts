@@ -11,7 +11,7 @@ const DEFAULT_SETTINGS = {
   minimizeToTray: true,
   globalHotkeys: {
     newNote: 'CommandOrControl+Alt+N',
-    showApp: 'CommandOrControl+Alt+S'
+    toggleApp: 'CommandOrControl+Alt+S'  // Renamed from showApp to toggleApp to reflect its toggle functionality
   }
 };
 
@@ -27,7 +27,8 @@ export interface AppSettings {
   minimizeToTray?: boolean;
   globalHotkeys?: {
     newNote: string;
-    showApp: string;
+    toggleApp?: string;  // New property name
+    showApp?: string;    // Keep old property name for backward compatibility
   };
 }
 
@@ -128,12 +129,19 @@ export const saveSettings = (settings: AppSettings): void => {
             // Compare with what we sent
             const mainHotkeys = mainProcessSettings.globalHotkeys as {
               newNote: string;
-              showApp: string;
+              toggleApp?: string;
+              showApp?: string;
             };
 
             const hotkeysMatch =
               mainHotkeys.newNote === settings.globalHotkeys?.newNote &&
-              mainHotkeys.showApp === settings.globalHotkeys?.showApp;
+              (
+                // Check either toggleApp or showApp property, depending on which one is used
+                (mainHotkeys.toggleApp !== undefined &&
+                 mainHotkeys.toggleApp === settings.globalHotkeys?.toggleApp) ||
+                (mainHotkeys.showApp !== undefined &&
+                 mainHotkeys.showApp === settings.globalHotkeys?.showApp)
+              );
 
             console.log(`Verification - hotkeys match what we sent: ${hotkeysMatch}`);
           } else {
@@ -176,8 +184,14 @@ export const initSettings = async (): Promise<AppSettings> => {
     console.log('Using global hotkeys from main process');
     updatedSettings.globalHotkeys = mainProcessSettings.globalHotkeys as {
       newNote: string;
-      showApp: string;
+      toggleApp?: string;
+      showApp?: string;
     };
+
+    // Migrate from showApp to toggleApp if needed
+    if (updatedSettings.globalHotkeys.showApp && !updatedSettings.globalHotkeys.toggleApp) {
+      updatedSettings.globalHotkeys.toggleApp = updatedSettings.globalHotkeys.showApp;
+    }
     needsUpdate = true;
   }
 
@@ -230,6 +244,13 @@ export const initSettings = async (): Promise<AppSettings> => {
     console.log('Setting default global hotkeys');
     updatedSettings.globalHotkeys = DEFAULT_SETTINGS.globalHotkeys;
     needsUpdate = true;
+  } else {
+    // Migrate from showApp to toggleApp if needed
+    if (updatedSettings.globalHotkeys.showApp && !updatedSettings.globalHotkeys.toggleApp) {
+      console.log('Migrating from showApp to toggleApp');
+      updatedSettings.globalHotkeys.toggleApp = updatedSettings.globalHotkeys.showApp;
+      needsUpdate = true;
+    }
   }
 
   // Save updated settings if needed

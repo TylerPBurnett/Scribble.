@@ -58,7 +58,8 @@ const formSchema = z.object({
   minimizeToTray: z.boolean().optional(),
   globalHotkeys: z.object({
     newNote: z.string(),
-    showApp: z.string(),
+    toggleApp: z.string().optional(),
+    showApp: z.string().optional(),
   }).optional(),
   // Hotkeys are handled separately from the form
 });
@@ -94,7 +95,7 @@ export function SettingsDialog({
       minimizeToTray: initialSettings.minimizeToTray || true,
       globalHotkeys: initialSettings.globalHotkeys || {
         newNote: 'CommandOrControl+Alt+N',
-        showApp: 'CommandOrControl+Alt+S',
+        toggleApp: 'CommandOrControl+Alt+S',
       },
     },
   });
