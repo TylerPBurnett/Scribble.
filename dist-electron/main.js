@@ -16674,27 +16674,73 @@ function createTray() {
     }
   });
 }
+const DEFAULT_GLOBAL_HOTKEYS = {
+  newNote: "CommandOrControl+Alt+N",
+  showApp: "CommandOrControl+Alt+S"
+};
 function registerGlobalHotkeys() {
+  console.log("Unregistering all global shortcuts");
+  globalShortcut.unregisterAll();
   const settingsStore = new ElectronStore({ name: "settings" });
   const settings = settingsStore.get("settings") || {};
-  const hotkeys = settings.hotkeys || {};
-  const newNoteHotkey = hotkeys.newNote || "CommandOrControl+Alt+N";
-  globalShortcut.register(newNoteHotkey, () => {
-    const noteId = `new-${Date.now().toString(36)}`;
-    createNoteWindow(noteId);
-    if (mainWindow && !mainWindow.isVisible()) {
-      mainWindow.show();
+  const globalHotkeys = settings.globalHotkeys || DEFAULT_GLOBAL_HOTKEYS;
+  console.log("Registering global hotkeys:", JSON.stringify(globalHotkeys, null, 2));
+  try {
+    globalShortcut.unregister(DEFAULT_GLOBAL_HOTKEYS.newNote);
+    globalShortcut.unregister(DEFAULT_GLOBAL_HOTKEYS.showApp);
+  } catch (e) {
+  }
+  const newNoteHotkey = globalHotkeys.newNote;
+  if (newNoteHotkey) {
+    try {
+      console.log(`Attempting to register global hotkey for new note: ${newNoteHotkey}`);
+      const success = globalShortcut.register(newNoteHotkey, () => {
+        const noteId = `new-${Date.now().toString(36)}`;
+        createNoteWindow(noteId);
+        if (mainWindow && !mainWindow.isVisible()) {
+          mainWindow.show();
+        }
+      });
+      if (success) {
+        console.log(`Successfully registered global hotkey for new note: ${newNoteHotkey}`);
+      } else {
+        console.error(`Failed to register global hotkey for new note: ${newNoteHotkey} - registration returned false`);
+      }
+    } catch (error2) {
+      console.error(`Error registering global hotkey for new note: ${newNoteHotkey}`, error2);
     }
-  });
-  globalShortcut.register("CommandOrControl+Alt+S", () => {
-    if (mainWindow) {
-      mainWindow.show();
-      mainWindow.focus();
-    } else {
-      createMainWindow();
+  } else {
+    console.log("No new note hotkey defined, skipping registration");
+  }
+  const showAppHotkey = globalHotkeys.showApp;
+  if (showAppHotkey) {
+    try {
+      console.log(`Attempting to register global hotkey for showing app: ${showAppHotkey}`);
+      const success = globalShortcut.register(showAppHotkey, () => {
+        if (mainWindow) {
+          mainWindow.show();
+          mainWindow.focus();
+        } else {
+          createMainWindow();
+        }
+      });
+      if (success) {
+        console.log(`Successfully registered global hotkey for showing app: ${showAppHotkey}`);
+      } else {
+        console.error(`Failed to register global hotkey for showing app: ${showAppHotkey} - registration returned false`);
+      }
+    } catch (error2) {
+      console.error(`Error registering global hotkey for showing app: ${showAppHotkey}`, error2);
     }
-  });
-  console.log("Global hotkeys registered");
+  } else {
+    console.log("No show app hotkey defined, skipping registration");
+  }
+  const registeredShortcuts = globalShortcut.isRegistered(newNoteHotkey) ? [newNoteHotkey] : [];
+  if (globalShortcut.isRegistered(showAppHotkey)) {
+    registeredShortcuts.push(showAppHotkey);
+  }
+  console.log("Currently registered global shortcuts:", registeredShortcuts);
+  console.log("Global hotkeys registration complete");
 }
 function getDefaultSaveLocation() {
   const userDataPath = app$1.getPath("userData");
@@ -16955,6 +17001,31 @@ ipcMain$1.handle("get-auto-launch", async () => {
   } catch (error2) {
     console.error("Error getting auto-launch status:", error2);
     return false;
+  }
+});
+ipcMain$1.handle("sync-settings", (_, settings) => {
+  try {
+    console.log("Syncing settings from renderer to main process:", settings);
+    const settingsStore = new ElectronStore({ name: "settings" });
+    settingsStore.set("settings", settings);
+    console.log("Settings synced successfully");
+    globalShortcut.unregisterAll();
+    registerGlobalHotkeys();
+    return true;
+  } catch (error2) {
+    console.error("Error syncing settings:", error2);
+    return false;
+  }
+});
+ipcMain$1.handle("get-main-process-settings", () => {
+  try {
+    const settingsStore = new ElectronStore({ name: "settings" });
+    const settings = settingsStore.get("settings");
+    console.log("Retrieved settings from main process:", settings);
+    return settings || {};
+  } catch (error2) {
+    console.error("Error getting main process settings:", error2);
+    return {};
   }
 });
 ipcMain$1.on("settings-updated", () => {

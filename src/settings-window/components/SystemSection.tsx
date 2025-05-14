@@ -1,20 +1,8 @@
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
 import { UseFormReturn } from 'react-hook-form';
-import { z } from 'zod';
-import { AppSettings } from '../../shared/services/settingsService';
 import { ThemeName } from '../../shared/services/themeService';
-
-// Define the form schema with Zod
-const formSchema = z.object({
-  autoLaunch: z.boolean(),
-  minimizeToTray: z.boolean(),
-  globalHotkeys: z.object({
-    newNote: z.string(),
-    showApp: z.string(),
-  }),
-});
+import { GlobalHotkeyEditor } from './GlobalHotkeyEditor';
 
 type SystemSectionProps = {
   form: UseFormReturn<any>;
@@ -95,18 +83,14 @@ export function SystemSection({ form, theme = 'dim' }: SystemSectionProps) {
           control={form.control}
           name="globalHotkeys.newNote"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-5 backdrop-blur-sm bg-black/20">
-              <div className="space-y-2">
-                <FormLabel className={`text-base font-medium ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>New Note</FormLabel>
-                <FormDescription className={`text-sm ${theme === 'light' ? 'text-black/70' : 'text-muted-foreground'}`}>
-                  Global hotkey to create a new note
-                </FormDescription>
-              </div>
+            <FormItem>
               <FormControl>
-                <Input
-                  {...field}
-                  className={`w-48 bg-secondary border border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 shadow-sm font-mono ${theme === 'light' ? 'text-black' : 'text-secondary-foreground'}`}
-                  placeholder="e.g. CommandOrControl+Alt+N"
+                <GlobalHotkeyEditor
+                  label="New Note"
+                  description="Global hotkey to create a new note"
+                  currentValue={field.value}
+                  onChange={field.onChange}
+                  theme={theme}
                 />
               </FormControl>
             </FormItem>
@@ -118,18 +102,14 @@ export function SystemSection({ form, theme = 'dim' }: SystemSectionProps) {
           control={form.control}
           name="globalHotkeys.showApp"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border/30 p-5 backdrop-blur-sm bg-black/20">
-              <div className="space-y-2">
-                <FormLabel className={`text-base font-medium ${theme === 'light' ? 'text-black' : 'text-foreground'}`}>Show App</FormLabel>
-                <FormDescription className={`text-sm ${theme === 'light' ? 'text-black/70' : 'text-muted-foreground'}`}>
-                  Global hotkey to show the main window
-                </FormDescription>
-              </div>
+            <FormItem>
               <FormControl>
-                <Input
-                  {...field}
-                  className={`w-48 bg-secondary border border-border/50 focus:border-primary/50 focus:ring-1 focus:ring-primary/30 shadow-sm font-mono ${theme === 'light' ? 'text-black' : 'text-secondary-foreground'}`}
-                  placeholder="e.g. CommandOrControl+Alt+S"
+                <GlobalHotkeyEditor
+                  label="Show App"
+                  description="Global hotkey to show the main window"
+                  currentValue={field.value}
+                  onChange={field.onChange}
+                  theme={theme}
                 />
               </FormControl>
             </FormItem>

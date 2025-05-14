@@ -39,6 +39,9 @@ interface Window {
     setAutoLaunch: (enabled: boolean) => Promise<boolean>
     getAutoLaunch: () => Promise<boolean>
     settingsUpdated: () => void
+    themeChanged: (theme: string) => void
+    syncSettings: (settings: Record<string, unknown>) => Promise<boolean>
+    getMainProcessSettings: () => Promise<Record<string, unknown>>
   }
   fileOps: {
     saveNoteToFile: (noteId: string, title: string, content: string, saveLocation: string, oldTitle?: string) => Promise<{ success: boolean, filePath?: string, error?: string }>

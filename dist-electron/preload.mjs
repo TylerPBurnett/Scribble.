@@ -42,7 +42,9 @@ electron.contextBridge.exposeInMainWorld("settings", {
   setAutoLaunch: (enabled) => electron.ipcRenderer.invoke("set-auto-launch", enabled),
   getAutoLaunch: () => electron.ipcRenderer.invoke("get-auto-launch"),
   settingsUpdated: () => electron.ipcRenderer.send("settings-updated"),
-  themeChanged: (theme) => electron.ipcRenderer.send("theme-changed", theme)
+  themeChanged: (theme) => electron.ipcRenderer.send("theme-changed", theme),
+  syncSettings: (settings) => electron.ipcRenderer.invoke("sync-settings", settings),
+  getMainProcessSettings: () => electron.ipcRenderer.invoke("get-main-process-settings")
 });
 electron.contextBridge.exposeInMainWorld("fileOps", {
   saveNoteToFile: (noteId, title, content, saveLocation, oldTitle) => electron.ipcRenderer.invoke("save-note-to-file", noteId, title, content, saveLocation, oldTitle),

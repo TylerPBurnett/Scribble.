@@ -12,6 +12,11 @@ interface SettingsType {
     newNote?: string;
     [key: string]: string | undefined;
   };
+  globalHotkeys?: {
+    newNote: string;
+    showApp: string;
+    [key: string]: string;
+  };
   [key: string]: unknown;
 }
 
@@ -428,7 +433,7 @@ function createSettingsWindow() {
 
 // Create tray icon
 function createTray() {
-  // Create tray icon 
+  // Create tray icon
   const iconPath = path.join(process.env.APP_ROOT, 'src/assets/icon-64.png')
   const trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 })
 
@@ -495,37 +500,100 @@ function createTray() {
   })
 }
 
+// Default global hotkeys
+const DEFAULT_GLOBAL_HOTKEYS = {
+  newNote: 'CommandOrControl+Alt+N',
+  showApp: 'CommandOrControl+Alt+S'
+};
+
 // Register global hotkeys
 function registerGlobalHotkeys() {
+  // First, unregister ALL global shortcuts to ensure no old ones remain
+  console.log('Unregistering all global shortcuts');
+  globalShortcut.unregisterAll();
+
   // Get settings to check for custom hotkeys
-  const settingsStore = new Store({ name: 'settings' })
-  const settings = settingsStore.get('settings') as SettingsType || {}
-  const hotkeys = settings.hotkeys || {}
+  const settingsStore = new Store({ name: 'settings' });
+  const settings = settingsStore.get('settings') as SettingsType || {};
+
+  // Get global hotkeys from settings
+  const globalHotkeys = settings.globalHotkeys || DEFAULT_GLOBAL_HOTKEYS;
+
+  // Log the hotkeys we're about to register
+  console.log('Registering global hotkeys:', JSON.stringify(globalHotkeys, null, 2));
+
+  // Also unregister the default hotkeys explicitly to be extra safe
+  try {
+    globalShortcut.unregister(DEFAULT_GLOBAL_HOTKEYS.newNote);
+    globalShortcut.unregister(DEFAULT_GLOBAL_HOTKEYS.showApp);
+  } catch (e) {
+    // Ignore errors when unregistering
+  }
 
   // Register global hotkey for creating a new note
-  const newNoteHotkey = hotkeys.newNote || 'CommandOrControl+Alt+N'
-  globalShortcut.register(newNoteHotkey, () => {
-    // Generate a unique ID for the new note
-    const noteId = `new-${Date.now().toString(36)}`
-    createNoteWindow(noteId)
+  const newNoteHotkey = globalHotkeys.newNote;
+  if (newNoteHotkey) {
+    try {
+      console.log(`Attempting to register global hotkey for new note: ${newNoteHotkey}`);
 
-    // Show main window if it's hidden
-    if (mainWindow && !mainWindow.isVisible()) {
-      mainWindow.show()
+      const success = globalShortcut.register(newNoteHotkey, () => {
+        // Generate a unique ID for the new note
+        const noteId = `new-${Date.now().toString(36)}`;
+        createNoteWindow(noteId);
+
+        // Show main window if it's hidden
+        if (mainWindow && !mainWindow.isVisible()) {
+          mainWindow.show();
+        }
+      });
+
+      if (success) {
+        console.log(`Successfully registered global hotkey for new note: ${newNoteHotkey}`);
+      } else {
+        console.error(`Failed to register global hotkey for new note: ${newNoteHotkey} - registration returned false`);
+      }
+    } catch (error) {
+      console.error(`Error registering global hotkey for new note: ${newNoteHotkey}`, error);
     }
-  })
+  } else {
+    console.log('No new note hotkey defined, skipping registration');
+  }
 
   // Register global hotkey for showing the app
-  globalShortcut.register('CommandOrControl+Alt+S', () => {
-    if (mainWindow) {
-      mainWindow.show()
-      mainWindow.focus()
-    } else {
-      createMainWindow()
-    }
-  })
+  const showAppHotkey = globalHotkeys.showApp;
+  if (showAppHotkey) {
+    try {
+      console.log(`Attempting to register global hotkey for showing app: ${showAppHotkey}`);
 
-  console.log('Global hotkeys registered')
+      const success = globalShortcut.register(showAppHotkey, () => {
+        if (mainWindow) {
+          mainWindow.show();
+          mainWindow.focus();
+        } else {
+          createMainWindow();
+        }
+      });
+
+      if (success) {
+        console.log(`Successfully registered global hotkey for showing app: ${showAppHotkey}`);
+      } else {
+        console.error(`Failed to register global hotkey for showing app: ${showAppHotkey} - registration returned false`);
+      }
+    } catch (error) {
+      console.error(`Error registering global hotkey for showing app: ${showAppHotkey}`, error);
+    }
+  } else {
+    console.log('No show app hotkey defined, skipping registration');
+  }
+
+  // Log all registered shortcuts for debugging
+  const registeredShortcuts = globalShortcut.isRegistered(newNoteHotkey) ? [newNoteHotkey] : [];
+  if (globalShortcut.isRegistered(showAppHotkey)) {
+    registeredShortcuts.push(showAppHotkey);
+  }
+
+  console.log('Currently registered global shortcuts:', registeredShortcuts);
+  console.log('Global hotkeys registration complete');
 }
 
 // Get default save location
@@ -879,6 +947,45 @@ ipcMain.handle('get-auto-launch', async () => {
     return false
   }
 })
+
+// Sync settings from renderer to main process
+ipcMain.handle('sync-settings', (_, settings) => {
+  try {
+    console.log('Syncing settings from renderer to main process:', settings);
+
+    // Create a settings store if it doesn't exist
+    const settingsStore = new Store({ name: 'settings' });
+
+    // Save the entire settings object
+    settingsStore.set('settings', settings);
+
+    console.log('Settings synced successfully');
+
+    // Unregister all shortcuts
+    globalShortcut.unregisterAll();
+
+    // Register them again with new settings
+    registerGlobalHotkeys();
+
+    return true;
+  } catch (error) {
+    console.error('Error syncing settings:', error);
+    return false;
+  }
+});
+
+// Get settings from main process
+ipcMain.handle('get-main-process-settings', () => {
+  try {
+    const settingsStore = new Store({ name: 'settings' });
+    const settings = settingsStore.get('settings');
+    console.log('Retrieved settings from main process:', settings);
+    return settings || {};
+  } catch (error) {
+    console.error('Error getting main process settings:', error);
+    return {};
+  }
+});
 
 // Update global hotkeys when settings change
 ipcMain.on('settings-updated', () => {

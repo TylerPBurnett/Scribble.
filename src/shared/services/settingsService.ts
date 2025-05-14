@@ -75,7 +75,16 @@ const notifySettingsChange = (settings: AppSettings): void => {
 // Save settings to localStorage
 export const saveSettings = (settings: AppSettings): void => {
   console.log('Saving settings to localStorage:', settings);
+
+  // Ensure globalHotkeys is properly set
+  if (!settings.globalHotkeys) {
+    settings.globalHotkeys = DEFAULT_SETTINGS.globalHotkeys;
+    console.log('Added default global hotkeys to settings');
+  }
+
+  // Save to localStorage
   localStorage.setItem('app_settings', JSON.stringify(settings));
+  console.log('Settings saved to localStorage');
 
   // Update auto-launch setting in the main process
   if (settings.autoLaunch !== undefined) {
@@ -88,8 +97,19 @@ export const saveSettings = (settings: AppSettings): void => {
       });
   }
 
-  // Notify the main process that settings have changed (for global hotkeys)
-  window.settings.settingsUpdated();
+  // Sync settings with the main process
+  console.log('Syncing settings with main process, global hotkeys:', settings.globalHotkeys);
+  window.settings.syncSettings(settings as unknown as Record<string, unknown>)
+    .then(success => {
+      console.log('Settings synced with main process:', success);
+
+      // After successful sync, notify the main process to update hotkeys
+      window.settings.settingsUpdated();
+      console.log('Notified main process that settings were updated');
+    })
+    .catch(error => {
+      console.error('Error syncing settings with main process:', error);
+    });
 
   // Notify listeners of the change
   notifySettingsChange(settings);
@@ -100,10 +120,29 @@ export const initSettings = async (): Promise<AppSettings> => {
   console.log('Initializing settings...');
   // Get settings from localStorage
   const storedSettings = getSettings();
-  console.log('Stored settings:', storedSettings);
+  console.log('Stored settings from localStorage:', storedSettings);
+
+  // Try to get settings from the main process
+  let mainProcessSettings: Record<string, unknown> = {};
+  try {
+    mainProcessSettings = await window.settings.getMainProcessSettings();
+    console.log('Settings from main process:', mainProcessSettings);
+  } catch (error) {
+    console.error('Error getting settings from main process:', error);
+  }
 
   let needsUpdate = false;
   let updatedSettings = { ...storedSettings };
+
+  // If we have global hotkeys in the main process but not in localStorage, use those
+  if (mainProcessSettings.globalHotkeys && (!storedSettings.globalHotkeys || Object.keys(storedSettings.globalHotkeys).length === 0)) {
+    console.log('Using global hotkeys from main process');
+    updatedSettings.globalHotkeys = mainProcessSettings.globalHotkeys as {
+      newNote: string;
+      showApp: string;
+    };
+    needsUpdate = true;
+  }
 
   // If no save location is set, get the default from the main process
   if (!storedSettings.saveLocation) {
@@ -146,6 +185,13 @@ export const initSettings = async (): Promise<AppSettings> => {
   if (!updatedSettings.theme || !['dim', 'dark', 'light'].includes(updatedSettings.theme)) {
     console.log('Setting default theme to dim');
     updatedSettings.theme = 'dim';
+    needsUpdate = true;
+  }
+
+  // Ensure globalHotkeys is set
+  if (!updatedSettings.globalHotkeys) {
+    console.log('Setting default global hotkeys');
+    updatedSettings.globalHotkeys = DEFAULT_SETTINGS.globalHotkeys;
     needsUpdate = true;
   }
 

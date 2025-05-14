@@ -50,6 +50,8 @@ contextBridge.exposeInMainWorld('settings', {
   getAutoLaunch: () => ipcRenderer.invoke('get-auto-launch'),
   settingsUpdated: () => ipcRenderer.send('settings-updated'),
   themeChanged: (theme: string) => ipcRenderer.send('theme-changed', theme),
+  syncSettings: (settings: Record<string, unknown>) => ipcRenderer.invoke('sync-settings', settings),
+  getMainProcessSettings: () => ipcRenderer.invoke('get-main-process-settings'),
 })
 
 // Expose file operation APIs

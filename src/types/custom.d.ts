@@ -51,6 +51,8 @@ interface Window {
     getAutoLaunch: () => Promise<boolean>;
     settingsUpdated: () => void;
     themeChanged: (theme: string) => void;
+    syncSettings: (settings: Record<string, unknown>) => Promise<boolean>;
+    getMainProcessSettings: () => Promise<Record<string, unknown>>;
   };
 
   // File operations
